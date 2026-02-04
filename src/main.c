@@ -1,5 +1,5 @@
 /***************************************************************************//**
- * @file main.c
+ * @file main.c  funkční
  * @brief Program pro obsluhu tří RS232 portů a čtyř LED diod na EFM32GG11B820F2048GQ64
  * @version 3.4
  * @note Upraven pro QFP64 balíček s LED1 na PA8, LED2 na PD5, LED3 na PD6, LED4 na PD8
