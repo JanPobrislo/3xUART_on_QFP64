@@ -1,0 +1,24 @@
+Pøiložený soubor je program pro procesor EFM32GG11B820F2048GQ64, který má pøipojený externí krystal 25MHz.
+Uprav jej pro pøipojení krystalu 50MHz tak aby byly zachovány konfigurace portù a UART:
+UART0  na LOC4: PC4 (TX), PC5 (RX) - 9600 baud
+UART1  na LOC4: PE12(TX), PE13(RX) - 115200 baud
+USART0 na LOC0: PE10(TX), PE11(RX) - 115200 baud
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------
+
+Pøiložený soubor je program pro procesor EFM32GG11B820F2048GL192. Uprav jej tak aby fungoval pro procesor EFM32GG11B820F2048GQ64.
+
+Dále pøidej funkce pro inicializaci a obsluhu portu PA8 na kterém je pøipojena LED dioda. Pøidej funkce pro ovládání LED diody a v hlavní smyèce zajisti aby trvale blikala pøibližnì v intervalu 150msec.
+
+Pro komunikaci používej èeštinu.
+
+-----------------------------
+ Aktuální konfigurace portù:
+-----------------------------
+UART0  na LOC4: PC4 (TX), PC5 (RX) - 9600 baud
+UART1  na LOC4: PE12(TX), PE13(RX) - 115200 baud
+USART0 na LOC0: PE10(TX), PE11(RX) - 115200 baud
+
