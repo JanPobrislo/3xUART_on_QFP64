@@ -1,11 +1,12 @@
 /***************************************************************************//**
  * @file main.c  funkční
  * @brief Program pro obsluhu tří RS232 portů a čtyř LED diod na EFM32GG11B820F2048GQ64
- * @version 3.4
+ * @version 3.6
  * @note Upraven pro QFP64 balíček s LED1 na PA8, LED2 na PD5, LED3 na PD6, LED4 na PD8
  * @note LED3 zobrazuje stav vstupu OnBattery (PA3)
  * @note LED4 zobrazuje stav vstupu Tamper (PA4)
  * @note TIMER0 (1 Hz) bliká LED2, TIMER1 (1200 Hz) toggleuje TX a posílá '*' na UART1
+ * @note Upraven pro 72 MHz (DPLL: HFXO 50 MHz × 3600 / 2500)
  ******************************************************************************/
 
 #include "em_device.h"
@@ -51,33 +52,53 @@ volatile uint16_t rxIndex3 = 0;
 #define LED4_PORT          (gpioPortD)
 #define LED4_PIN           (8)  // PD8 (Zobrazuje stav Tamper)
 
-// Konstanta frekvence HFXO
-#define HFXO_FREQ  24000000UL
+// Konstanta frekvence HFXO (výstup DPLL)
+#define HFXO_FREQ     50000000UL   // Frekvence externího krystalu
+#define HFCLK_FREQ    72000000UL   // Výstupní frekvence DPLL (jádro + periférie)
 
 /***************************************************************************//**
- * @brief Inicializace hodin procesoru s externím krystalem 24 MHz
- * @note Zapne HFXO (High Frequency Crystal Oscillator) a přepne na něj HFCLK
+ * @brief Inicializace hodin procesoru: HFXO 50 MHz → DPLL → 72 MHz
+ * @note DPLL: Fout = Fref × (N+1) / (M+1) = 50 MHz × 3600/2500 = 72 MHz
+ * @note N = 3599, M = 2499 (obě hodnoty splňují podmínku 300 < N ≤ 4095)
+ * @note emlib CMU_DPLLLock() automaticky nastaví flash wait states (WS1)
+ *       a WSHFLE bit nutné pro HFCLK > 50 MHz
  * @note DŮLEŽITÉ: Musí se volat PŘED inicializací UART!
  ******************************************************************************/
 void initClocks(void)
 {
     // Inicializace struktury pro HFXO
     CMU_HFXOInit_TypeDef hfxoInit = CMU_HFXOINIT_DEFAULT;
-
-    // Konfigurace pro krystalový režim
     hfxoInit.mode = cmuOscMode_Crystal;
 
-    // Inicializace HFXO s krystalem 24 MHz
+    // Inicializace HFXO s krystalem 50 MHz
     CMU_HFXOInit(&hfxoInit);
 
     // Zapnout HFXO a počkat na stabilizaci
     CMU_OscillatorEnable(cmuOsc_HFXO, true, true);
 
-    // Přepnout HFCLK z HFRCO na HFXO
-    CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFXO);
+    // Konfigurace DPLL: 50 MHz × (3599+1) / (2499+1) = 72 MHz
+    // Referenční zdroj: HFXO, detekce náběžné hrany, frekvenční zámek
+    CMU_DPLLInit_TypeDef dpllInit = {
+        .frequency   = 72000000UL,          // Cílová frekvence
+        .n           = 3599,                 // N = 3599
+        .m           = 2499,                 // M = 2499
+        .refClk      = cmuSelect_HFXO,       // Referenční zdroj = HFXO
+        .edgeSel     = cmuDPLLEdgeSel_Fall,  // Detekce sestupné hrany
+        .lockMode    = cmuDPLLLockMode_Freq, // Frekvenční zámek (lepší jitter)
+        .autoRecover = true                  // Automatické obnovení při ztrátě zámku
+    };
 
-    // Nastavit HFPERCLK dělič na 1 (periférie běží na plných 24 MHz)
-    // PRESC = 0 znamená dělič 1 (HFPERCLK = HFCLK)
+    // Zamknout DPLL - funkce automaticky:
+    //   - přepne HFCLK na HFRCO před konfigurací
+    //   - nastaví flash wait states pro 72 MHz (WS1 + WSHFLE)
+    //   - počká na zámek DPLL
+    //   - přepne HFCLK zpět na HFRCO (řízenou DPLL)
+    if (!CMU_DPLLLock(&dpllInit)) {
+        // Záložní řešení: při selhání DPLL běžíme alespoň na HFXO 50 MHz
+        CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFXO);
+    }
+
+    // Nastavit HFPERCLK dělič na 1 (periférie běží na 72 MHz)
     CMU->HFPERPRESC = (CMU->HFPERPRESC & ~_CMU_HFPERPRESC_PRESC_MASK);
 
     // Povolit hodiny pro periferní sběrnici
@@ -185,8 +206,8 @@ void LED4_SetFromInput(void)
 /***************************************************************************//**
  * @brief Inicializace TIMER0 pro generování přerušení 1Hz (jednou za vteřinu)
  * @note Používá se pro toggle LED2
- * @note HFXO = 24 MHz, Předděličkaa 1024 → 24000000 / 1024 = 23437.5 Hz
- *       Pro 1 Hz: 23437.5 / 1 ≈ 23437
+ * @note HFCLK = 72 MHz, Předděličkaa 1024 → 72000000 / 1024 = 70312.5 Hz
+ *       Pro 1 Hz: 70312.5 / 1 ≈ 70313
  ******************************************************************************/
 void initTIMER0(void)
 {
@@ -198,7 +219,7 @@ void initTIMER0(void)
     TIMER0->CNT = 0;
 
     // Výpočet TOP hodnoty pro 1 Hz
-    uint32_t topValue = 23437 - 1;
+    uint32_t topValue = 70313 - 1;
 
     // Nastavení TOP hodnoty
     TIMER0->TOP = topValue;
@@ -224,8 +245,8 @@ void initTIMER0(void)
 /***************************************************************************//**
  * @brief Inicializace TIMER1 pro generování přerušení 1200Hz
  * @note Používá se pro toggle TX portu a odesílání '*' na UART1
- * @note HFXO = 24 MHz, Předděličkaa 16 → 24000000 / 16 = 1500000 Hz
- *       Pro 1200 Hz: 1500000 / 1200 = 1250
+ * @note HFCLK = 72 MHz, Předděličkaa 16 → 72000000 / 16 = 4500000 Hz
+ *       Pro 1200 Hz: 4500000 / 1200 = 3750
  ******************************************************************************/
 void initTIMER1(void)
 {
@@ -237,7 +258,7 @@ void initTIMER1(void)
     TIMER1->CNT = 0;
 
     // Výpočet TOP hodnoty pro 1200 Hz
-    uint32_t topValue = 1250 - 1;
+    uint32_t topValue = 3750 - 1;
 
     // Nastavení TOP hodnoty
     TIMER1->TOP = topValue;
@@ -331,8 +352,8 @@ void initUSART0(void)
                      USART_FRAME_PARITY_NONE |
                      USART_FRAME_STOPBITS_ONE;
 
-    // Manuální nastavení baudrate pro 115200 @ 24 MHz
-    USART_BaudrateSet_Manual(USART0, 115200, HFXO_FREQ);
+    // Manuální nastavení baudrate pro 115200 @ 72 MHz
+    USART_BaudrateSet_Manual(USART0, 115200, HFCLK_FREQ);
 
     // Nastavení lokace pinů (LOCATION 0)
     USART0->ROUTEPEN = USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_TXPEN;
@@ -377,8 +398,8 @@ void initUART0(void)
                     USART_FRAME_PARITY_NONE |
                     USART_FRAME_STOPBITS_ONE;
 
-    // Manuální nastavení baudrate pro 9600 @ 24 MHz
-    USART_BaudrateSet_Manual(UART0, 9600, HFXO_FREQ);
+    // Manuální nastavení baudrate pro 9600 @ 72 MHz
+    USART_BaudrateSet_Manual(UART0, 9600, HFCLK_FREQ);
 
     // Nastavení lokace pinů (LOCATION 4)
     UART0->ROUTEPEN = USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_TXPEN;
@@ -423,8 +444,8 @@ void initUART1(void)
                     USART_FRAME_PARITY_NONE |
                     USART_FRAME_STOPBITS_ONE;
 
-    // Manuální nastavení baudrate pro 115200 @ 24 MHz
-    USART_BaudrateSet_Manual(UART1, 115200, HFXO_FREQ);
+    // Manuální nastavení baudrate pro 115200 @ 72 MHz
+    USART_BaudrateSet_Manual(UART1, 115200, HFCLK_FREQ);
 
     // Nastavení lokace pinů (LOCATION 4)
     UART1->ROUTEPEN = USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_TXPEN;
@@ -535,8 +556,8 @@ void UART1_RX_IRQHandler(void)
  *****************************************************************************/
 void delay_ms(uint32_t ms)
 {
-    // Přepočítáno pro 24 MHz
-    uint32_t cycles_per_ms = 858;
+    // Přepočítáno pro 72 MHz
+    uint32_t cycles_per_ms = 2571;
 
     volatile uint32_t i;
     uint32_t total_cycles = cycles_per_ms * ms;
@@ -582,7 +603,7 @@ int main(void)
     sendStringUART1 ("TCI COM2-B (UART1) - QFN64 DEBUG1\r\n");
     sendStringUSART0("TCI COM3-C (USART0) - QFN64\r\n");
 
-    sendStringUART1 ("HFXO: Externi krystal 24 MHz\r\n");
+    sendStringUART1 ("HFXO: 50 MHz krystal, DPLL: 72 MHz\r\n");
     sendStringUART1 ("LED2 blikani 1Hz (TIMER0)\r\n");
     sendStringUART1 ("LED3 = stav OnBattery (PA3)\r\n");
     sendStringUART1 ("LED4 = stav Tamper (PA4)\r\n");

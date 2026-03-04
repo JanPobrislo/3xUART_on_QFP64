@@ -4,21 +4,30 @@ UART0  na LOC4: PC4 (TX), PC5 (RX) - 9600 baud
 UART1  na LOC4: PE12(TX), PE13(RX) - 115200 baud
 USART0 na LOC0: PE10(TX), PE11(RX) - 115200 baud
 
-
-
-
 -------------------------------------------------------------------------------------------------------------------
 
 Pøiložený soubor je program pro procesor EFM32GG11B820F2048GL192. Uprav jej tak aby fungoval pro procesor EFM32GG11B820F2048GQ64.
-
-Dále pøidej funkce pro inicializaci a obsluhu portu PA8 na kterém je pøipojena LED dioda. Pøidej funkce pro ovládání LED diody a v hlavní smyèce zajisti aby trvale blikala pøibližnì v intervalu 150msec.
-
+Dále pøidej funkce pro inicializaci a obsluhu portu PA8 na kterém je pøipojena LED dioda. 
+Pøidej funkce pro ovládání LED diody a v hlavní smyèce zajisti aby trvale blikala pøibližnì v intervalu 150msec.
 Pro komunikaci používej èeštinu.
 
------------------------------
- Aktuální konfigurace portù:
------------------------------
+Aktuální konfigurace portù:
 UART0  na LOC4: PC4 (TX), PC5 (RX) - 9600 baud
 UART1  na LOC4: PE12(TX), PE13(RX) - 115200 baud
 USART0 na LOC0: PE10(TX), PE11(RX) - 115200 baud
+
+-------------------------------------------------------------------------------------------------------------------
+27.2.2026
+Pøiložený soubor je program pro procesor EFM32GG11B820F2048GQ64. 
+Soubor main.c rozdìl do nìkolika souborù tak, aby
+definice všech vstupù a výstupù byla v samostatném souboru ports.h, 
+obsluha UART0 byla v samostatném souboru uart0.c a potøebné rozhraní v uart0.h,
+obsluha UART1 byla v samostatném souboru uart1.c a potøebné rozhraní v uart1.h,
+obsluha USART0 byla v samostatném souboru usart0.c a potøebné rozhraní v usart0.h,
+obsluha LED byla v souboru led.c a led.h. Pro každou LED vytvoø sadu funkci ON, OFF a TOGGLE,
+obsluha vstupù byla v souboru inputs.c.
+Ke všem souborùm vytvoø odpovídající hlavièkové soubory .h
+K diodám pøidej LED_RX na portu PD2 a LED_TX na portu PD3.
+Ke vstupùm pøidej RX na portu PA0.
+-------------------------------------------------------------------------------------------------------------------
 
