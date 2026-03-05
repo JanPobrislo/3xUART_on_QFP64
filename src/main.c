@@ -27,6 +27,7 @@
 #include "usart0.h"
 #include "uart0.h"
 #include "uart1.h"
+#include "pocsag.h"
 
 //------------------------------------------------------------------------------
 //  Globalni promenne
@@ -73,6 +74,15 @@ static void delay_ms(uint32_t ms)
 }
 
 //------------------------------------------------------------------------------
+// GPIO preruseni pro PA0 - detekce hrany POCSAG signalu
+//------------------------------------------------------------------------------
+void GPIO_EVEN_IRQHandler(void)
+{
+    GPIO_IntClear(1 << RX_PIN);
+    POCSAG_EdgeDetected();
+}
+
+//------------------------------------------------------------------------------
 //
 //                           M A I N
 //
@@ -92,6 +102,7 @@ int main(void)
     initUART1();
     initTIMER0();
     initTIMER1();
+    POCSAG_Init();
 
     for (volatile int i = 0; i < 100000; i++);
 
@@ -118,6 +129,15 @@ int main(void)
         GPIO_PinOutClear(PTT_PORT, PTT_PIN);
         delay_ms(250);
 */
+
+    	//------------------------------------------------------------------------------
+    	//  Prijem POCSAG
+    	//------------------------------------------------------------------------------
+    	if (POCSAG_DataReady()) {
+    	    pocsag_datagram_t dg;
+    	    POCSAG_GetDatagram(&dg);
+    	    POCSAG_PrintDatagram(&dg);
+    	}
 
     	//------------------------------------------------------------------------------
     	//  Prikaz z COM-B (UART1)

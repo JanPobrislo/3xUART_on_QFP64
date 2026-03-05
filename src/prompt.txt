@@ -30,4 +30,19 @@ Ke všem souborùm vytvoø odpovídající hlavièkové soubory .h
 K diodám pøidej LED_RX na portu PD2 a LED_TX na portu PD3.
 Ke vstupùm pøidej RX na portu PA0.
 -------------------------------------------------------------------------------------------------------------------
-
+5.3.2026
+Soubory jsou aktuální upravené verze programu pro procesor EFM32GG11B820F2048GQ64. 
+Na port RX PA0 a má pøiveden signál. Tento signál je datagram POCSAG o rychlosti 1200Hz. 
+Vytvoø funkce který tento datagram pøijme a zapíše do datové struktury.
+Pøidej kontrolu BCH kódu.
+Pøidej do hlavní smyèky programu výpis na UART1 pøijatého datagramu. 
+Vypiš zda byl pøijat bezchybnì nebo zda probìhly opravy.
+Nové funkce vytvoø v souboru pocsag.c a pocsag.h
+Pro ètení signálu mùžeš využít timer1, který bìží na 1200Hz.
+----------------------
+Jak je zajištìna synchronizace na zaèátku datagramu POCSAG. 
+Na vstupu je nejprve šum z radiostanice a teprve potom pøíjde POCSAG preamble. 
+Musíš zajistit naètení. Staèí pøijmout 32 bitù preamble.
+----------------------
+Není nijak zajištìn okamžik odeèítání bitu. Je nutné od hrany signálu poèkat polovinu doby bitu a potom teprve spustit odeèítání.
+----------------------

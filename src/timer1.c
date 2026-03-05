@@ -6,11 +6,17 @@
  *****************************************************************************/
 #include "timer1.h"
 #include "ports.h"
+#include "pocsag.h"
+#include "led.h"
+
 #include "em_cmu.h"
 #include "em_timer.h"
 #include "em_gpio.h"
 
-#define TIMER1_TOP  (72000000UL / 16 / 1200 - 1)  /* 3749 */
+//---- 1200 Hz
+//#define TIMER1_TOP  (72000000UL / 16 / 1200 - 1)  /* 3749 */
+//---- 2400 Hz
+#define TIMER1_TOP  (72000000UL / 16 / 2400 - 1)  /* 1874 - dvojnasobna rychlost */
 
 void initTIMER1(void)
 {
@@ -47,6 +53,7 @@ void TIMER1_Stop(void)
 void TIMER1_IRQHandler(void)
 {
     TIMER1->IFC = TIMER_IFC_OF;
+    POCSAG_SampleBit();          /* vzorkovani POCSAG bitu z PA0 */
     GPIO_PinOutToggle(TX_PORT, TX_PIN);
     LED_TX_Toggle();
 }
