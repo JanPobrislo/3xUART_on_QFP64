@@ -8,9 +8,12 @@
 #include <stdint.h>
 
 void initUART1(void);
+void sendCharUART1(char zn);
 void sendStringUART1(const char *str);
 
 extern char     rxBuffer3[];
 extern volatile uint16_t rxIndex3;
+
+extern char     tci_cmd;
 
 #endif /* UART1_H */

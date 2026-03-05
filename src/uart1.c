@@ -11,6 +11,7 @@
 
 char     rxBuffer3[BUFFER_SIZE];
 volatile uint16_t rxIndex3 = 0;
+char     tci_cmd;
 
 void initUART1(void)
 {
@@ -41,6 +42,13 @@ void initUART1(void)
     USART_IntEnable(UART1, USART_IEN_RXDATAV);
     NVIC_ClearPendingIRQ(UART1_RX_IRQn);
     NVIC_EnableIRQ(UART1_RX_IRQn);
+
+    tci_cmd = 0;
+}
+
+void sendCharUART1(char zn)
+{
+    USART_Tx(UART1, (uint8_t)zn);
 }
 
 void sendStringUART1(const char *str)
@@ -50,13 +58,17 @@ void sendStringUART1(const char *str)
 
 void UART1_RX_IRQHandler(void)
 {
-    uint8_t data = USART_Rx(UART1);
+	uint8_t data = USART_Rx(UART1);
     if (data == 13) {
         rxBuffer3[rxIndex3] = '\0';
-        sendStringUART1(rxBuffer3);
-        sendStringUART1("\r\n");
+        //sendStringUART1(rxBuffer3);
+        sendStringUART1("\r\nTCI> ");
+        if (rxIndex3 < BUFFER_SIZE - 1)
+        {  	tci_cmd = rxBuffer3[rxIndex3-1];
+        }
         rxIndex3 = 0;
     } else {
+    	sendCharUART1(data);
         if (rxIndex3 < BUFFER_SIZE - 1) rxBuffer3[rxIndex3++] = data;
     }
 }
