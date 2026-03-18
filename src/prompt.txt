@@ -45,4 +45,19 @@ Na vstupu je nejprve šum z radiostanice a teprve potom pøíjde POCSAG preamble.
 Musíš zajistit naètení. Staèí pøijmout 32 bitù preamble.
 ----------------------
 Není nijak zajištìn okamžik odeèítání bitu. Je nutné od hrany signálu poèkat polovinu doby bitu a potom teprve spustit odeèítání.
-----------------------
+-------------------------------------------------------------------------------------------------------------------
+18.3.2026
+Soubory jsou aktuální upravené verze programu pro procesor EFM32GG11B820F2048GQ64. 
+Na port RX PA0 a má pøiveden signál. Tento signál je datagram POCSAG o rychlosti 1200Hz, který je již demodulován z NRZ, 
+takže jednotlivé bity jsou již bity POCSAG datagramu. Napøíklad POCSAG IDLE word bude pøijat jako 0x7A89C197.
+Vytvoø funkce který tento datagram pøijme a zapíše do datové struktury.
+Na vstupu je nejprve šum z radiostanice a teprve potom pøíjde POCSAG preamble. 
+Musíš zajistit naètení. Staèí pøijmout 32 bitù preamble.
+Musíš zajistit správný okamžik odeèítání bitu. Je vhodné od hrany signálu poèkat polovinu doby bitu a potom teprve spustit odeèítání.
+Pro ètení signálu mùžeš využít timer1, který bìží na 1200Hz. Mùžeš zmìnit rychlost timer1 podle potøeby, 
+tøeba na dvojnásobek aby jsi nastavil okamžik odeètení bitu. 
+Pøidej kontrolu BCH kódu a parity.
+Pøidej do hlavní smyèky programu výpis na UART1 pøijatého datagramu. 
+Vypiš zda byl pøijat bezchybnì nebo zda probìhly opravy.
+Nové funkce vytvoø v souboru pocsag.c a pocsag.h
+

@@ -1,8 +1,14 @@
 /******************************************************************************
  * @file timer1.c
- * @brief Obsluha TIMER1 - preruseni 1200 Hz pro toggle vystupu TX (PA1)
- * @note HFCLK = 72 MHz, PRESC = DIV16, TOP = 3749
- *       72 000 000 / 16 / 3750 = 1200 Hz
+ * @brief Obsluha TIMER1 – 2400 Hz pro POCSAG vzorkování (2 vzorky / bit)
+ *
+ * @note HFCLK = 72 MHz, PRESC = DIV16, TOP = 1874
+ *       72 000 000 / 16 / 1875 = 2400 Hz
+ *
+ * TIMER1 taktuje POCSAG_SampleBit() 2400× za sekundu.
+ * Uvnitø POCSAG_SampleBit() se fáze støídá 0/1; bit se ète pouze ve fázi 1
+ * (= støed bitu). Synchronizaci fáze zajišuje POCSAG_EdgeDetected() volaná
+ * z GPIO_EVEN_IRQHandler pøi hranì signálu na PA0.
  *****************************************************************************/
 #include "timer1.h"
 #include "ports.h"
@@ -13,10 +19,8 @@
 #include "em_timer.h"
 #include "em_gpio.h"
 
-//---- 1200 Hz
-//#define TIMER1_TOP  (72000000UL / 16 / 1200 - 1)  /* 3749 */
-//---- 2400 Hz
-#define TIMER1_TOP  (72000000UL / 16 / 2400 - 1)  /* 1874 - dvojnasobna rychlost */
+/* 2400 Hz: 72 000 000 / 16 / 2400 - 1 = 1874 */
+#define TIMER1_TOP  (72000000UL / 16 / 2400 - 1)
 
 void initTIMER1(void)
 {
@@ -37,7 +41,7 @@ void initTIMER1(void)
 
 void TIMER1_Start(void)
 {
-    TIMER1->CNT  = 0;     //----- zajisti reset citace (jinak by pokracoval od posledni hodnoty)
+    TIMER1->CNT  = 0;
     TIMER1->IFC  = _TIMER_IFC_MASK;
     NVIC_ClearPendingIRQ(TIMER1_IRQn);
     NVIC_EnableIRQ(TIMER1_IRQn);
@@ -53,7 +57,5 @@ void TIMER1_Stop(void)
 void TIMER1_IRQHandler(void)
 {
     TIMER1->IFC = TIMER_IFC_OF;
-    POCSAG_SampleBit();          /* vzorkovani POCSAG bitu z PA0 */
-    GPIO_PinOutToggle(TX_PORT, TX_PIN);
-    LED_TX_Toggle();
+    POCSAG_SampleBit();      /* vzorkování POCSAG – 2400 Hz, støídá fáze 0/1 */
 }

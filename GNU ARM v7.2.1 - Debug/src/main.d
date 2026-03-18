@@ -78,7 +78,9 @@ src/main.o: ../src/main.c \
  d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_gpio.h \
  d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_common.h \
  d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_usart.h \
- ../src/em_emu.h
+ ../src/ports.h ../src/timer0.h ../src/timer1.h ../src/led.h \
+ ../src/inputs.h ../src/usart0.h ../src/uart0.h ../src/uart1.h \
+ ../src/pocsag.h
 
 d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\device\siliconlabs\efm32gg11b\include\em_device.h:
 
@@ -238,4 +240,20 @@ d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\
 
 d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_usart.h:
 
-../src/em_emu.h:
+../src/ports.h:
+
+../src/timer0.h:
+
+../src/timer1.h:
+
+../src/led.h:
+
+../src/inputs.h:
+
+../src/usart0.h:
+
+../src/uart0.h:
+
+../src/uart1.h:
+
+../src/pocsag.h:

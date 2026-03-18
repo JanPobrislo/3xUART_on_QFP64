@@ -31,7 +31,7 @@ all: 3xUART_on_QFP64.axf
 3xUART_on_QFP64.axf: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GNU ARM C Linker'
-	arm-none-eabi-gcc -g3 -gdwarf-2 -mcpu=cortex-m4 -mthumb -T "3xUART_on_QFP64.ld" -Xlinker --gc-sections -Xlinker -Map="3xUART_on_QFP64.map" -mfpu=fpv4-sp-d16 -mfloat-abi=softfp --specs=nano.specs -o 3xUART_on_QFP64.axf "./src/em_cmu.o" "./src/em_gpio.o" "./src/em_usart.o" "./src/main.o" "./emlib/em_system.o" "./CMSIS/EFM32GG11B/startup_efm32gg11b.o" "./CMSIS/EFM32GG11B/system_efm32gg11b.o" "./src/em_emu.o" -Wl,--start-group -lgcc -lc -lnosys -Wl,--end-group
+	arm-none-eabi-gcc -g3 -gdwarf-2 -mcpu=cortex-m4 -mthumb -T "3xUART_on_QFP64.ld" -Xlinker --gc-sections -Xlinker -Map="3xUART_on_QFP64.map" -mfpu=fpv4-sp-d16 -mfloat-abi=softfp --specs=nano.specs -o 3xUART_on_QFP64.axf "./src/em_cmu.o" "./src/em_gpio.o" "./src/em_usart.o" "./src/main.o" "./emlib/em_system.o" "./CMSIS/EFM32GG11B/startup_efm32gg11b.o" "./CMSIS/EFM32GG11B/system_efm32gg11b.o" "./src/em_emu.o" "./src/inputs.o" "./src/led.o" "./src/pocsag.o" "./src/timer0.o" "./src/timer1.o" "./src/uart0.o" "./src/uart1.o" "./src/usart0.o" -Wl,--start-group -lgcc -lc -lnosys -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

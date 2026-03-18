@@ -115,10 +115,10 @@ int main(void)
     LED_TX_On(); delay_ms(300); LED_TX_Off();
 
     //----------------- Hlavicky
-    sendStringUART0 ("TCI COM1-A (UART0) - QFN64\r\n");
-    sendStringUART1 ("TCI COM2-B (UART1) - QFN64 DEBUG1\r\n");
+    sendStringUART0 ("TCI COM1-A (UART0)\r\n");
+    sendStringUART1 ("TCI COM2-B (UART1) - DEBUG\r\n");
     sendStringUART1 ("HFXO: 50 MHz krystal, DPLL: 72 MHz\r\n");
-    sendStringUSART0("TCI COM3-C (USART0) - QFN64\r\n");
+    sendStringUSART0("TCI COM3-C (USART0)\r\n");
 
     while (1) {
 /*
@@ -133,11 +133,17 @@ int main(void)
     	//------------------------------------------------------------------------------
     	//  Prijem POCSAG
     	//------------------------------------------------------------------------------
-    	if (POCSAG_DataReady()) {
-    	    pocsag_datagram_t dg;
-    	    POCSAG_GetDatagram(&dg);
-    	    POCSAG_PrintDatagram(&dg);
-    	}
+        /*------------------------------------------------------------------*/
+        /*  POCSAG: vyzvedáváme batche z fronty jeden po druhém             */
+        /*  POCSAG_ProcessQueue() vypíše batch na UART1 a vrátí 1.         */
+        /*  Opakujeme dokud fronta není prázdná.                            */
+        /*------------------------------------------------------------------*/
+        while (POCSAG_ProcessQueue())
+        {
+            /* Každý batch se sám vypíše uvnitř ProcessQueue(). */
+            /* Zde lze přidat např. bliknutí LED_RX:            */
+            LED_RX_Toggle();
+        }
 
     	//------------------------------------------------------------------------------
     	//  Prikaz z COM-B (UART1)
@@ -194,6 +200,7 @@ int main(void)
     	{
     		IsSecond=0;
 
+    		POCSAG_PrintDiag();
     		/*
     		if (Input_GetOnBattery()) {
 				sendStringUART1("Batery:1  ");
@@ -214,6 +221,10 @@ int main(void)
 			sendStringUART1(txt);
 			sendStringUART1("\r\n");
 			*/
+//    	    sendStringUART0 ("[COM1-A]");
+//    	    sendStringUART1 ("[COM2-B]");
+//    	    sendStringUSART0("[COM3-C]");
+
 	    }
     }
 }
