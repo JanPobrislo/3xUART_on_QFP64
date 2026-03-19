@@ -15,6 +15,9 @@
 #define PTT_PORT            (gpioPortA)
 #define PTT_PIN             (2)
 
+#define DBG_PORT            (gpioPortD)
+#define DBG_PIN             (4)
+
 /* --- Vstupni porty --- */
 #define RX_PORT             (gpioPortA)
 #define RX_PIN              (0)

@@ -20,7 +20,8 @@
 #include "em_gpio.h"
 
 /* 2400 Hz: 72 000 000 / 16 / 2400 - 1 = 1874 */
-#define TIMER1_TOP  (72000000UL / 16 / 2400 - 1)
+/* 1200 Hz: 3749 pøi 72MHz a div16 */
+#define TIMER1_TOP  (72000000UL / 16 / 1200 - 1)
 
 void initTIMER1(void)
 {
@@ -33,11 +34,12 @@ void initTIMER1(void)
     TIMER1->IFC  = _TIMER_IFC_MASK;
     TIMER1->IEN  = TIMER_IEN_OF;
 
-    NVIC_ClearPendingIRQ(TIMER1_IRQn);
-    NVIC_EnableIRQ(TIMER1_IRQn);
+    // Zásadní: Povolení v NVIC, jinak se IRQHandler nikdy nezavolá
+	NVIC_ClearPendingIRQ(TIMER1_IRQn);
+	NVIC_EnableIRQ(TIMER1_IRQn);
 
-    TIMER1->CMD = TIMER_CMD_START;
-}
+	// Na zaèátku ho necháme stát - spustí ho až první hrana (pocsag.c)
+	TIMER1->CMD = TIMER_CMD_STOP;}
 
 void TIMER1_Start(void)
 {
@@ -54,8 +56,10 @@ void TIMER1_Stop(void)
     NVIC_DisableIRQ(TIMER1_IRQn);
 }
 
-void TIMER1_IRQHandler(void)
-{
+void TIMER1_IRQHandler(void) {
     TIMER1->IFC = TIMER_IFC_OF;
-    POCSAG_SampleBit();      /* vzorkování POCSAG – 2400 Hz, støídá fáze 0/1 */
+    POCSAG_SampleBit(); // Tato funkce nyní øeší èasování
+    GPIO_PinOutToggle(TX_PORT, TX_PIN); // Diagnostický výstup
+//    GPIO_PinOutToggle(PTT_PORT, PTT_PIN);
+
 }

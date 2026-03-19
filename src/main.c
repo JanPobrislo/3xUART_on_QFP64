@@ -65,6 +65,7 @@ static void initOutputs(void)
     CMU_ClockEnable(cmuClock_GPIO, true);
     GPIO_PinModeSet(TX_PORT,  TX_PIN,  gpioModePushPull, 0);
     GPIO_PinModeSet(PTT_PORT, PTT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(DBG_PORT, DBG_PIN, gpioModePushPull, 0);
 }
 
 static void delay_ms(uint32_t ms)
@@ -76,10 +77,12 @@ static void delay_ms(uint32_t ms)
 //------------------------------------------------------------------------------
 // GPIO preruseni pro PA0 - detekce hrany POCSAG signalu
 //------------------------------------------------------------------------------
-void GPIO_EVEN_IRQHandler(void)
-{
-    GPIO_IntClear(1 << RX_PIN);
-    POCSAG_EdgeDetected();
+void GPIO_EVEN_IRQHandler(void) {
+    uint32_t flags = GPIO_IntGet();
+    GPIO_IntClear(flags);
+    if (flags & (1 << RX_PIN)) {
+        POCSAG_EdgeDetected();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -114,6 +117,8 @@ int main(void)
     LED_RX_On(); delay_ms(300); LED_RX_Off();
     LED_TX_On(); delay_ms(300); LED_TX_Off();
 
+    GPIO_PinOutClear(DBG_PORT, DBG_PIN);
+
     //----------------- Hlavicky
     sendStringUART0 ("TCI COM1-A (UART0)\r\n");
     sendStringUART1 ("TCI COM2-B (UART1) - DEBUG\r\n");
@@ -133,17 +138,7 @@ int main(void)
     	//------------------------------------------------------------------------------
     	//  Prijem POCSAG
     	//------------------------------------------------------------------------------
-        /*------------------------------------------------------------------*/
-        /*  POCSAG: vyzvedáváme batche z fronty jeden po druhém             */
-        /*  POCSAG_ProcessQueue() vypíše batch na UART1 a vrátí 1.         */
-        /*  Opakujeme dokud fronta není prázdná.                            */
-        /*------------------------------------------------------------------*/
-        while (POCSAG_ProcessQueue())
-        {
-            /* Každý batch se sám vypíše uvnitř ProcessQueue(). */
-            /* Zde lze přidat např. bliknutí LED_RX:            */
-            LED_RX_Toggle();
-        }
+    	POCSAG_Process(); // Zpracuje a vypíše datagram, pokud je připraven
 
     	//------------------------------------------------------------------------------
     	//  Prikaz z COM-B (UART1)
@@ -163,6 +158,7 @@ int main(void)
     					sendStringUART1(" --------------------------------\r\n");
 						break;
     		case '1' : 	LED1_Toggle();
+    	    			GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
     					sendStringUART1("LED1");
     					break;
     		case '2' : 	LED2_Toggle();
@@ -200,7 +196,6 @@ int main(void)
     	{
     		IsSecond=0;
 
-    		POCSAG_PrintDiag();
     		/*
     		if (Input_GetOnBattery()) {
 				sendStringUART1("Batery:1  ");
