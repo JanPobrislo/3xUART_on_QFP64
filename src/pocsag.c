@@ -1,4 +1,5 @@
 ﻿#include <stdio.h>
+#include <string.h>
 #include "pocsag.h"
 #include "inputs.h"
 #include "uart1.h"
@@ -17,35 +18,68 @@ static volatile POCSAG_State state = STATE_IDLE;
 static volatile uint32_t shiftReg = 0;
 static volatile uint16_t bitCounter = 0;
 volatile POCSAG_Message currentMsg;
+static uint32_t bitBuffer = 0;
+static uint8_t bitsInBuffer = 0;
+
 
 // --- BCH (31,21) a Parita ---
+// Pomocná funkce pro zrcadlení bitů v 32-bitovém slově
+__attribute__((unused)) static uint32_t reverse32(uint32_t x) {
+    x = ((x >> 1) & 0x55555555) | ((x & 0x55555555) << 1);
+    x = ((x >> 2) & 0x33333333) | ((x & 0x33333333) << 2);
+    x = ((x >> 4) & 0x0F0F0F0F) | ((x & 0x0F0F0F0F) << 4);
+    x = ((x >> 8) & 0x00FF00FF) | ((x & 0x00FF00FF) << 8);
+    return (x >> 16) | (x << 16);
+}
+
 static uint32_t calculate_syndrom(uint32_t word) {
-    uint32_t rem = (word >> 11) << 10;
-    rem |= (word >> 1) & 0x3FF;
+    // POCSAG používá pro výpočet syndromu bity v pořadí, jak přicházely.
+    // Musíme pracovat s bity od MSB k LSB (bit 31 je x^30).
+
+    // Vytvoříme pracovní kopii a vynulujeme paritu (bit 0)
+    uint32_t reg = word & 0xFFFFFFFE;
+
+    // Polynom: x^10 + x^9 + x^8 + x^6 + x^5 + x^3 + 1  => 0b11101101001 => 0x769
+    // Pro dělení shora (od bitu 31) musíme polynom zarovnat doleva:
+    // 0x769 zarovnaný tak, aby x^10 odpovídalo bitu 31:
+    uint32_t poly = 0xED200000; // To je 0x769 posunutý tak, aby začínal na bitu 31
+
     for (int i = 0; i < 21; i++) {
-        if (rem & (1UL << (30 - i))) rem ^= (0x3B3UL << (20 - i));
+        if (reg & (1UL << (31 - i))) {
+            reg ^= (poly >> i);
+        }
     }
-    return rem & 0x3FF;
+    // Syndrom jsou bity 10 až 1. Pokud je slovo OK, musí být tyto bity v reg nulové.
+    return (reg & 0x000007FE);
 }
 
 static bool check_parity(uint32_t word) {
+    // Celkové slovo (32 bitů) má mít SUDOU paritu
     uint32_t p = 0;
-    for (int i = 0; i < 32; i++) if (word & (1UL << i)) p++;
+    for (int i = 0; i < 32; i++) {
+        if (word & (1UL << i)) p++;
+    }
     return (p % 2 == 0);
 }
-
 static uint32_t try_fix_word(uint32_t word, bool *fixed) {
     *fixed = false;
-    if (calculate_syndrom(word) == 0 && check_parity(word)) return word;
+
+    // 1. Krok: Je slovo už v pořádku?
+    if (calculate_syndrom(word) == 0 && check_parity(word)) {
+        return word;
+    }
+
+    // 2. Krok: Pokus o opravu jednoho bitu (brute force přes všech 32 pozic)
     for (int i = 0; i < 32; i++) {
-        uint32_t test = word ^ (1UL << i);
-        if (calculate_syndrom(test) == 0 && check_parity(test)) {
-            *fixed = true; return test;
+        uint32_t test_word = word ^ (1UL << i);
+        if (calculate_syndrom(test_word) == 0 && check_parity(test_word)) {
+            *fixed = true;
+            return test_word;
         }
     }
-    return word;
-}
 
+    return word; // Neopravitelné (více chyb)
+}
 void POCSAG_Init(void) {
     state = STATE_IDLE;
     currentMsg.ready = false;
@@ -152,30 +186,99 @@ void POCSAG_SampleBit(void) {
     }
 }
 
+// Pomocná funkce pro dekódování 7-bit ASCII (upraveno pro korektní bit-order)
+void decode_ascii_part(uint32_t word, char *outStr) {
+    uint32_t data = (word >> 11) & 0xFFFFF; // 20 bitů dat
+
+    for (int i = 0; i < 20; i++) {
+        bitBuffer <<= 1;
+        if (data & (1UL << (19 - i))) bitBuffer |= 1;
+        bitsInBuffer++;
+
+        if (bitsInBuffer == 7) {
+            // POCSAG ASCII je LSB-first
+            uint8_t c = 0;
+            for(int b=0; b<7; b++) {
+                if(bitBuffer & (1 << b)) c |= (1 << (6-b));
+            }
+
+            if (c >= 32 && c <= 126) {
+                size_t len = strlen(outStr);
+                if (len < 120) {
+                    outStr[len] = (char)c;
+                    outStr[len+1] = '\0';
+                }
+            }
+            bitBuffer = 0;
+            bitsInBuffer = 0;
+        }
+    }
+}
+
 void POCSAG_Process(void) {
     if (!currentMsg.ready) return;
 
-    char buf[128];
+    char buf[160];
+    char textMsg[128] = {0};
+    bitBuffer = 0;
+    bitsInBuffer = 0;
+
     sendStringUART1("\r\n>>> POCSAG MSG START <<<\r\n");
 
+    // --- 1. ČÁST: Původní výpis surových dat ---
     for (uint16_t i = 0; i < currentMsg.total_words; i++) {
-        bool fixed = false;
         uint32_t raw = currentMsg.data[i];
 
-        if (raw == POCSAG_IDLE_WORD)
-        {
+        if (raw == POCSAG_IDLE_WORD) {
             sprintf(buf, "W[%03d]: IDLE\r\n", i);
             sendStringUART1(buf);
-        	continue;
+            continue;
         }
 
+        bool fixed = false;
         uint32_t clean = try_fix_word(raw, &fixed);
         bool valid = (calculate_syndrom(clean) == 0 && check_parity(clean));
 
         sprintf(buf, "W[%03d]: %08X %s %s\r\n",
-                i, (unsigned int)clean,
-                valid ? "OK" : "ERR", fixed ? "[FIXED]" : "");
+                i, (unsigned int)raw, valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
         sendStringUART1(buf);
+    }
+
+    // --- 2. ČÁST: Dekódování adresy a textu ---
+    sendStringUART1("\r\n--- INTERPRETACE ---\r\n");
+
+    for (uint16_t i = 0; i < currentMsg.total_words; i++) {
+        uint32_t raw = currentMsg.data[i];
+        if (raw == POCSAG_IDLE_WORD) continue;
+
+        bool fixed = false;
+        uint32_t clean = try_fix_word(raw, &fixed);
+        if (calculate_syndrom(clean) != 0 || !check_parity(clean)) continue;
+
+        if ((clean & 0x80000000) == 0) {
+            // Výpočet úplné RIC adresy (Adresa + Frame Index)
+            uint8_t wordInBatchPos = i % 16;
+            uint8_t frameIndex = wordInBatchPos / 2;
+            uint32_t addrPart = (clean >> 13) & 0x3FFFF;
+            uint32_t fullRIC = (addrPart << 3) | (frameIndex & 0x07);
+            uint8_t func = (clean >> 11) & 0x03;
+
+            sprintf(buf, "ADRESA: %07lu (Funkce %d)\r\n", (unsigned long)fullRIC, func);
+            sendStringUART1(buf);
+
+            textMsg[0] = '\0';
+            bitBuffer = 0;
+            bitsInBuffer = 0;
+        }
+        else {
+            decode_ascii_part(clean, textMsg);
+        }
+    }
+
+    if (textMsg[0] != '\0') {
+        sendStringUART1("TEXT  : ");
+        sendStringUART1(textMsg);
+        sendStringUART1("\r\n");
     }
 
     sendStringUART1(">>> MSG END <<<\r\nTC1> ");
