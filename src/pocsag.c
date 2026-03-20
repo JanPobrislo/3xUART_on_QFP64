@@ -215,6 +215,9 @@ void decode_ascii_part(uint32_t word, char *outStr) {
     }
 }
 
+//------------------------------------------------------------------------------
+//  Zpracovani prijateho datagramu
+//------------------------------------------------------------------------------
 void POCSAG_Process(void) {
     if (!currentMsg.ready) return;
 
@@ -223,9 +226,9 @@ void POCSAG_Process(void) {
     bitBuffer = 0;
     bitsInBuffer = 0;
 
-    sendStringUART1("\r\n>>> POCSAG MSG START <<<\r\n");
+    sendStringUART1("\r\n--- POCSAG DATAGRAM START ---\r\n");
 
-    // --- 1. ČÁST: Původní výpis surových dat ---
+    //--- Výpis surových dat a kontrola/oprava CDW
     for (uint16_t i = 0; i < currentMsg.total_words; i++) {
         uint32_t raw = currentMsg.data[i];
 
@@ -244,35 +247,61 @@ void POCSAG_Process(void) {
         sendStringUART1(buf);
     }
 
-    // --- 2. ČÁST: Dekódování adresy a textu ---
-    sendStringUART1("\r\n--- INTERPRETACE ---\r\n");
+	//---------------------- Nacte udaje z hlavicky
+    currentMsg.Ttoken= (currentMsg.data[2]>>16)&0x1F;
+    currentMsg.Tbatch= (currentMsg.data[1]>>25)&0x3F;
+    currentMsg.Tnet =  (currentMsg.data[0]>>24)&0x0F;
+    currentMsg.Tadr =  (currentMsg.data[0]>>16)&0x1F;
+    currentMsg.Tdau =  (currentMsg.data[2]>>26)&0x1F;
+    currentMsg.Tpath = (currentMsg.data[0]>>12)&0x0F;
+    currentMsg.Tmaster=(currentMsg.data[1]>>16)&0x1F;
+    currentMsg.Tsystem=0x01==((currentMsg.data[0]>>21)&0x07);
 
-    for (uint16_t i = 0; i < currentMsg.total_words; i++) {
-        uint32_t raw = currentMsg.data[i];
-        if (raw == POCSAG_IDLE_WORD) continue;
+    //--- Vypise hlavicku
+//    sendStringUART1("\r\n--- HEADER ---\r\n");
 
-        bool fixed = false;
-        uint32_t clean = try_fix_word(raw, &fixed);
-        if (calculate_syndrom(clean) != 0 || !check_parity(clean)) continue;
+	if(currentMsg.Tsystem==1) {
+		sendStringUART1("\r\n--- HEADER - SYSTEM TOKEN ---\r\n");
+	}
+	else {
+		sendStringUART1("\r\n--- HEADER - NORMAL TOKEN ---\r\n");
+	}
+	sprintf(buf,"NET=%02u DAU=%02u ADR=%u PATH=%u\r\n",currentMsg.Tnet,currentMsg.Tdau,currentMsg.Tadr,currentMsg.Tpath);
+    sendStringUART1(buf);
+	sprintf(buf,"TOKEN=%02u BATCH=%02u MASTER=%u\r\n",currentMsg.Ttoken,currentMsg.Tbatch,currentMsg.Tmaster);
+    sendStringUART1(buf);
 
-        if ((clean & 0x80000000) == 0) {
-            // Výpočet úplné RIC adresy (Adresa + Frame Index)
-            uint8_t wordInBatchPos = i % 16;
-            uint8_t frameIndex = wordInBatchPos / 2;
-            uint32_t addrPart = (clean >> 13) & 0x3FFFF;
-            uint32_t fullRIC = (addrPart << 3) | (frameIndex & 0x07);
-            uint8_t func = (clean >> 11) & 0x03;
+    //--- Dekódování adresy a textu --- az od ctvrteho codewordu, za hlavickou
+    if(currentMsg.Tsystem==0) {
+		sendStringUART1("\r\n--- MESSAGES ---\r\n");
 
-            sprintf(buf, "ADRESA: %07lu (Funkce %d)\r\n", (unsigned long)fullRIC, func);
-            sendStringUART1(buf);
+		for (uint16_t i = 3; i < currentMsg.total_words; i++) {
+			uint32_t raw = currentMsg.data[i];
+			if (raw == POCSAG_IDLE_WORD) continue;
 
-            textMsg[0] = '\0';
-            bitBuffer = 0;
-            bitsInBuffer = 0;
-        }
-        else {
-            decode_ascii_part(clean, textMsg);
-        }
+			bool fixed = false;
+			uint32_t clean = try_fix_word(raw, &fixed);
+			if (calculate_syndrom(clean) != 0 || !check_parity(clean)) continue;
+
+			if ((clean & 0x80000000) == 0) {
+				// Výpočet úplné RIC adresy (Adresa + Frame Index)
+				uint8_t wordInBatchPos = i % 16;
+				uint8_t frameIndex = wordInBatchPos / 2;
+				uint32_t addrPart = (clean >> 13) & 0x3FFFF;
+				uint32_t fullRIC = (addrPart << 3) | (frameIndex & 0x07);
+				uint8_t func = (clean >> 11) & 0x03;
+
+				sprintf(buf, "ADRESA: %07lu (Funkce %d)\r\n", (unsigned long)fullRIC, func);
+				sendStringUART1(buf);
+
+				textMsg[0] = '\0';
+				bitBuffer = 0;
+				bitsInBuffer = 0;
+			}
+			else {
+				decode_ascii_part(clean, textMsg);
+			}
+		}
     }
 
     if (textMsg[0] != '\0') {
@@ -281,6 +310,6 @@ void POCSAG_Process(void) {
         sendStringUART1("\r\n");
     }
 
-    sendStringUART1(">>> MSG END <<<\r\nTC1> ");
+    sendStringUART1("--- DATAGRAM END ---\r\n\r\n");
     currentMsg.ready = false;
 }

@@ -13,6 +13,15 @@ typedef struct {
     uint32_t data[MAX_BATCHES * WORDS_PER_BATCH];
     uint16_t total_words;
     volatile bool ready;
+    //------------------------------ Hlavicka prijateho POCSAG tokenu.
+	unsigned char Tbatch;	// Pocet batch - udaj uvedeny v hlavicce tokenu (nikoliv prijatych)
+	unsigned char Tnet;		// Cislo site
+	unsigned char Ttoken;	// Cislo tokenu (TokenID = 1-31)
+	unsigned char Tadr;		// Adresat (DAU) - komu je token posilan
+	unsigned char Tdau;		// Odesilatel (DAU) - vysilac ktery vyslal tento token
+	unsigned char Tpath;	// Radiova cesta (0-15)
+	unsigned char Tmaster;	// Master DAU, ktery zahajil vysilani tokenu
+	unsigned char Tsystem;	// =1 pro sytemovy token
 } POCSAG_Message;
 
 extern volatile POCSAG_Message currentMsg;
