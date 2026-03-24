@@ -126,9 +126,11 @@ int main(void)
 
     //----------------- Hlavicky
     sendStringUART0 ("TCI COM1-A (UART0)\r\n");
+    sendStringUSART0("TCI COM3-C (USART0)\r\n");
+
     sendStringUART1 ("TCI COM2-B (UART1) - DEBUG\r\n");
     sendStringUART1 ("HFXO: 50 MHz krystal, DPLL: 72 MHz\r\n");
-    sendStringUSART0("TCI COM3-C (USART0)\r\n");
+    Parameters_Show();
 
     while (1) {
 /*
@@ -159,6 +161,8 @@ int main(void)
     					sendStringUART1(" 1..6 : Toggle LED\r\n");
     					sendStringUART1(" t : start timer1 TX 1200Hz\r\n");
     					sendStringUART1(" T : stop timer1 TX 1200Hz\r\n");
+    					sendStringUART1(" x : Tx datagram\r\n");
+    					sendStringUART1(" X : Toggle Tx bit\r\n");
     					sendStringUART1(" h : Display this help\r\n");
     					sendStringUART1(" --------------------------------\r\n");
 						break;
@@ -187,12 +191,10 @@ int main(void)
     		case 'T' : 	TIMER1_Stop();
     					sendStringUART1("Stop timer1 TX 1200Hz\r\n");
     					break;
-    		case 'x' : 	TIMER1_Stop();
-    					sendStringUART1("TX Preamble 1200Hz\r\n");
+    		case 'x' : 	sendStringUART1("TX Preamble 1200Hz\r\n");
     					POCSAG_Tx_datagram();
     					break;
-    		case 'X' : 	TIMER1_Stop();
-    					sendStringUART1("TX toggle bit\r\n");
+    		case 'X' : 	sendStringUART1("TX toggle bit\r\n");
     					GPIO_PinOutToggle(TX_PORT, TX_PIN);
     					break;
     		default:	break;
