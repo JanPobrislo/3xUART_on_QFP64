@@ -295,13 +295,11 @@ void POCSAG_Process(void) {
     currentMsg.Tsystem=0x01==((currentMsg.data[0]>>21)&0x07);
 
     //--- Vypise hlavicku
-//    sendStringUART1("\r\n--- HEADER ---\r\n");
-
 	if(currentMsg.Tsystem==1) {
-		sendStringUART1("\r\n--- HEADER - SYSTEM TOKEN ---\r\n");
+		sendStringUART1("\r\n--- HEADER: SYSTEM TOKEN ---\r\n");
 	}
 	else {
-		sendStringUART1("\r\n--- HEADER - NORMAL TOKEN ---\r\n");
+		sendStringUART1("\r\n--- HEADER: NORMAL TOKEN ---\r\n");
 	}
 	sprintf(buf,"NET=%02u DAU=%02u ADR=%u PATH=%u\r\n",currentMsg.Tnet,currentMsg.Tdau,currentMsg.Tadr,currentMsg.Tpath);
     sendStringUART1(buf);

@@ -20,6 +20,7 @@
 #include "em_usart.h"
 
 #include "ports.h"
+#include "parameters.h"
 #include "timer0.h"
 #include "timer1.h"
 #include "led.h"
@@ -107,6 +108,8 @@ int main(void)
     initUART1();
     initTIMER0();
     initTIMER1();
+
+    Parameters_Init();
     POCSAG_Init();
 
     for (volatile int i = 0; i < 100000; i++);
