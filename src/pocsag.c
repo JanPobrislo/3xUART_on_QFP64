@@ -7,11 +7,13 @@
 #include "em_gpio.h"
 #include "ports.h"
 #include "led.h"
+#include "timer1.h"
 
 typedef enum {
     STATE_IDLE,         // Čekání na preambuli v šumu
     STATE_SYNC_WAIT,    // Preambule nalezena, čekáme na první Sync Word
-    STATE_RECEIVING     // Pevné časování, příjem datových slov
+    STATE_RECEIVING,    // Pevné časování, příjem datových slov
+	STATE_TRANSMITING   // Během vysílání se musí blokovat příjem.
 } POCSAG_State;
 
 static volatile POCSAG_State state = STATE_IDLE;
@@ -108,8 +110,8 @@ void POCSAG_SampleBit(void) {
     shiftReg = (shiftReg << 1) | bit;
 
     //-- Diagnostika
-    if (bit==1) {GPIO_PinOutSet(PTT_PORT, PTT_PIN);}
-    else {GPIO_PinOutClear(PTT_PORT, PTT_PIN);}
+//    if (bit==1) {GPIO_PinOutSet(PTT_PORT, PTT_PIN);}
+//    else {GPIO_PinOutClear(PTT_PORT, PTT_PIN);}
 
     switch (state) {
         case STATE_IDLE:
@@ -183,6 +185,24 @@ void POCSAG_SampleBit(void) {
 					}
 				}
 				break;
+			case STATE_TRANSMITING:
+				bitCounter--;
+				if (bitCounter == 0) {
+					//-- Konec vysilani
+					GPIO_PinOutSet(PTT_PORT, PTT_PIN);
+/*
+					GPIO_IntEnable(1 << RX_PIN);
+					LED4_Off();
+					state = STATE_IDLE;
+					TIMER1_Stop();
+*/
+					POCSAG_Init();
+				}
+				else {
+					//-- Vysila
+					GPIO_PinOutToggle(TX_PORT, TX_PIN);
+				}
+				break;
     }
 }
 
@@ -213,6 +233,23 @@ void decode_ascii_part(uint32_t word, char *outStr) {
             bitsInBuffer = 0;
         }
     }
+}
+
+//------------------------------------------------------------------------------
+//  Vysilani datagramu
+//------------------------------------------------------------------------------
+void POCSAG_Tx_datagram(void) {
+	// Zastavit a zablokovat Rx
+	TIMER1_Stop();
+    GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - teď už jen pevný čas
+	state = STATE_TRANSMITING;
+
+	// Spusti vysilani
+	bitCounter=5000;
+	GPIO_PinOutClear(PTT_PORT, PTT_PIN);  // zaklicuje
+	TIMER1_Start();
+	LED4_On();
+
 }
 
 //------------------------------------------------------------------------------

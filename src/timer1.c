@@ -1,13 +1,13 @@
 /******************************************************************************
  * @file timer1.c
- * @brief Obsluha TIMER1 – 2400 Hz pro POCSAG vzorkování (2 vzorky / bit)
+ * @brief Obsluha TIMER1 – 1200 Hz pro POCSAG vzorkování
  *
  * @note HFCLK = 72 MHz, PRESC = DIV16, TOP = 1874
  *       72 000 000 / 16 / 1875 = 2400 Hz
  *
- * TIMER1 taktuje POCSAG_SampleBit() 2400× za sekundu.
- * Uvnitø POCSAG_SampleBit() se fáze støídá 0/1; bit se ète pouze ve fázi 1
- * (= støed bitu). Synchronizaci fáze zajišuje POCSAG_EdgeDetected() volaná
+ * TIMER1 taktuje POCSAG_SampleBit() 1200x za sekundu.
+ * Uvnitø POCSAG_SampleBit() se odeète RX
+ * Støed bitu - Synchronizaci fáze zajišuje POCSAG_EdgeDetected() volaná
  * z GPIO_EVEN_IRQHandler pøi hranì signálu na PA0.
  *****************************************************************************/
 #include "timer1.h"
@@ -59,7 +59,7 @@ void TIMER1_Stop(void)
 void TIMER1_IRQHandler(void) {
     TIMER1->IFC = TIMER_IFC_OF;
     POCSAG_SampleBit(); // Tato funkce nyní øeší èasování
-    GPIO_PinOutToggle(TX_PORT, TX_PIN); // Diagnostický výstup
+//    GPIO_PinOutToggle(TX_PORT, TX_PIN);
 //    GPIO_PinOutToggle(PTT_PORT, PTT_PIN);
 
 }

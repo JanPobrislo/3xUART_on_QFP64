@@ -66,6 +66,8 @@ static void initOutputs(void)
     GPIO_PinModeSet(TX_PORT,  TX_PIN,  gpioModePushPull, 0);
     GPIO_PinModeSet(PTT_PORT, PTT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(DBG_PORT, DBG_PIN, gpioModePushPull, 0);
+
+	GPIO_PinOutSet(PTT_PORT, PTT_PIN);
 }
 
 static void delay_ms(uint32_t ms)
@@ -181,6 +183,14 @@ int main(void)
     					break;
     		case 'T' : 	TIMER1_Stop();
     					sendStringUART1("Stop timer1 TX 1200Hz\r\n");
+    					break;
+    		case 'x' : 	TIMER1_Stop();
+    					sendStringUART1("TX Preamble 1200Hz\r\n");
+    					POCSAG_Tx_datagram();
+    					break;
+    		case 'X' : 	TIMER1_Stop();
+    					sendStringUART1("TX toggle bit\r\n");
+    					GPIO_PinOutToggle(TX_PORT, TX_PIN);
     					break;
     		default:	break;
     		}

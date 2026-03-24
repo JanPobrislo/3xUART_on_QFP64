@@ -30,5 +30,6 @@ void POCSAG_Init(void);
 void POCSAG_EdgeDetected(void); // Pro synchronizaci na začátku
 void POCSAG_SampleBit(void);    // Voláno z TIMER1 (1200 Hz)
 void POCSAG_Process(void);      // Výpis v main loop
+void POCSAG_Tx_datagram(void);  // Vysle datagram
 
 #endif
