@@ -1,5 +1,7 @@
 ﻿#include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "pocsag.h"
 #include "inputs.h"
 #include "uart1.h"
@@ -51,6 +53,33 @@ __attribute__((unused)) static uint32_t reverse32(uint32_t x) {
     x = ((x >> 4) & 0x0F0F0F0F) | ((x & 0x0F0F0F0F) << 4);
     x = ((x >> 8) & 0x00FF00FF) | ((x & 0x00FF00FF) << 8);
     return (x >> 16) | (x << 16);
+}
+
+//------------------------------------------------------------------------------
+// Vrací jeden bit z POCSAG_SYNC_WORD.
+//------------------------------------------------------------------------------
+/**
+ * @brief Vrací jeden bit z POCSAG_SYNC_WORD.
+ * @param bit_pos Pozice bitu: 32 (nejvyšší bit) až 1 (nejnižší bit).
+ * @return Hodnota bitu (0 nebo 1). Pokud je parametr mimo rozsah, vrací 0.
+ */
+uint8_t get_sync_bit(uint8_t bit_pos) {
+    // Kontrola rozsahu (povolené hodnoty 1 až 32)
+    if (bit_pos < 1 || bit_pos > 32) {
+        return 0;
+    }
+
+    // Výpočet posunu:
+    // Pro bit_pos = 32 chceme posun o 31 (nejvyšší bit)
+    // Pro bit_pos = 1 chceme posun o 0 (nejnižší bit)
+    uint8_t shift = bit_pos - 1;
+
+    // Izolace bitu pomocí masky a posunu
+    if (POCSAG_SYNC_WORD & (1UL << shift)) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 static uint32_t calculate_syndrom(uint32_t word) {
@@ -122,7 +151,7 @@ void POCSAG_rx_init(void) {
 //------------------------------------------------------------------------------
 // Synchro na hranu signalu - Voláno z GPIO_EVEN_IRQHandler
 //------------------------------------------------------------------------------
-void POCSAG_EdgeDetected(void) {
+void POCSAG_edge_detected(void) {
     if (rx_state != STATE_RECEIVING) {
     	// Zastavit, pokud běžel (kvůli re-synchronizaci v šumu)
 		TIMER1->CMD = TIMER_CMD_STOP;
@@ -130,6 +159,18 @@ void POCSAG_EdgeDetected(void) {
         TIMER1->CNT = TIMER1->TOP / 2;
         TIMER1->CMD = TIMER_CMD_START;
     }
+}
+
+//------------------------------------------------------------------------------
+// Nastavi TX BIT
+//------------------------------------------------------------------------------
+void set_tx_bit(uint8_t bit) {
+	if (bit==1) {
+		GPIO_PinOutSet(TX_PORT, TX_PIN);
+	}
+	else {
+		GPIO_PinOutClear(TX_PORT, TX_PIN);
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -175,20 +216,28 @@ void tx_bit(void) {
 			number_of_tx++;
 			GPIO_PinOutToggle(TX_PORT, TX_PIN);
 			if (number_of_tx == 576) {  //-- preamble ma 576 bitu
-				tx_stop();
+				number_of_tx = 0;
+				tx_state = TX_SYNC;
 			}
         	break;
         case TX_SYNC:
+        	number_of_tx++;
+        	set_tx_bit(get_sync_bit(33-number_of_tx));  //-- Nastavi TX BIT
+			if (number_of_tx == 32) {  //-- 32 bitu sync word
+				number_of_tx = 0;
+				tx_state = TX_CDW;
+			}
         	break;
         case TX_CDW:
+			tx_stop();
         	break;
     }
 }
 
 //------------------------------------------------------------------------------
-// Cte nebo vysila BIT - Voláno z TIMER1_IRQHandler (1200 Hz)
+// Odecte nebo vysila BIT - Voláno z TIMER1_IRQHandler (1200 Hz)
 //------------------------------------------------------------------------------
-void sample_bit(void) {
+void POCSAG_sample_bit(void) {
     static uint8_t wordsInBatch = 0; // Sleduje pozici v rámci aktuálního batche (0-15)
 
 	uint8_t bit = (Input_GetRX() > 0) ? 1 : 0;
@@ -431,6 +480,7 @@ void make_header(POCSAG_token *token) {
 //------------------------------------------------------------------------------
 //  Vysilani datagramu
 //------------------------------------------------------------------------------
+/*
 void POCSAG_Tx_datagram(void) {
 	// Zastavit a zablokovat Rx
 	TIMER1_Stop();
@@ -444,11 +494,12 @@ void POCSAG_Tx_datagram(void) {
 	LED4_On();
 
 }
+*/
 
 //------------------------------------------------------------------------------
 //  Zpracovani prijateho datagramu
 //------------------------------------------------------------------------------
-void POCSAG_Process(void) {
+void POCSAG_process(void) {
     if (!rx_token.ready) return;
 
     char buf[160];

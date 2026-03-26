@@ -84,7 +84,7 @@ void GPIO_EVEN_IRQHandler(void) {
     uint32_t flags = GPIO_IntGet();
     GPIO_IntClear(flags);
     if (flags & (1 << RX_PIN)) {
-        POCSAG_EdgeDetected();
+        POCSAG_edge_detected();
     }
 }
 
@@ -137,7 +137,7 @@ int main(void)
     	//------------------------------------------------------------------------------
     	//  Prijem POCSAG
     	//------------------------------------------------------------------------------
-    	POCSAG_Process(); // Zpracuje a vypíše datagram, pokud je připraven
+    	POCSAG_process(); // Zpracuje a vypíše datagram, pokud je připraven
 
     	//------------------------------------------------------------------------------
     	//  Prikaz z COM-B (UART1)
@@ -151,11 +151,10 @@ int main(void)
     					sendStringUART1(" TCI commands:\r\n");
     					sendStringUART1(" --------------------------------\r\n");
     					sendStringUART1(" 1..6 : Toggle LED\r\n");
-    					sendStringUART1(" t : start timer1 TX 1200Hz\r\n");
-    					sendStringUART1(" T : stop timer1 TX 1200Hz\r\n");
-    					sendStringUART1(" x : Tx datagram\r\n");
-    					sendStringUART1(" X : Toggle Tx bit\r\n");
-    					sendStringUART1(" h : Display this help\r\n");
+    					sendStringUART1(" t : start TX TOKEN\r\n");
+    					sendStringUART1(" T : stop timer1 1200Hz\r\n");
+    					sendStringUART1(" x : toggle Tx bit\r\n");
+    					sendStringUART1(" h : display this help\r\n");
     					sendStringUART1(" --------------------------------\r\n");
 						break;
     		case '1' : 	LED1_Toggle();
@@ -183,10 +182,7 @@ int main(void)
     		case 'T' : 	TIMER1_Stop();
     					sendStringUART1("Stop timer1 TX 1200Hz\r\n");
     					break;
-    		case 'x' : 	sendStringUART1("TX Preamble 1200Hz\r\n");
-    					POCSAG_Tx_datagram();
-    					break;
-    		case 'X' : 	sendStringUART1("TX toggle bit\r\n");
+    		case 'x' : 	sendStringUART1("TX toggle bit\r\n");
     					GPIO_PinOutToggle(TX_PORT, TX_PIN);
     					break;
     		default:	break;

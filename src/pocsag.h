@@ -6,7 +6,7 @@
 
 #define MAX_BATCHES      10
 #define WORDS_PER_BATCH  16
-#define POCSAG_SYNC_WORD 0x7CD215D8
+#define POCSAG_SYNC_WORD 0x7CD215D8  // FS t.j. synchronizacni slovo
 #define POCSAG_IDLE_WORD 0x7A89C197
 
 typedef struct {
@@ -28,10 +28,10 @@ typedef struct {
 extern volatile POCSAG_token rx_token;
 
 void POCSAG_rx_init(void);
-void POCSAG_EdgeDetected(void); // Pro synchronizaci na začátku
-void sample_bit(void);    // Voláno z TIMER1 (1200 Hz)
-void POCSAG_Process(void);      // Výpis v main loop
-void POCSAG_Tx_datagram(void);  // Vysle datagram
+void POCSAG_edge_detected(void); // volano interuptem GPIO_EVEN_IRQHandler()
+void POCSAG_sample_bit(void);    // volano z TIMER1 (1200 Hz)
+void POCSAG_process(void);       // volano v main loop
+//void POCSAG_Tx_datagram(void);
 void tx_start(void);
 
 #endif
