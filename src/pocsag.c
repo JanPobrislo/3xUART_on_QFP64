@@ -105,17 +105,18 @@ static uint32_t try_fix_word(uint32_t word, bool *fixed) {
 //------------------------------------------------------------------------------
 // Init prijmu
 //------------------------------------------------------------------------------
-void POCSAG_Init(void) {
+void POCSAG_rx_init(void) {
     rx_state = STATE_RX_IDLE;
     rx_token.ready = false;
     rx_token.total_words = 0;
 	tx_state = STATE_TX_IDLE;
+	shiftReg = 0;
 
     TIMER1->CMD = TIMER_CMD_STOP;
     // Povolení přerušení od hran PA0
     GPIO_ExtIntConfig(RX_PORT, RX_PIN, RX_PIN, true, true, true);
 	GPIO_IntEnable(1 << RX_PIN);
-	sendStringUART1("\r\nPOCSAG_Init()\r\n");
+//	sendStringUART1("\r\nPOCSAG_Init()\r\n");
 }
 
 //------------------------------------------------------------------------------
@@ -158,7 +159,8 @@ void tx_stop(void) {
 	GPIO_PinOutSet(PTT_PORT, PTT_PIN);  	// odklicuje
 	LED3_Off();
 	LED4_Off();
-	POCSAG_Init();  // inicializuje prijem
+	POCSAG_rx_init();  // inicializuje prijem
+	rx_state = STATE_RX_IDLE;
 }
 
 //------------------------------------------------------------------------------
@@ -192,9 +194,7 @@ void sample_bit(void) {
 	uint8_t bit = (Input_GetRX() > 0) ? 1 : 0;
     shiftReg = (shiftReg << 1) | bit;
 
-    //-- Diagnostika
-//    if (bit==1) {GPIO_PinOutSet(PTT_PORT, PTT_PIN);}
-//    else {GPIO_PinOutClear(PTT_PORT, PTT_PIN);}
+    //LED2_Toggle();
 
     switch (rx_state) {
         case STATE_RX_IDLE:
@@ -207,6 +207,7 @@ void sample_bit(void) {
             break;
 
         case STATE_SYNC_WAIT:
+//            LED4_Toggle();
             if (shiftReg == POCSAG_SYNC_WORD) {
                 rx_state = STATE_RECEIVING;
                 bitCounter = 0;
@@ -573,7 +574,7 @@ void POCSAG_Process(void) {
 
 //-------------------------------------------------------------------------------------------------
     	rx_token = tx_token;
-		sendStringUART1("\r\n--- TOKEN for TX ---\r\n");
+		sendStringUART1("\r\n--- TX TOKEN ---\r\n");
 	    //--- Výpis surových dat a kontrola/oprava CDW
 	    for (uint16_t i = 0; i < rx_token.total_words; i++) {
 	        uint32_t raw = rx_token.data[i];
@@ -592,12 +593,12 @@ void POCSAG_Process(void) {
 	        	rx_token.rx_ok = false;
 	        }
 
-	        sprintf(buf, "W[%02d]: %08X %s %s\r\n",
+	        sprintf(buf, "TX[%02d]: %08X %s %s\r\n",
 	                i+1, (unsigned int)raw, valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
 	        sendStringUART1(buf);
 	    }
 
-	    sprintf(buf, "TX TOKEN: %s\r\n", rx_token.rx_ok ? "ALL OK" : "ERROR");
+	    sprintf(buf, "BCH+PARITY: %s\r\n", rx_token.rx_ok ? "ALL OK" : "ERROR");
 	    sendStringUART1(buf);
 
 		//---------------------- Nacte udaje z hlavicky
@@ -612,10 +613,10 @@ void POCSAG_Process(void) {
 
 	    //--- Vypise hlavicku
 		if(rx_token.system_token==1) {
-			sendStringUART1(" SYSTEM\r\n");
+			sendStringUART1("SYSTEM TOKEN\r\n");
 		}
 		else {
-			sendStringUART1(" NORMAL\r\n");
+			sendStringUART1("NORMAL TOKEN\r\n");
 		}
 		sprintf(buf,"NET=%02u DAU=%02u ADR=%u PATH=%u\r\n",rx_token.net,rx_token.dau,rx_token.adr,rx_token.path);
 	    sendStringUART1(buf);

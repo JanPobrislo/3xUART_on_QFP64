@@ -27,7 +27,7 @@ typedef struct {
 
 extern volatile POCSAG_token rx_token;
 
-void POCSAG_Init(void);
+void POCSAG_rx_init(void);
 void POCSAG_EdgeDetected(void); // Pro synchronizaci na začátku
 void sample_bit(void);    // Voláno z TIMER1 (1200 Hz)
 void POCSAG_Process(void);      // Výpis v main loop

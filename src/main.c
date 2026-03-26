@@ -118,7 +118,7 @@ int main(void)
     LED_TX_On(); delay_ms(300); LED_TX_Off();
 
     Parameters_Init();
-    POCSAG_Init();
+    POCSAG_rx_init();
 
     for (volatile int i = 0; i < 100000; i++);
 
