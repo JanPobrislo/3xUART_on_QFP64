@@ -58,7 +58,7 @@ void TIMER1_Stop(void)
 
 void TIMER1_IRQHandler(void) {
     TIMER1->IFC = TIMER_IFC_OF;
-    POCSAG_SampleBit(); // Tato funkce nyní øeší èasování
+    sample_bit(); // Tato funkce nyní øeší èasování
 //    GPIO_PinOutToggle(TX_PORT, TX_PIN);
 //    GPIO_PinOutToggle(PTT_PORT, PTT_PIN);
 

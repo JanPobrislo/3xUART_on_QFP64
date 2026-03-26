@@ -29,8 +29,9 @@ extern volatile POCSAG_token rx_token;
 
 void POCSAG_Init(void);
 void POCSAG_EdgeDetected(void); // Pro synchronizaci na začátku
-void POCSAG_SampleBit(void);    // Voláno z TIMER1 (1200 Hz)
+void sample_bit(void);    // Voláno z TIMER1 (1200 Hz)
 void POCSAG_Process(void);      // Výpis v main loop
 void POCSAG_Tx_datagram(void);  // Vysle datagram
+void tx_start(void);
 
 #endif

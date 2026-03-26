@@ -185,8 +185,8 @@ int main(void)
     		case '6' : 	LED_TX_Toggle();
     					sendStringUART1("LED TX");
     					break;
-    		case 't' : 	TIMER1_Start();
-    					sendStringUART1("Start timer1 TX 1200Hz\r\n");
+    		case 't' : 	tx_start();
+    					sendStringUART1("Tx datagram\r\n");
     					break;
     		case 'T' : 	TIMER1_Stop();
     					sendStringUART1("Stop timer1 TX 1200Hz\r\n");

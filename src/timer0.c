@@ -53,7 +53,7 @@ void TIMER0_IRQHandler(void)
     TIMER0->IFC = TIMER_IFC_OF;
     if (++timer0_count >= TIMER0_DIVIDER) {
         timer0_count = 0;
-        LED2_Toggle();   // Toggle pøesnì 1x za sekundu
+//        LED2_Toggle();   // Toggle pøesnì 1x za sekundu
         IsSecond = 1;
         SecondCounter++;
     }
