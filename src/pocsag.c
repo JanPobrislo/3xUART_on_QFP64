@@ -19,7 +19,7 @@ typedef enum {
 static volatile POCSAG_State state = STATE_IDLE;
 static volatile uint32_t shiftReg = 0;
 static volatile uint16_t bitCounter = 0;
-volatile POCSAG_Message currentMsg;
+volatile POCSAG_token rx_token;
 static uint32_t bitBuffer = 0;
 static uint8_t bitsInBuffer = 0;
 
@@ -82,16 +82,22 @@ static uint32_t try_fix_word(uint32_t word, bool *fixed) {
 
     return word; // Neopravitelné (více chyb)
 }
+
+//------------------------------------------------------------------------------
+// Init prijmu
+//------------------------------------------------------------------------------
 void POCSAG_Init(void) {
     state = STATE_IDLE;
-    currentMsg.ready = false;
-    currentMsg.total_words = 0;
+    rx_token.ready = false;
+    rx_token.total_words = 0;
     TIMER1->CMD = TIMER_CMD_STOP;
     // Povolení přerušení od hran PA0
     GPIO_ExtIntConfig(RX_PORT, RX_PIN, RX_PIN, true, true, true);
 }
 
-// Voláno z GPIO_EVEN_IRQHandler
+//------------------------------------------------------------------------------
+// Synchro na hranu signalu - Voláno z GPIO_EVEN_IRQHandler
+//------------------------------------------------------------------------------
 void POCSAG_EdgeDetected(void) {
     if (state != STATE_RECEIVING) {
     	// Zastavit, pokud běžel (kvůli re-synchronizaci v šumu)
@@ -102,7 +108,9 @@ void POCSAG_EdgeDetected(void) {
     }
 }
 
-// Voláno z TIMER1_IRQHandler (1200 Hz)
+//------------------------------------------------------------------------------
+// Nacte BIT - Voláno z TIMER1_IRQHandler (1200 Hz)
+//------------------------------------------------------------------------------
 void POCSAG_SampleBit(void) {
     static uint8_t wordsInBatch = 0; // Sleduje pozici v rámci aktuálního batche (0-15)
 
@@ -128,7 +136,7 @@ void POCSAG_SampleBit(void) {
                 state = STATE_RECEIVING;
                 bitCounter = 0;
                 wordsInBatch = 1; // Dalších 16 slov jsou data
-                currentMsg.total_words = 0;
+                rx_token.total_words = 0;
                 GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - teď už jen pevný čas
             	LED1_On();
 //                GPIO_PinOutSet(DBG_PORT, DBG_PIN);
@@ -153,7 +161,7 @@ void POCSAG_SampleBit(void) {
 							// (Teoreticky zde wordsInBatch nastavíme na 1 po inkrementaci níže)
 						} else {
 							// KONEC DATAGRAMU: Na místě, kde měl být SYNC, je něco jiného
-							currentMsg.ready = true;
+							rx_token.ready = true;
 							state = STATE_IDLE;
 							TIMER1->CMD = TIMER_CMD_STOP;
 							GPIO_IntEnable(1 << RX_PIN);
@@ -165,8 +173,8 @@ void POCSAG_SampleBit(void) {
 
 					// SCÉNÁŘ B: Čteme datové slovo (1-16)
 					else {
-						if (currentMsg.total_words < (MAX_BATCHES * WORDS_PER_BATCH)) {
-							currentMsg.data[currentMsg.total_words++] = shiftReg;
+						if (rx_token.total_words < (MAX_BATCHES * WORDS_PER_BATCH)) {
+							rx_token.data[rx_token.total_words++] = shiftReg;
 						}
 					}
 
@@ -177,8 +185,8 @@ void POCSAG_SampleBit(void) {
 					}
 
 					// Ochrana proti přetečení celkového pole
-					if (currentMsg.total_words >= (MAX_BATCHES * WORDS_PER_BATCH)) {
-						currentMsg.ready = true;
+					if (rx_token.total_words >= (MAX_BATCHES * WORDS_PER_BATCH)) {
+						rx_token.ready = true;
 						state = STATE_IDLE;
 						TIMER1->CMD = TIMER_CMD_STOP;
 						GPIO_IntEnable(1 << RX_PIN);
@@ -256,7 +264,7 @@ void POCSAG_Tx_datagram(void) {
 //  Zpracovani prijateho datagramu
 //------------------------------------------------------------------------------
 void POCSAG_Process(void) {
-    if (!currentMsg.ready) return;
+    if (!rx_token.ready) return;
 
     char buf[160];
     char textMsg[128] = {0};
@@ -265,12 +273,14 @@ void POCSAG_Process(void) {
 
     sendStringUART1("\r\n--- POCSAG DATAGRAM START ---\r\n");
 
+    rx_token.rx_ok = true; // Neopravena chyba to schodi
+
     //--- Výpis surových dat a kontrola/oprava CDW
-    for (uint16_t i = 0; i < currentMsg.total_words; i++) {
-        uint32_t raw = currentMsg.data[i];
+    for (uint16_t i = 0; i < rx_token.total_words; i++) {
+        uint32_t raw = rx_token.data[i];
 
         if (raw == POCSAG_IDLE_WORD) {
-            sprintf(buf, "W[%03d]: IDLE\r\n", i);
+            sprintf(buf, "W[%02d]: IDLE\r\n", i+1);
             sendStringUART1(buf);
             continue;
         }
@@ -279,62 +289,72 @@ void POCSAG_Process(void) {
         uint32_t clean = try_fix_word(raw, &fixed);
         bool valid = (calculate_syndrom(clean) == 0 && check_parity(clean));
 
-        sprintf(buf, "W[%03d]: %08X %s %s\r\n",
-                i, (unsigned int)raw, valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
+        if (valid==false && fixed==false) {
+        	rx_token.rx_ok = false;
+        }
+
+        sprintf(buf, "W[%02d]: %08X %s %s\r\n",
+                i+1, (unsigned int)raw, valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
         sendStringUART1(buf);
     }
 
+//    sendStringUART1("-----------------------------\r\n");
+    sprintf(buf, "--- TOKEN: %s ---\r\n", rx_token.rx_ok ? "ALL OK" : "ERROR");
+    sendStringUART1(buf);
+
 	//---------------------- Nacte udaje z hlavicky
-    currentMsg.Ttoken= (currentMsg.data[2]>>16)&0x1F;
-    currentMsg.Tbatch= (currentMsg.data[1]>>25)&0x3F;
-    currentMsg.Tnet =  (currentMsg.data[0]>>24)&0x0F;
-    currentMsg.Tadr =  (currentMsg.data[0]>>16)&0x1F;
-    currentMsg.Tdau =  (currentMsg.data[2]>>26)&0x1F;
-    currentMsg.Tpath = (currentMsg.data[0]>>12)&0x0F;
-    currentMsg.Tmaster=(currentMsg.data[1]>>16)&0x1F;
-    currentMsg.Tsystem=0x01==((currentMsg.data[0]>>21)&0x07);
+    rx_token.token_id= (rx_token.data[2]>>16)&0x1F;
+    rx_token.batch= (rx_token.data[1]>>25)&0x3F;
+    rx_token.net =  (rx_token.data[0]>>24)&0x0F;
+    rx_token.adr =  (rx_token.data[0]>>16)&0x1F;
+    rx_token.dau =  (rx_token.data[2]>>26)&0x1F;
+    rx_token.path = (rx_token.data[0]>>12)&0x0F;
+    rx_token.master=(rx_token.data[1]>>16)&0x1F;
+    rx_token.system_token=0x01==((rx_token.data[0]>>21)&0x07);
 
     //--- Vypise hlavicku
-	if(currentMsg.Tsystem==1) {
+	if(rx_token.system_token==1) {
 		sendStringUART1("\r\n--- HEADER: SYSTEM TOKEN ---\r\n");
 	}
 	else {
 		sendStringUART1("\r\n--- HEADER: NORMAL TOKEN ---\r\n");
 	}
-	sprintf(buf,"NET=%02u DAU=%02u ADR=%u PATH=%u\r\n",currentMsg.Tnet,currentMsg.Tdau,currentMsg.Tadr,currentMsg.Tpath);
+	sprintf(buf,"NET=%02u DAU=%02u ADR=%u PATH=%u\r\n",rx_token.net,rx_token.dau,rx_token.adr,rx_token.path);
     sendStringUART1(buf);
-	sprintf(buf,"TOKEN=%02u BATCH=%02u MASTER=%u\r\n",currentMsg.Ttoken,currentMsg.Tbatch,currentMsg.Tmaster);
+	sprintf(buf,"TOKEN=%02u BATCH=%02u MASTER=%u\r\n",rx_token.token_id,rx_token.batch,rx_token.master);
     sendStringUART1(buf);
 
     //--- Dekódování adresy a textu --- az od ctvrteho codewordu, za hlavickou
-    if(currentMsg.Tsystem==0) {
-		sendStringUART1("\r\n--- MESSAGES ---\r\n");
+    if (rx_token.rx_ok) {
+		if(rx_token.system_token==0) {
+			sendStringUART1("\r\n--- MESSAGES ---\r\n");
 
-		for (uint16_t i = 3; i < currentMsg.total_words; i++) {
-			uint32_t raw = currentMsg.data[i];
-			if (raw == POCSAG_IDLE_WORD) continue;
+			for (uint16_t i = 3; i < rx_token.total_words; i++) {
+				uint32_t raw = rx_token.data[i];
+				if (raw == POCSAG_IDLE_WORD) continue;
 
-			bool fixed = false;
-			uint32_t clean = try_fix_word(raw, &fixed);
-			if (calculate_syndrom(clean) != 0 || !check_parity(clean)) continue;
+				bool fixed = false;
+				uint32_t clean = try_fix_word(raw, &fixed);
+				if (calculate_syndrom(clean) != 0 || !check_parity(clean)) continue;
 
-			if ((clean & 0x80000000) == 0) {
-				// Výpočet úplné RIC adresy (Adresa + Frame Index)
-				uint8_t wordInBatchPos = i % 16;
-				uint8_t frameIndex = wordInBatchPos / 2;
-				uint32_t addrPart = (clean >> 13) & 0x3FFFF;
-				uint32_t fullRIC = (addrPart << 3) | (frameIndex & 0x07);
-				uint8_t func = (clean >> 11) & 0x03;
+				if ((clean & 0x80000000) == 0) {
+					// Výpočet úplné RIC adresy (Adresa + Frame Index)
+					uint8_t wordInBatchPos = i % 16;
+					uint8_t frameIndex = wordInBatchPos / 2;
+					uint32_t addrPart = (clean >> 13) & 0x3FFFF;
+					uint32_t fullRIC = (addrPart << 3) | (frameIndex & 0x07);
+					uint8_t func = (clean >> 11) & 0x03;
 
-				sprintf(buf, "ADRESA: %07lu (Funkce %d)\r\n", (unsigned long)fullRIC, func);
-				sendStringUART1(buf);
+					sprintf(buf, "ADRESA: %07lu\r\nFUNKCE: %d\r\n", (unsigned long)fullRIC, func);
+					sendStringUART1(buf);
 
-				textMsg[0] = '\0';
-				bitBuffer = 0;
-				bitsInBuffer = 0;
-			}
-			else {
-				decode_ascii_part(clean, textMsg);
+					textMsg[0] = '\0';
+					bitBuffer = 0;
+					bitsInBuffer = 0;
+				}
+				else {
+					decode_ascii_part(clean, textMsg);
+				}
 			}
 		}
     }
@@ -345,6 +365,6 @@ void POCSAG_Process(void) {
         sendStringUART1("\r\n");
     }
 
-    sendStringUART1("--- DATAGRAM END ---\r\n\r\n");
-    currentMsg.ready = false;
+    sendStringUART1("--- END ---\r\n\r\n");
+    rx_token.ready = false;
 }

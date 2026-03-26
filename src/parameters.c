@@ -72,7 +72,7 @@ void Parameters_Show(void) {
 			sendStringUART1(txt);
 		}
 		else {
-			sendStringUART1(" --");
+			sendStringUART1(" x ");
 		}
 	}
 	sendStringUART1("\r\n-------------------------------------------------");
