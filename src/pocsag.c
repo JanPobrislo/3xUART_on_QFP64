@@ -109,9 +109,13 @@ void POCSAG_Init(void) {
     rx_state = STATE_RX_IDLE;
     rx_token.ready = false;
     rx_token.total_words = 0;
+	tx_state = STATE_TX_IDLE;
+
     TIMER1->CMD = TIMER_CMD_STOP;
     // Povolení přerušení od hran PA0
     GPIO_ExtIntConfig(RX_PORT, RX_PIN, RX_PIN, true, true, true);
+	GPIO_IntEnable(1 << RX_PIN);
+	sendStringUART1("\r\nPOCSAG_Init()\r\n");
 }
 
 //------------------------------------------------------------------------------
