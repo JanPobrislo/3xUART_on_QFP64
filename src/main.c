@@ -109,11 +109,6 @@ int main(void)
     initTIMER0();
     initTIMER1();
 
-    Parameters_Init();
-    POCSAG_Init();
-
-    for (volatile int i = 0; i < 100000; i++);
-
     //----------------- Blikačka
     LED1_On(); delay_ms(300); LED1_Off();
     LED2_On(); delay_ms(300); LED2_Off();
@@ -121,6 +116,11 @@ int main(void)
     LED4_On(); delay_ms(300); LED4_Off();
     LED_RX_On(); delay_ms(300); LED_RX_Off();
     LED_TX_On(); delay_ms(300); LED_TX_Off();
+
+    Parameters_Init();
+    POCSAG_Init();
+
+    for (volatile int i = 0; i < 100000; i++);
 
     GPIO_PinOutClear(DBG_PORT, DBG_PIN);
 
@@ -133,14 +133,6 @@ int main(void)
     Parameters_Show();
 
     while (1) {
-/*
-    	LED1_On();
-        GPIO_PinOutSet(PTT_PORT, PTT_PIN);
-        delay_ms(250);
-        LED1_Off();
-        GPIO_PinOutClear(PTT_PORT, PTT_PIN);
-        delay_ms(250);
-*/
 
     	//------------------------------------------------------------------------------
     	//  Prijem POCSAG

@@ -155,16 +155,16 @@ void tx_start(void) {
 //------------------------------------------------------------------------------
 void tx_stop(void) {
 	tx_state = STATE_TX_IDLE;
-	GPIO_PinOutClear(PTT_PORT, PTT_PIN);  	// odklicuje
-	POCSAG_Init();  // inicializuje prijem
+	GPIO_PinOutSet(PTT_PORT, PTT_PIN);  	// odklicuje
+	LED3_Off();
 	LED4_Off();
+	POCSAG_Init();  // inicializuje prijem
 }
 
 //------------------------------------------------------------------------------
 // Vysila BIT - Voláno z sample_bit() spoustenym z TIMER1_IRQHandler (1200 Hz)
 //------------------------------------------------------------------------------
 void tx_bit(void) {
-	LED3_On();
     switch (tx_state) {
         case STATE_TX_IDLE:
         	break;
@@ -188,7 +188,6 @@ void tx_bit(void) {
 //------------------------------------------------------------------------------
 void sample_bit(void) {
     static uint8_t wordsInBatch = 0; // Sleduje pozici v rámci aktuálního batche (0-15)
-    LED1_Toggle();
 
 	uint8_t bit = (Input_GetRX() > 0) ? 1 : 0;
     shiftReg = (shiftReg << 1) | bit;
@@ -199,11 +198,11 @@ void sample_bit(void) {
 
     switch (rx_state) {
         case STATE_RX_IDLE:
+            LED1_Toggle();
 			// Hledáme střídavou sekvenci (01010101...) v posledních 16 bitech
 			// 0xAAAA je 1010101010101010, 0x5555 je 0101010101010101
 			if ((uint16_t)(shiftReg & 0xFFFF) == 0xAAAA || (uint16_t)(shiftReg & 0xFFFF) == 0x5555) {
 				rx_state = STATE_SYNC_WAIT;
-//            	LED1_On();
             }
             break;
 
@@ -225,8 +224,7 @@ void sample_bit(void) {
 					bitCounter = 0;
 
 					// Právě jsme dočetli 32. bit. Obsah je v shiftReg.
-	            	LED3_On();
-	                GPIO_PinOutSet(DBG_PORT, DBG_PIN);
+//	                GPIO_PinOutSet(DBG_PORT, DBG_PIN);
 
 
 					// SCÉNÁŘ A: Čekáme na SYNC slovo (každých 17. slovo v proudu dat)
@@ -241,8 +239,6 @@ void sample_bit(void) {
 							rx_state = STATE_RX_IDLE;
 							TIMER1->CMD = TIMER_CMD_STOP;
 							GPIO_IntEnable(1 << RX_PIN);
-							LED3_Off();
-			            	LED1_On();
 							return;
 						}
 					}
@@ -559,6 +555,7 @@ void POCSAG_Process(void) {
     //-------------- Kontrola a vysilani
     if (rx_token.rx_ok) {  //-- jen kompletne prijate tokeny
 
+    	LED3_On();
     	tx_token = rx_token;
     	tx_token.net = 15;
 		tx_token.adr = 2;
@@ -582,7 +579,7 @@ void POCSAG_Process(void) {
 	        uint32_t raw = rx_token.data[i];
 
 	        if (raw == POCSAG_IDLE_WORD) {
-	            sprintf(buf, "W[%02d]: IDLE\r\n", i+1);
+	            sprintf(buf, "TX[%02d]: IDLE\r\n", i+1);
 	            sendStringUART1(buf);
 	            continue;
 	        }
@@ -600,7 +597,7 @@ void POCSAG_Process(void) {
 	        sendStringUART1(buf);
 	    }
 
-	    sprintf(buf, "--- TX TOKEN: %s ---\r\n", rx_token.rx_ok ? "ALL OK" : "ERROR");
+	    sprintf(buf, "TX TOKEN: %s\r\n", rx_token.rx_ok ? "ALL OK" : "ERROR");
 	    sendStringUART1(buf);
 
 		//---------------------- Nacte udaje z hlavicky
@@ -615,16 +612,16 @@ void POCSAG_Process(void) {
 
 	    //--- Vypise hlavicku
 		if(rx_token.system_token==1) {
-			sendStringUART1("\r\n--- TX HEADER: SYSTEM TOKEN ---\r\n");
+			sendStringUART1(" SYSTEM\r\n");
 		}
 		else {
-			sendStringUART1("\r\n--- TX HEADER: NORMAL TOKEN ---\r\n");
+			sendStringUART1(" NORMAL\r\n");
 		}
 		sprintf(buf,"NET=%02u DAU=%02u ADR=%u PATH=%u\r\n",rx_token.net,rx_token.dau,rx_token.adr,rx_token.path);
 	    sendStringUART1(buf);
 		sprintf(buf,"TOKEN=%02u BATCH=%02u MASTER=%u\r\n",rx_token.token_id,rx_token.batch,rx_token.master);
 	    sendStringUART1(buf);
-		sendStringUART1("\r\n--- END ---\r\n");
+		sendStringUART1("--- TX END ---\r\n");
 //-------------------------------------------------------------------------------------------------
 		//-- Vysila
 		tx_start();
