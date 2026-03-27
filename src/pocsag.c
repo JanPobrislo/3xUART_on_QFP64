@@ -196,7 +196,7 @@ void tx_start(void) {
 //	bitCounter=5000;
 	tx_state = TX_PREAMBLE;
 	number_of_tx = 0;
-	GPIO_PinOutSet(TX_PORT, TX_PIN);    	// preamble zacina 1
+	GPIO_PinOutClear(TX_PORT, TX_PIN);    	// nulujeme aby preamble zacal 1
 	GPIO_PinOutClear(PTT_PORT, PTT_PIN);  	// zaklicuje
 	TIMER1_Start();
 	LED4_On();
