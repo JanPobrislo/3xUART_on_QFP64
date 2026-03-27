@@ -32,7 +32,8 @@ typedef enum {
     TX_CDW,  		// Vysila codeword - datove slovo
 } POCSAG_Tx_State;
 static POCSAG_Tx_State tx_state = STATE_TX_IDLE;
-static volatile uint16_t number_of_tx = 0; // Pocet vyslanych bitu
+static volatile uint16_t number_of_tx = 0;    // Pocet vyslanych bitu
+static volatile uint16_t number_of_words = 0; // Pocet vyslanych slov CDW
 
 typedef enum {
     STATE_ROUTE_IDLE,  // Nic nedela, ceka az bude vysilat
@@ -56,14 +57,9 @@ __attribute__((unused)) static uint32_t reverse32(uint32_t x) {
 }
 
 //------------------------------------------------------------------------------
-// Vrací jeden bit z POCSAG_SYNC_WORD.
+// Vrací jeden bit z 32bitov0ho slova. 1=nejnizsi bit .. 32=nejvyzsi bit.
 //------------------------------------------------------------------------------
-/**
- * @brief Vrací jeden bit z POCSAG_SYNC_WORD.
- * @param bit_pos Pozice bitu: 32 (nejvyšší bit) až 1 (nejnižší bit).
- * @return Hodnota bitu (0 nebo 1). Pokud je parametr mimo rozsah, vrací 0.
- */
-uint8_t get_sync_bit(uint8_t bit_pos) {
+uint8_t get_bit(uint32_t word, uint8_t bit_pos) {
     // Kontrola rozsahu (povolené hodnoty 1 až 32)
     if (bit_pos < 1 || bit_pos > 32) {
         return 0;
@@ -75,7 +71,7 @@ uint8_t get_sync_bit(uint8_t bit_pos) {
     uint8_t shift = bit_pos - 1;
 
     // Izolace bitu pomocí masky a posunu
-    if (POCSAG_SYNC_WORD & (1UL << shift)) {
+    if (word & (1UL << shift)) {
         return 1;
     } else {
         return 0;
@@ -145,7 +141,19 @@ void POCSAG_rx_init(void) {
     // Povolení přerušení od hran PA0
     GPIO_ExtIntConfig(RX_PORT, RX_PIN, RX_PIN, true, true, true);
 	GPIO_IntEnable(1 << RX_PIN);
-//	sendStringUART1("\r\nPOCSAG_Init()\r\n");
+/*
+	sendStringUART1("\r\nPOCSAG_Init()\r\nSYNC WORD:<");
+	unsigned char n;
+	for(n=1; n<33; n++) {
+		if(get_bit(POCSAG_SYNC_WORD,33-n)) {
+			sendStringUART1("1");
+		}
+		else {
+			sendStringUART1("0");
+		}
+	}
+	sendStringUART1(">\r\n");
+*/
 }
 
 //------------------------------------------------------------------------------
@@ -167,9 +175,11 @@ void POCSAG_edge_detected(void) {
 void set_tx_bit(uint8_t bit) {
 	if (bit==1) {
 		GPIO_PinOutSet(TX_PORT, TX_PIN);
+		sendStringUART1("1");
 	}
 	else {
 		GPIO_PinOutClear(TX_PORT, TX_PIN);
+		sendStringUART1("0");
 	}
 }
 
@@ -217,19 +227,39 @@ void tx_bit(void) {
 			GPIO_PinOutToggle(TX_PORT, TX_PIN);
 			if (number_of_tx == 576) {  //-- preamble ma 576 bitu
 				number_of_tx = 0;
+				number_of_words = 0;
 				tx_state = TX_SYNC;
+				sendStringUART1("\n");
 			}
         	break;
         case TX_SYNC:
         	number_of_tx++;
-        	set_tx_bit(get_sync_bit(33-number_of_tx));  //-- Nastavi TX BIT
+        	set_tx_bit(get_bit(POCSAG_SYNC_WORD, 33-number_of_tx));  //-- Nastavi TX BIT
 			if (number_of_tx == 32) {  //-- 32 bitu sync word
 				number_of_tx = 0;
 				tx_state = TX_CDW;
+				sendStringUART1("\n");
 			}
         	break;
         case TX_CDW:
-			tx_stop();
+        	number_of_tx++;
+        	set_tx_bit(get_bit(tx_token.data[number_of_words], 33-number_of_tx));  //-- Nastavi TX BIT
+			if (number_of_tx == 32) {  //-- 32 bitu = vyslano cele slovo
+				number_of_tx = 0;
+				number_of_words++;
+				sendStringUART1("\n");
+				if(number_of_words >= tx_token.total_words) {  //-- vyslan cely token
+					tx_stop();
+					sendStringUART1("\nEND");
+				}
+				else {
+					if(number_of_words%16 == 0) {  //-- konec batch nasleduje SYNC WORD
+						number_of_tx = 0;
+						tx_state = TX_SYNC;
+						sendStringUART1("\n");
+					}
+				}
+			}
         	break;
     }
 }
@@ -537,6 +567,8 @@ void POCSAG_process(void) {
 //    sendStringUART1("-----------------------------\r\n");
     sprintf(buf, "--- TOKEN: %s ---\r\n", rx_token.rx_ok ? "ALL OK" : "ERROR");
     sendStringUART1(buf);
+    sprintf(buf, "TOTAL WORDS: %u\r\n", rx_token.total_words);
+    sendStringUART1(buf);
 
 	//---------------------- Nacte udaje z hlavicky
     rx_token.token_id= (rx_token.data[2]>>16)&0x1F;
@@ -616,16 +648,17 @@ void POCSAG_process(void) {
 //		tx_token.system_token = 1;
 //		tx_token.master = 7;
 //		tx_token.token_id = 31;
-		tx_token.batch = 1;
-		tx_token.total_words = 16; // jeden BATCH
+//		tx_token.batch = 1;
+//		tx_token.total_words = 16; // jeden BATCH
 
 	    make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
 	    make_bch(&tx_token);     //-- Opravi BCH a Paritu
 
 
 //-------------------------------------------------------------------------------------------------
-    	rx_token = tx_token;
 		sendStringUART1("\r\n--- TX TOKEN ---\r\n");
+/*
+		rx_token = tx_token;
 	    //--- Výpis surových dat a kontrola/oprava CDW
 	    for (uint16_t i = 0; i < rx_token.total_words; i++) {
 	        uint32_t raw = rx_token.data[i];
@@ -661,7 +694,7 @@ void POCSAG_process(void) {
 	    rx_token.path = (rx_token.data[0]>>12)&0x0F;
 	    rx_token.master=(rx_token.data[1]>>16)&0x1F;
 	    rx_token.system_token=0x01==((rx_token.data[0]>>21)&0x07);
-
+*/
 	    //--- Vypise hlavicku
 		if(rx_token.system_token==1) {
 			sendStringUART1("SYSTEM TOKEN\r\n");
@@ -673,9 +706,12 @@ void POCSAG_process(void) {
 	    sendStringUART1(buf);
 		sprintf(buf,"TOKEN=%02u BATCH=%02u MASTER=%u\r\n",rx_token.token_id,rx_token.batch,rx_token.master);
 	    sendStringUART1(buf);
-		sendStringUART1("--- TX END ---\r\n");
+//		sendStringUART1("--- TX END ---\r\n");
 //-------------------------------------------------------------------------------------------------
 		//-- Vysila
+		sendStringUART1("\r\n---------------- TX ----------------\r\n");
+	    sprintf(buf, "TOTAL WORDS: %u\r\n", tx_token.total_words);
+	    sendStringUART1(buf);
 		tx_start();
     }
 }
