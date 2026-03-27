@@ -60,7 +60,5 @@ void TIMER1_IRQHandler(void) {
     TIMER1->IFC = TIMER_IFC_OF;
 //    LED2_Toggle();
     POCSAG_sample_bit(); // Tato funkce nyní øeší èasování
-    GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
-//    GPIO_PinOutToggle(PTT_PORT, PTT_PIN);
-
+//    GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
 }
