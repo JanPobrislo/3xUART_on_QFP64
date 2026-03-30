@@ -160,12 +160,19 @@ void POCSAG_rx_init(void) {
 // Synchro na hranu signalu - Voláno z GPIO_EVEN_IRQHandler
 //------------------------------------------------------------------------------
 void POCSAG_edge_detected(void) {
-    if (rx_state != STATE_RECEIVING) {
+//    if (rx_state != STATE_RECEIVING)
+//    if (rx_state == STATE_RX_IDLE)
+    {
     	// Zastavit, pokud běžel (kvůli re-synchronizaci v šumu)
 		TIMER1->CMD = TIMER_CMD_STOP;
 		// Resetujeme časovač na polovinu periody, aby první Sample přišel do středu bitu
-        TIMER1->CNT = TIMER1->TOP / 2;
+        TIMER1->CNT = TIMER1_TOP / 2;
         TIMER1->CMD = TIMER_CMD_START;
+
+//      GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - teď už jen pevný čas
+//		bitCounter = 0;
+        LED_TX_On();
+
     }
 }
 
@@ -273,6 +280,7 @@ void POCSAG_sample_bit(void) {
 	uint8_t bit = (Input_GetRX() > 0) ? 1 : 0;
     shiftReg = (shiftReg << 1) | bit;
 
+    GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
     //LED2_Toggle();
 
     switch (rx_state) {
@@ -280,28 +288,64 @@ void POCSAG_sample_bit(void) {
             LED1_Toggle();
 			// Hledáme střídavou sekvenci (01010101...) v posledních 16 bitech
 			// 0xAAAA je 1010101010101010, 0x5555 je 0101010101010101
+//			if ((shiftReg == 0xAAAAAAAA) || (shiftReg == 0x55555555)) {
 			if ((uint16_t)(shiftReg & 0xFFFF) == 0xAAAA || (uint16_t)(shiftReg & 0xFFFF) == 0x5555) {
-				rx_state = STATE_SYNC_WAIT;
+
+
+//                GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - teď už jen pevný čas
+/*
+        		// Resetujeme časovač na polovinu periody, aby první Sample přišel do středu bitu
+        		TIMER1->CMD = TIMER_CMD_STOP;
+                TIMER1->CNT = TIMER1->TOP / 2;
+                TIMER1->CMD = TIMER_CMD_START;
+*/
+                rx_state = STATE_SYNC_WAIT;
             }
+/*
+			else {
+				bitCounter++;
+				//-- Nenasel preamble -> spusti detekci hran
+				if (bitCounter >= 16) {
+					GPIO_IntEnable(1 << RX_PIN);
+	        		TIMER1->CMD = TIMER_CMD_STOP;
+				}
+			}
+*/
             break;
 
         case STATE_SYNC_WAIT:
-//            LED4_Toggle();
+            LED4_Toggle();
             if (shiftReg == POCSAG_SYNC_WORD) {
                 rx_state = STATE_RECEIVING;
                 bitCounter = 0;
                 wordsInBatch = 1; // Dalších 16 slov jsou data
                 rx_token.total_words = 0;
+
                 GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - teď už jen pevný čas
-            	LED1_On();
+/*
+        		// Resetujeme časovač na polovinu periody, aby první Sample přišel do středu bitu
+        		TIMER1->CMD = TIMER_CMD_STOP;
+                TIMER1->CNT = TIMER1->TOP / 2;
+                TIMER1->CMD = TIMER_CMD_START;
+*/
+                LED1_On();
 //                GPIO_PinOutSet(DBG_PORT, DBG_PIN);
+
             }
             break;
 
 			case STATE_RECEIVING:
+	            LED3_Toggle();
 				bitCounter++;
+				//-- Synchronizoval na prvni dva bity FS, zastavit
+				if (wordsInBatch == 0 && bitCounter == 2) {
+//				if (bitCounter == 2) {
+	                GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - teď už jen pevný čas
+				}
+
 				if (bitCounter >= 32) {
 					bitCounter = 0;
+//					GPIO_IntEnable(1 << RX_PIN);
 
 					// Právě jsme dočetli 32. bit. Obsah je v shiftReg.
 //	                GPIO_PinOutSet(DBG_PORT, DBG_PIN);
@@ -334,6 +378,7 @@ void POCSAG_sample_bit(void) {
 					wordsInBatch++;
 					if (wordsInBatch > 16) {
 						wordsInBatch = 0; // Příští slovo MUSÍ být SYNC
+						GPIO_IntEnable(1 << RX_PIN);
 					}
 
 					// Ochrana proti přetečení celkového pole
@@ -537,7 +582,7 @@ void POCSAG_process(void) {
     bitBuffer = 0;
     bitsInBuffer = 0;
 
-    sendStringUART1("\r\n--- POCSAG DATAGRAM START ---\r\n");
+    sendStringUART1("\r\n--- RX POCSAG START ---\r\n");
 
     rx_token.rx_ok = true; // Neopravena chyba to schodi
 
@@ -565,10 +610,16 @@ void POCSAG_process(void) {
     }
 
 //    sendStringUART1("-----------------------------\r\n");
-    sprintf(buf, "--- TOKEN: %s ---\r\n", rx_token.rx_ok ? "ALL OK" : "ERROR");
+    if (rx_token.rx_ok) {
+    	sprintf(buf, "--- OK ---\r\n");
+//    	sprintf(buf, "--- OK ALL %u WORDS ---\r\n", rx_token.total_words);
+    }
+    else {
+    	sprintf(buf, "--- ERROR ---\r\n");
+    }
     sendStringUART1(buf);
-    sprintf(buf, "TOTAL WORDS: %u\r\n", rx_token.total_words);
-    sendStringUART1(buf);
+//    sprintf(buf, "TOTAL WORDS: %u\r\n", rx_token.total_words);
+//    sendStringUART1(buf);
 
 	//---------------------- Nacte udaje z hlavicky
     rx_token.token_id= (rx_token.data[2]>>16)&0x1F;
@@ -582,12 +633,12 @@ void POCSAG_process(void) {
 
     //--- Vypise hlavicku
 	if(rx_token.system_token==1) {
-		sendStringUART1("\r\n--- HEADER: SYSTEM TOKEN ---\r\n");
+		sendStringUART1("SYSTEM TOKEN: ");
 	}
 	else {
-		sendStringUART1("\r\n--- HEADER: NORMAL TOKEN ---\r\n");
+		sendStringUART1("NORMAL TOKEN: ");
 	}
-	sprintf(buf,"NET=%02u DAU=%02u ADR=%u PATH=%u\r\n",rx_token.net,rx_token.dau,rx_token.adr,rx_token.path);
+	sprintf(buf,"NET=%02u DAU=%02u ADR=%u PATH=%u ",rx_token.net,rx_token.dau,rx_token.adr,rx_token.path);
     sendStringUART1(buf);
 	sprintf(buf,"TOKEN=%02u BATCH=%02u MASTER=%u\r\n",rx_token.token_id,rx_token.batch,rx_token.master);
     sendStringUART1(buf);
@@ -595,7 +646,7 @@ void POCSAG_process(void) {
     //--- Dekódování adresy a textu --- az od ctvrteho codewordu, za hlavickou
     if (rx_token.rx_ok) {
 		if(rx_token.system_token==0) {
-			sendStringUART1("\r\n--- MESSAGES ---\r\n");
+//			sendStringUART1("--- MESSAGES ---\r\n");
 
 			for (uint16_t i = 3; i < rx_token.total_words; i++) {
 				uint32_t raw = rx_token.data[i];
@@ -613,7 +664,7 @@ void POCSAG_process(void) {
 					uint32_t fullRIC = (addrPart << 3) | (frameIndex & 0x07);
 					uint8_t func = (clean >> 11) & 0x03;
 
-					sprintf(buf, "ADRESA: %07lu\r\nFUNKCE: %d\r\n", (unsigned long)fullRIC, func);
+					sprintf(buf, "ADR: %07lu FCE: %d", (unsigned long)fullRIC, func);
 					sendStringUART1(buf);
 
 					textMsg[0] = '\0';
@@ -628,12 +679,12 @@ void POCSAG_process(void) {
     }
 
     if (textMsg[0] != '\0') {
-        sendStringUART1("TEXT  : ");
+        sendStringUART1("MSG: ");
         sendStringUART1(textMsg);
         sendStringUART1("\r\n");
     }
 
-    sendStringUART1("--- END ---\r\n\r\n");
+    sendStringUART1("--- END ---\r\n");
     rx_token.ready = false;
 
     //-------------- Kontrola a vysilani
@@ -656,7 +707,7 @@ void POCSAG_process(void) {
 
 
 //-------------------------------------------------------------------------------------------------
-		sendStringUART1("\r\n--- TX TOKEN ---\r\n");
+		sendStringUART1("\r\nTX: ");
 /*
 		rx_token = tx_token;
 	    //--- Výpis surových dat a kontrola/oprava CDW
@@ -695,23 +746,23 @@ void POCSAG_process(void) {
 	    rx_token.master=(rx_token.data[1]>>16)&0x1F;
 	    rx_token.system_token=0x01==((rx_token.data[0]>>21)&0x07);
 */
-	    //--- Vypise hlavicku
-		if(rx_token.system_token==1) {
-			sendStringUART1("SYSTEM TOKEN\r\n");
+	    //--- Vypise TX hlavicku
+		if(tx_token.system_token==1) {
+			sendStringUART1("SYSTEM ");
 		}
 		else {
-			sendStringUART1("NORMAL TOKEN\r\n");
+			sendStringUART1("NORMAL ");
 		}
-		sprintf(buf,"NET=%02u DAU=%02u ADR=%u PATH=%u\r\n",rx_token.net,rx_token.dau,rx_token.adr,rx_token.path);
+		sprintf(buf,"NET=%02u DAU=%02u ADR=%02u PATH=%u ",tx_token.net,tx_token.dau,tx_token.adr,tx_token.path);
 	    sendStringUART1(buf);
-		sprintf(buf,"TOKEN=%02u BATCH=%02u MASTER=%u\r\n",rx_token.token_id,rx_token.batch,rx_token.master);
+		sprintf(buf,"TOKEN=%02u BATCH=%2u MASTER=%02u\r\n",tx_token.token_id,tx_token.batch,tx_token.master);
 	    sendStringUART1(buf);
 //		sendStringUART1("--- TX END ---\r\n");
 //-------------------------------------------------------------------------------------------------
 		//-- Vysila
-		sendStringUART1("\r\n---------------- TX ----------------\r\n");
-	    sprintf(buf, "TOTAL WORDS: %u\r\n", tx_token.total_words);
-	    sendStringUART1(buf);
+		sendStringUART1("\r\n-------------- TX --------------\r\n");
+//	    sprintf(buf, "TOTAL WORDS: %u\r\n", tx_token.total_words);
+//	    sendStringUART1(buf);
 		tx_start();
     }
 }

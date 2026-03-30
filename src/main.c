@@ -153,7 +153,7 @@ int main(void)
     					sendStringUART1(" 1..6 : Toggle LED\r\n");
     					sendStringUART1(" t : start TX TOKEN\r\n");
     					sendStringUART1(" T : stop timer1 1200Hz\r\n");
-    					sendStringUART1(" x : toggle Tx bit\r\n");
+    					sendStringUART1(" x : GPIO_IntEnable(RX_PIN)\r\n");
     					sendStringUART1(" h : display this help\r\n");
     					sendStringUART1(" --------------------------------\r\n");
 						break;
@@ -183,7 +183,8 @@ int main(void)
     					sendStringUART1("Stop timer1 TX 1200Hz\r\n");
     					break;
     		case 'x' : 	sendStringUART1("TX toggle bit\r\n");
-    					GPIO_PinOutToggle(TX_PORT, TX_PIN);
+//    					GPIO_PinOutToggle(TX_PORT, TX_PIN);
+						GPIO_IntEnable(1 << RX_PIN);
     					break;
     		default:	break;
     		}

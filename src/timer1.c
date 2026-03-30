@@ -7,7 +7,7 @@
  *
  * TIMER1 taktuje POCSAG_SampleBit() 1200x za sekundu.
  * Uvnitø POCSAG_SampleBit() se odeète RX
- * Støed bitu - Synchronizaci fáze zajišuje POCSAG_EdgeDetected() volaná
+ * Støed bitu - Synchronizaci fáze zajišuje POCSAG_edge_detected() volaná
  * z GPIO_EVEN_IRQHandler pøi hranì signálu na PA0.
  *****************************************************************************/
 #include "timer1.h"
@@ -18,10 +18,6 @@
 #include "em_cmu.h"
 #include "em_timer.h"
 #include "em_gpio.h"
-
-/* 2400 Hz: 72 000 000 / 16 / 2400 - 1 = 1874 */
-/* 1200 Hz: 3749 pøi 72MHz a div16 */
-#define TIMER1_TOP  (72000000UL / 16 / 1200 - 1)
 
 void initTIMER1(void)
 {
@@ -58,7 +54,9 @@ void TIMER1_Stop(void)
 
 void TIMER1_IRQHandler(void) {
     TIMER1->IFC = TIMER_IFC_OF;
-//    LED2_Toggle();
+    LED2_Toggle();
+    LED_TX_Off();
     POCSAG_sample_bit(); // Tato funkce nyní øeší èasování
 //    GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
+
 }
