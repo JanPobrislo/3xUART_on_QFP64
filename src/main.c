@@ -156,6 +156,8 @@ int main(void)
     					sendStringUART1(" x : GPIO_IntEnable(RX_PIN)\r\n");
     					sendStringUART1(" h : display this help\r\n");
     					sendStringUART1(" --------------------------------\r\n");
+    					POCSAG_show_rx_state();
+    					sendStringUART1(" --------------------------------\r\n");
 						break;
     		case '1' : 	LED1_Toggle();
     	    			GPIO_PinOutToggle(DBG_PORT, DBG_PIN);

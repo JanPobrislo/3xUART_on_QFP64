@@ -12,8 +12,9 @@
 #include "timer1.h"
 
 typedef enum {
-    STATE_RX_IDLE,         // Čekání na preambuli v šumu
-    STATE_SYNC_WAIT,    // Preambule nalezena, čekáme na první Sync Word
+    STATE_RX_IDLE,      // Čekání na preamble v šumu
+	STATE_PREAMBLE,		// Preamble nalezen, cte az do konce preamble
+    STATE_SYNC_WAIT,    // Konec preamble, čeká na první Sync Word
     STATE_RECEIVING,    // Pevné časování, příjem datových slov
 	STATE_TRANSMITING   // Během vysílání se musí blokovat příjem.
 } POCSAG_Rx_State;
@@ -288,29 +289,20 @@ void POCSAG_sample_bit(void) {
             LED1_Toggle();
 			// Hledáme střídavou sekvenci (01010101...) v posledních 16 bitech
 			// 0xAAAA je 1010101010101010, 0x5555 je 0101010101010101
-//			if ((shiftReg == 0xAAAAAAAA) || (shiftReg == 0x55555555)) {
-			if ((uint16_t)(shiftReg & 0xFFFF) == 0xAAAA || (uint16_t)(shiftReg & 0xFFFF) == 0x5555) {
-
-
-//                GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - teď už jen pevný čas
-/*
-        		// Resetujeme časovač na polovinu periody, aby první Sample přišel do středu bitu
-        		TIMER1->CMD = TIMER_CMD_STOP;
-                TIMER1->CNT = TIMER1->TOP / 2;
-                TIMER1->CMD = TIMER_CMD_START;
-*/
-                rx_state = STATE_SYNC_WAIT;
+			if ((shiftReg == 0xAAAAAAAA) || (shiftReg == 0x55555555)) {
+//			if ((uint16_t)(shiftReg & 0xFFFF) == 0xAAAA || (uint16_t)(shiftReg & 0xFFFF) == 0x5555) {
+                rx_state = STATE_PREAMBLE;
             }
-/*
-			else {
-				bitCounter++;
-				//-- Nenasel preamble -> spusti detekci hran
-				if (bitCounter >= 16) {
-					GPIO_IntEnable(1 << RX_PIN);
-	        		TIMER1->CMD = TIMER_CMD_STOP;
-				}
-			}
-*/
+            break;
+
+        case STATE_PREAMBLE:
+            LED1_Toggle();
+			// Ceka do konce preamble
+			if ((shiftReg != 0xAAAAAAAA) && (shiftReg != 0x55555555)) {
+				//-- Zkusi nacist FS (sync.word)
+                rx_state = STATE_SYNC_WAIT;
+                bitCounter = 0;
+            }
             break;
 
         case STATE_SYNC_WAIT:
@@ -332,80 +324,120 @@ void POCSAG_sample_bit(void) {
 //                GPIO_PinOutSet(DBG_PORT, DBG_PIN);
 
             }
+            else {
+                bitCounter++;
+                if (bitCounter >= 32) {
+                	//-- FS nenalezen
+					rx_state = STATE_RX_IDLE;
+                }
+            }
             break;
 
-			case STATE_RECEIVING:
-	            LED3_Toggle();
-				bitCounter++;
-				//-- Synchronizoval na prvni dva bity FS, zastavit
-				if (wordsInBatch == 0 && bitCounter == 2) {
+		case STATE_RECEIVING:
+			LED3_Toggle();
+			bitCounter++;
+			//-- Synchronizoval na prvni dva bity FS, zastavit
+			if (wordsInBatch == 0 && bitCounter == 2) {
 //				if (bitCounter == 2) {
-	                GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - teď už jen pevný čas
-				}
+				GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - teď už jen pevný čas
+			}
 
-				if (bitCounter >= 32) {
-					bitCounter = 0;
+			if (bitCounter >= 32) {
+				bitCounter = 0;
 //					GPIO_IntEnable(1 << RX_PIN);
 
-					// Právě jsme dočetli 32. bit. Obsah je v shiftReg.
+				// Právě jsme dočetli 32. bit. Obsah je v shiftReg.
 //	                GPIO_PinOutSet(DBG_PORT, DBG_PIN);
 
 
-					// SCÉNÁŘ A: Čekáme na SYNC slovo (každých 17. slovo v proudu dat)
-					if (wordsInBatch == 0) {
-						if (shiftReg == POCSAG_SYNC_WORD) {
-							// V pořádku, začíná další batch
-							// wordsInBatch necháme na 0, ale nepíšeme SYNC do dat
-							// (Teoreticky zde wordsInBatch nastavíme na 1 po inkrementaci níže)
-						} else {
-							// KONEC DATAGRAMU: Na místě, kde měl být SYNC, je něco jiného
-							rx_token.ready = true;
-							rx_state = STATE_RX_IDLE;
-							TIMER1->CMD = TIMER_CMD_STOP;
-							GPIO_IntEnable(1 << RX_PIN);
-							return;
-						}
-					}
-
-					// SCÉNÁŘ B: Čteme datové slovo (1-16)
-					else {
-						if (rx_token.total_words < (MAX_BATCHES * WORDS_PER_BATCH)) {
-							rx_token.data[rx_token.total_words++] = shiftReg;
-						}
-					}
-
-					// Inkrementace a reset čítače batche (0-16, kde 0 je pozice pro SYNC)
-					wordsInBatch++;
-					if (wordsInBatch > 16) {
-						wordsInBatch = 0; // Příští slovo MUSÍ být SYNC
-						GPIO_IntEnable(1 << RX_PIN);
-					}
-
-					// Ochrana proti přetečení celkového pole
-					if (rx_token.total_words >= (MAX_BATCHES * WORDS_PER_BATCH)) {
+				// SCÉNÁŘ A: Čekáme na SYNC slovo (každých 17. slovo v proudu dat)
+				if (wordsInBatch == 0) {
+					if (shiftReg == POCSAG_SYNC_WORD) {
+						// V pořádku, začíná další batch
+						// wordsInBatch necháme na 0, ale nepíšeme SYNC do dat
+						// (Teoreticky zde wordsInBatch nastavíme na 1 po inkrementaci níže)
+					} else {
+						// KONEC DATAGRAMU: Na místě, kde měl být SYNC, je něco jiného
 						rx_token.ready = true;
 						rx_state = STATE_RX_IDLE;
 						TIMER1->CMD = TIMER_CMD_STOP;
 						GPIO_IntEnable(1 << RX_PIN);
+						return;
 					}
 				}
-				break;
-			case STATE_TRANSMITING:
-				tx_bit();
-/*
-				bitCounter--;
-				if (bitCounter == 0) {
-					//-- Konec vysilani
-					GPIO_PinOutSet(PTT_PORT, PTT_PIN);
-					POCSAG_Init();
-				}
+
+				// SCÉNÁŘ B: Čteme datové slovo (1-16)
 				else {
-					//-- Vysila
-					GPIO_PinOutToggle(TX_PORT, TX_PIN);
+					if (rx_token.total_words < (MAX_BATCHES * WORDS_PER_BATCH)) {
+						rx_token.data[rx_token.total_words++] = shiftReg;
+					}
 				}
+
+				// Inkrementace a reset čítače batche (0-16, kde 0 je pozice pro SYNC)
+				wordsInBatch++;
+				if (wordsInBatch > 16) {
+					wordsInBatch = 0; // Příští slovo MUSÍ být SYNC
+					GPIO_IntEnable(1 << RX_PIN);
+				}
+
+				// Ochrana proti přetečení celkového pole
+				if (rx_token.total_words >= (MAX_BATCHES * WORDS_PER_BATCH)) {
+					rx_token.ready = true;
+					rx_state = STATE_RX_IDLE;
+					TIMER1->CMD = TIMER_CMD_STOP;
+					GPIO_IntEnable(1 << RX_PIN);
+				}
+			}
+			break;
+		case STATE_TRANSMITING:
+			tx_bit();
+/*
+			bitCounter--;
+			if (bitCounter == 0) {
+				//-- Konec vysilani
+				GPIO_PinOutSet(PTT_PORT, PTT_PIN);
+				POCSAG_Init();
+			}
+			else {
+				//-- Vysila
+				GPIO_PinOutToggle(TX_PORT, TX_PIN);
+			}
 */
-				break;
+			break;
     }
+}
+
+//------------------------------------------------------------------------------
+// Vypise stav rx_state na UART1 (COM-B)
+//------------------------------------------------------------------------------
+void POCSAG_show_rx_state(void) {
+	sendStringUART1(" RX STATE: ");
+    switch (rx_state) {
+        case STATE_RX_IDLE:
+			sendStringUART1("STATE_RX_IDLE");
+            break;
+
+        case STATE_PREAMBLE:
+			sendStringUART1("STATE_PREAMBLE");
+            break;
+
+        case STATE_SYNC_WAIT:
+			sendStringUART1("STATE_SYNC_WAIT");
+            break;
+
+		case STATE_RECEIVING:
+			sendStringUART1("STATE_RECEIVING");
+			break;
+
+		case STATE_TRANSMITING:
+			sendStringUART1("STATE_TRANSMITING");
+			break;
+
+		default:
+			sendStringUART1("UNKNOWN");
+			break;
+    }
+	sendStringUART1("\r\n");
 }
 
 // Pomocná funkce pro dekódování 7-bit ASCII (upraveno pro korektní bit-order)
@@ -688,7 +720,7 @@ void POCSAG_process(void) {
     rx_token.ready = false;
 
     //-------------- Kontrola a vysilani
-    if (rx_token.rx_ok) {  //-- jen kompletne prijate tokeny
+    if (rx_token.rx_ok && rx_token.net == 15) {  //-- jen kompletne prijate tokeny
 
     	LED3_On();
     	tx_token = rx_token;

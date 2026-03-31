@@ -32,6 +32,7 @@ void POCSAG_edge_detected(void); // volano interuptem GPIO_EVEN_IRQHandler()
 void POCSAG_sample_bit(void);    // volano z TIMER1 (1200 Hz)
 void POCSAG_process(void);       // volano v main loop
 //void POCSAG_Tx_datagram(void);
+void POCSAG_show_rx_state(void);
 void tx_start(void);
 
 #endif
