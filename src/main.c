@@ -29,6 +29,8 @@
 #include "uart0.h"
 #include "uart1.h"
 #include "pocsag.h"
+#include "wtimer0.h"
+
 
 //------------------------------------------------------------------------------
 //  Globalni promenne
@@ -78,17 +80,6 @@ static void delay_ms(uint32_t ms)
 }
 
 //------------------------------------------------------------------------------
-// GPIO preruseni pro PA0 - detekce hrany POCSAG signalu
-//------------------------------------------------------------------------------
-void GPIO_EVEN_IRQHandler(void) {
-    uint32_t flags = GPIO_IntGet();
-    GPIO_IntClear(flags);
-    if (flags & (1 << RX_PIN)) {
-        POCSAG_edge_detected();
-    }
-}
-
-//------------------------------------------------------------------------------
 //
 //                           M A I N
 //
@@ -97,17 +88,19 @@ int main(void)
 {
 	char txt[250] = "";
 
-    CHIP_Init();
-    initClocks();       /* MUSI BYT PRVNI */
-    Inputs_Init();
-    initOutputs();
-    LED_Init();
+    CHIP_Init();  	//-- z em_chip.h
 
+    initClocks();  	/* MUSI BYT PRVNI */
+
+    initInputs();
+    initOutputs();
+    initLED();
     initUSART0();
     initUART0();
     initUART1();
     initTIMER0();
     initTIMER1();
+    initWTIMER0();
 
     //----------------- Blikačka
     LED1_On(); delay_ms(300); LED1_Off();
@@ -186,7 +179,7 @@ int main(void)
     					break;
     		case 'x' : 	sendStringUART1("TX toggle bit\r\n");
 //    					GPIO_PinOutToggle(TX_PORT, TX_PIN);
-						GPIO_IntEnable(1 << RX_PIN);
+    					rx_edge_irq_enabled();
     					break;
     		default:	break;
     		}

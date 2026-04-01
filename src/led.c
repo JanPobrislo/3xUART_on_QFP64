@@ -6,7 +6,7 @@
 #include "em_gpio.h"
 #include "em_cmu.h"
 
-void LED_Init(void) {
+void initLED(void) {
     CMU_ClockEnable(cmuClock_GPIO, true);
     GPIO_PinModeSet(LED1_PORT,   LED1_PIN,   gpioModePushPull, 0);
     GPIO_PinModeSet(LED2_PORT,   LED2_PIN,   gpioModePushPull, 0);

@@ -73,7 +73,7 @@ src/em_cmu.o: ../src/em_cmu.c ../src/em_cmu.h \
  d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_bus.h \
  d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_assert.h \
  d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_common.h \
- d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_emu.h \
+ ../src/em_emu.h \
  d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_system.h
 
 ../src/em_cmu.h:
@@ -226,6 +226,6 @@ d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\
 
 d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_common.h:
 
-d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_emu.h:
+../src/em_emu.h:
 
 d:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_system.h:
