@@ -27,13 +27,6 @@ typedef struct {
 
 extern volatile POCSAG_token rx_token;
 
-//--- Kalibrace rychlosti prijmu
-extern bool calib_start;
-extern bool calib_stop;
-extern uint32_t calib_start_counter;
-extern uint32_t calib_stop_counter;
-extern uint16_t calib_bits;
-
 void POCSAG_rx_init(void);
 void POCSAG_edge_detected(void); // volano interuptem GPIO_EVEN_IRQHandler()
 void POCSAG_sample_bit(void);    // volano z TIMER1 (1200 Hz)

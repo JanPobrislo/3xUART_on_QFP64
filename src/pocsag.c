@@ -59,13 +59,6 @@ __attribute__((unused)) static uint32_t reverse32(uint32_t x) {
     return (x >> 16) | (x << 16);
 }
 
-//--- Kalibrace rychlosti prijmu
-bool calib_start = false;
-bool calib_stop = false;
-uint32_t calib_start_counter = 0;
-uint32_t calib_stop_counter = 0;
-uint16_t calib_bits = 0;
-
 //------------------------------------------------------------------------------
 // Vrací jeden bit z 32bitov0ho slova. 1=nejnizsi bit .. 32=nejvyzsi bit.
 //------------------------------------------------------------------------------
@@ -149,8 +142,8 @@ void POCSAG_rx_init(void) {
 
 	calib_start = false;
 	calib_stop = false;
-	calib_start_counter = 0;
-	calib_stop_counter = 0;
+//	calib_start_counter = 0;
+//	calib_stop_counter = 0;
 
     // Povolení přerušení od hran PA0
     GPIO_ExtIntConfig(RX_PORT, RX_PIN, RX_PIN, true, true, true);
@@ -294,10 +287,10 @@ void POCSAG_sample_bit(void) {
                 rx_state = STATE_PREAMBLE;
                 TIMER1_ResetSpeed();
                 bitCounter = 0;
-            	calib_start_counter = 0;
-            	calib_stop_counter = 0;
+//            	calib_start_counter = 0;
+//            	calib_stop_counter = 0;
+                TIMER_CounterSet((TIMER_TypeDef *)WTIMER0, 0); // Nuluje counter
             	calib_bits = 0;
-                TIMER_CounterSet((TIMER_TypeDef *)WTIMER0, 0);
         		calib_start = true;
             }
             break;
@@ -367,7 +360,7 @@ void POCSAG_sample_bit(void) {
 						rx_state = STATE_RX_IDLE;
 //						TIMER1->CMD = TIMER_CMD_STOP;
 
-						sprintf(buf,"\r\nTOP=%lu",TIMER1->TOP);
+						sprintf(buf,"\r\nTIMER1.TOP=%lu",TIMER1->TOP);
 					    sendStringUART1(buf);
 
 						TIMER1_ResetSpeed();
@@ -387,7 +380,8 @@ void POCSAG_sample_bit(void) {
 				wordsInBatch++;
 				if (wordsInBatch > 16) {
 					wordsInBatch = 0; // Příští slovo MUSÍ být SYNC
-					rx_edge_irq_enabled();
+					//-- zrusena synchronizace na kazde FS - uz je kalibrovano
+//					rx_edge_irq_enabled();
 				}
 
 				// Ochrana proti přetečení celkového pole
@@ -685,9 +679,9 @@ void POCSAG_process(void) {
 	else {
 		sendStringUART1("NORMAL TOKEN: ");
 	}
-	sprintf(buf,"NET=%02u DAU=%02u ADR=%u PATH=%u ",rx_token.net,rx_token.dau,rx_token.adr,rx_token.path);
+	sprintf(buf,"NET=%02u DAU=%02u ADR=%02u PATH=%u ",rx_token.net,rx_token.dau,rx_token.adr,rx_token.path);
     sendStringUART1(buf);
-	sprintf(buf,"TOKEN=%02u BATCH=%02u MASTER=%u\r\n",rx_token.token_id,rx_token.batch,rx_token.master);
+	sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u\r\n",rx_token.token_id,rx_token.batch,rx_token.master);
     sendStringUART1(buf);
 
     //--- Dekódování adresy a textu --- az od ctvrteho codewordu, za hlavickou
@@ -728,10 +722,13 @@ void POCSAG_process(void) {
     if (textMsg[0] != '\0') {
         sendStringUART1("MSG=");
         sendStringUART1(textMsg);
-        sendStringUART1("\r\n");
     }
 
-    sendStringUART1("------------------------------------------\r\n");
+    sendStringUART1("\r\n------------------------------------------\r\n");
+//	sprintf(buf, "KALIBRACE: %lu = %0.2f Hz \r\n",calib_count_per_bit,(float)(72000000UL/calib_count_per_bit));
+	sprintf(buf, "KALIBRACE: %lu\r\n",calib_count_per_bit);
+	sendStringUART1(buf);
+/*
 	sprintf(buf, "KALIBRACE: %lu  1-bit: %lu ", calib_stop_counter-calib_start_counter, (calib_stop_counter-calib_start_counter)/calib_bits);
 	sendStringUART1(buf);
 	sprintf(buf, " pocet bitu: %u ", calib_bits);
@@ -742,7 +739,7 @@ void POCSAG_process(void) {
 
 	sprintf(buf, "calib_counter: %lu\r\n",(calib_stop_counter-calib_start_counter)/calib_bits);
 	sendStringUART1(buf);
-
+*/
 	sendStringUART1("--- END ---\r\n");
     rx_token.ready = false;
 
@@ -767,7 +764,8 @@ void POCSAG_process(void) {
 
 
 //-------------------------------------------------------------------------------------------------
-		sendStringUART1("\r\nTX: ");
+		sendStringUART1("\r\n-------------- TX --------------\r\n");
+		sendStringUART1("TX: ");
 /*
 		rx_token = tx_token;
 	    //--- Výpis surových dat a kontrola/oprava CDW
@@ -815,12 +813,12 @@ void POCSAG_process(void) {
 		}
 		sprintf(buf,"NET=%02u DAU=%02u ADR=%02u PATH=%u ",tx_token.net,tx_token.dau,tx_token.adr,tx_token.path);
 	    sendStringUART1(buf);
-		sprintf(buf,"TOKEN=%02u BATCH=%2u MASTER=%02u\r\n",tx_token.token_id,tx_token.batch,tx_token.master);
+		sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u\r\n",tx_token.token_id,tx_token.batch,tx_token.master);
 	    sendStringUART1(buf);
 //		sendStringUART1("--- TX END ---\r\n");
 //-------------------------------------------------------------------------------------------------
 		//-- Vysila
-		sendStringUART1("\r\n-------------- TX --------------\r\n");
+//		sendStringUART1("\r\n-------------- TX --------------\r\n");
 //	    sprintf(buf, "TOTAL WORDS: %u\r\n", tx_token.total_words);
 //	    sendStringUART1(buf);
 		tx_start();

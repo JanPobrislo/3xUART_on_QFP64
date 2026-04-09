@@ -12,6 +12,14 @@
 #include "pocsag.h"
 #include "timer1.h"
 
+//--- Kalibrace rychlosti prijmu
+bool calib_start = false;
+bool calib_stop = false;
+uint32_t calib_start_counter = 0;
+uint32_t calib_stop_counter = 0;
+uint16_t calib_bits = 0;
+uint32_t calib_count_per_bit = 0; //-- Pocet tiku na bit (aby to nemusel porad pocitat)
+
 void initInputs(void) {
     CMU_ClockEnable(cmuClock_GPIO, true);
     /* PA0 - RX vstup s pull-down */
@@ -38,14 +46,16 @@ void GPIO_EVEN_IRQHandler(void) {
 
     if (flags & (1 << RX_PIN)) {
     	if (calib_start) {
+//            TIMER_CounterSet((TIMER_TypeDef *)WTIMER0, 0); // Nuluje counter
     		calib_start_counter = TIMER_CounterGet((TIMER_TypeDef *)WTIMER0);
     		calib_start = false;
     	}
 
 		if (calib_stop) {
 			calib_stop_counter = TIMER_CounterGet((TIMER_TypeDef *)WTIMER0);
+			calib_count_per_bit = (calib_stop_counter-calib_start_counter)/calib_bits;
 			calib_stop = false;
-            TIMER1_Calibrate((calib_stop_counter-calib_start_counter)/calib_bits);
+            TIMER1_Calibrate(calib_count_per_bit);
 		}
 
 		POCSAG_edge_detected();
