@@ -10,6 +10,7 @@
 #include "inputs.h"
 #include "ports.h"
 #include "pocsag.h"
+#include "timer1.h"
 
 void initInputs(void) {
     CMU_ClockEnable(cmuClock_GPIO, true);
@@ -44,6 +45,7 @@ void GPIO_EVEN_IRQHandler(void) {
 		if (calib_stop) {
 			calib_stop_counter = TIMER_CounterGet((TIMER_TypeDef *)WTIMER0);
 			calib_stop = false;
+            TIMER1_Calibrate((calib_stop_counter-calib_start_counter)/calib_bits);
 		}
 
 		POCSAG_edge_detected();

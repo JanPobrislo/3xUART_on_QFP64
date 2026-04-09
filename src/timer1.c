@@ -2,8 +2,8 @@
  * @file timer1.c
  * @brief Obsluha TIMER1 – 1200 Hz pro POCSAG vzorkování
  *
- * @note HFCLK = 72 MHz, PRESC = DIV16, TOP = 1874
- *       72 000 000 / 16 / 1875 = 2400 Hz
+ * @note HFCLK = 72 MHz, PRESC = DIV16, TOP = 3750
+ *       72 000 000 / 16 / 3750 = 1200 Hz
  *
  * TIMER1 taktuje POCSAG_SampleBit() 1200x za sekundu.
  * Uvnitø POCSAG_SampleBit() se odeète RX
@@ -59,4 +59,24 @@ void TIMER1_IRQHandler(void) {
     POCSAG_sample_bit(); // Tato funkce nyní øeší èasování
 //    GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
 
+}
+
+//------------------------------------------------------------------------------
+// Kalibrace - nastavi TOP podle namerene rychlosti v preamble
+// Rychlost se meri pomoci wtimer0 - 72MHz t.j. pro 1200Hz nacita 60000x
+// TOP = (72M / 16 / f) -1
+// pro f=1200Hz to je 3750-1
+// pri vzorkovani 72MHz (13,88nsec) je TOP kalibrovane f => count / 16
+//------------------------------------------------------------------------------
+void TIMER1_Calibrate(uint32_t calib_counter)
+{
+	//-- Ochrana, kalibrujeme jen pri odchylce +/- 10Hz
+	if (calib_counter>59500 && calib_counter<60500) {
+		TIMER1->TOP = ((calib_counter/16)+0.5)-1;
+	}
+}
+
+void TIMER1_ResetSpeed(void)
+{
+    TIMER1->TOP  = TIMER1_TOP;
 }

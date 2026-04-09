@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "pocsag.h"
+#include "parameters.h"
 #include "inputs.h"
 #include "uart1.h"
 #include "em_timer.h"
@@ -15,7 +16,7 @@ typedef enum {
     STATE_RX_IDLE,      // Čekání na preamble v šumu
 	STATE_PREAMBLE,		// Preamble nalezen, zacne kalibrovat
 //	STATE_PREAMBLE_CALIBRATED,	// Cte az do konce preamble
-    STATE_SYNC_WAIT,    // Konec preamble, čeká na první Sync Word
+    STATE_SYNC_WORD,    // Konec preamble, čeká na první Sync Word
     STATE_RECEIVING,    // Pevné časování, příjem datových slov
 	STATE_TRANSMITING   // Během vysílání se musí blokovat příjem.
 } POCSAG_Rx_State;
@@ -193,15 +194,17 @@ void set_tx_bit(uint8_t bit) {
 void tx_start(void) {
 	// Zastavit a zablokovat Rx
 	TIMER1_Stop();
-    GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - teď už jen pevný čas
+	rx_edge_irq_disabled(); // Vypneme detekci hran - nevyhodnocuje prijem
+//    GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - nevyhodnocuje prijem
 	rx_state = STATE_TRANSMITING;
 
 	// Spusti vysilani
 //	bitCounter=5000;
 	tx_state = TX_PREAMBLE;
 	number_of_tx = 0;
-	GPIO_PinOutClear(TX_PORT, TX_PIN);    	// nulujeme aby preamble zacal 1
+	GPIO_PinOutClear(TX_PORT, TX_PIN);    	// nula aby preamble zacal 1
 	GPIO_PinOutClear(PTT_PORT, PTT_PIN);  	// zaklicuje
+	TIMER1_ResetSpeed();
 	TIMER1_Start();
 	LED4_On();
 }
@@ -272,6 +275,7 @@ void tx_bit(void) {
 // Odecte nebo vysila BIT - Voláno z TIMER1_IRQHandler (1200 Hz)
 //------------------------------------------------------------------------------
 void POCSAG_sample_bit(void) {
+    char buf[160];
     static uint8_t wordsInBatch = 0; // Sleduje pozici v rámci aktuálního batche (0-15)
 
 	uint8_t bit = (Input_GetRX() > 0) ? 1 : 0;
@@ -288,6 +292,7 @@ void POCSAG_sample_bit(void) {
 			if ((shiftReg == 0xAAAAAAAA) || (shiftReg == 0x55555555)) {
 //			if ((uint16_t)(shiftReg & 0xFFFF) == 0xAAAA || (uint16_t)(shiftReg & 0xFFFF) == 0x5555) {
                 rx_state = STATE_PREAMBLE;
+                TIMER1_ResetSpeed();
                 bitCounter = 0;
             	calib_start_counter = 0;
             	calib_stop_counter = 0;
@@ -296,53 +301,31 @@ void POCSAG_sample_bit(void) {
         		calib_start = true;
             }
             break;
-/*
-        case STATE_PREAMBLE:
-			// Cte 32 bitu preamble - kalibrace
-			if ((shiftReg != 0xAAAAAAAA) && (shiftReg != 0x55555555)) {
-				//-- Chyba preamble
-                rx_state = STATE_RX_IDLE;
-                bitCounter = 0;
-            }
-			else {
-				bitCounter++;
-				//-- Kalibrujeme na 32 bitech preamble
-				if (bitCounter >= 32) {
-	        		calib_stop = true;
-	                rx_state = STATE_PREAMBLE_CALIBRATED;
-				}
-			}
-            break;
-*/
+
         case STATE_PREAMBLE:
 			bitCounter++;
 			// Ceka do konce preamble
 			if ((shiftReg != 0xAAAAAAAA) && (shiftReg != 0x55555555)) {
 				//-- Zkusi nacist FS (sync.word)
-                rx_state = STATE_SYNC_WAIT;
+                rx_state = STATE_SYNC_WORD;
                 calib_bits = bitCounter;
         		calib_stop = true;
                 bitCounter = 0;
+//                TIMER1_Calibrate(calib_stop_counter-calib_start_counter);
             }
             break;
 
 
-        case STATE_SYNC_WAIT:
+        case STATE_SYNC_WORD:
             LED4_On();
             if (shiftReg == POCSAG_SYNC_WORD) {
                 rx_state = STATE_RECEIVING;
                 bitCounter = 0;
                 wordsInBatch = 1; // Dalších 16 slov jsou data
                 rx_token.total_words = 0;
+            	rx_edge_irq_disabled(); // Vypneme detekci hran - teď už jen pevný čas
 
-                GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - teď už jen pevný čas
-/*
-        		// Resetujeme časovač na polovinu periody, aby první Sample přišel do středu bitu
-        		TIMER1->CMD = TIMER_CMD_STOP;
-                TIMER1->CNT = TIMER1->TOP / 2;
-                TIMER1->CMD = TIMER_CMD_START;
-*/
-                LED1_On();
+            	LED1_On();
 //                GPIO_PinOutSet(DBG_PORT, DBG_PIN);
 
             }
@@ -350,6 +333,7 @@ void POCSAG_sample_bit(void) {
                 bitCounter++;
                 if (bitCounter >= 32) {
                 	//-- FS nenalezen
+                	TIMER1_ResetSpeed();
 					rx_state = STATE_RX_IDLE;
                 }
             }
@@ -360,8 +344,7 @@ void POCSAG_sample_bit(void) {
 			bitCounter++;
 			//-- Synchronizoval na prvni dva bity FS, zastavit
 			if (wordsInBatch == 0 && bitCounter == 2) {
-//				if (bitCounter == 2) {
-				GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - teď už jen pevný čas
+            	rx_edge_irq_disabled(); // Vypneme detekci hran - teď už jen pevný čas
 			}
 
 			if (bitCounter >= 32) {
@@ -383,6 +366,11 @@ void POCSAG_sample_bit(void) {
 						rx_token.ready = true;
 						rx_state = STATE_RX_IDLE;
 //						TIMER1->CMD = TIMER_CMD_STOP;
+
+						sprintf(buf,"\r\nTOP=%lu",TIMER1->TOP);
+					    sendStringUART1(buf);
+
+						TIMER1_ResetSpeed();
     					rx_edge_irq_enabled();
 						return;
 					}
@@ -407,6 +395,7 @@ void POCSAG_sample_bit(void) {
 					rx_token.ready = true;
 					rx_state = STATE_RX_IDLE;
 //					TIMER1->CMD = TIMER_CMD_STOP;
+					TIMER1_ResetSpeed();
 					rx_edge_irq_enabled();
 				}
 			}
@@ -447,7 +436,7 @@ void POCSAG_show_rx_state(void) {
 			sendStringUART1("STATE_PREAMBLE_CALIBRATED");
             break;
 */
-        case STATE_SYNC_WAIT:
+        case STATE_SYNC_WORD:
 			sendStringUART1("STATE_SYNC_WAIT");
             break;
 
@@ -722,7 +711,7 @@ void POCSAG_process(void) {
 					uint32_t fullRIC = (addrPart << 3) | (frameIndex & 0x07);
 					uint8_t func = (clean >> 11) & 0x03;
 
-					sprintf(buf, "ADR: %07lu FCE: %d", (unsigned long)fullRIC, func);
+					sprintf(buf, "ADR=%07lu FCE=%d ", (unsigned long)fullRIC, func);
 					sendStringUART1(buf);
 
 					textMsg[0] = '\0';
@@ -737,7 +726,7 @@ void POCSAG_process(void) {
     }
 
     if (textMsg[0] != '\0') {
-        sendStringUART1("MSG: ");
+        sendStringUART1("MSG=");
         sendStringUART1(textMsg);
         sendStringUART1("\r\n");
     }
@@ -751,17 +740,21 @@ void POCSAG_process(void) {
 	sprintf(buf, "  start: %lu  stop: %lu\r\n", calib_start_counter, calib_stop_counter);
 	sendStringUART1(buf);
 
-    sendStringUART1("--- END ---\r\n");
+	sprintf(buf, "calib_counter: %lu\r\n",(calib_stop_counter-calib_start_counter)/calib_bits);
+	sendStringUART1(buf);
+
+	sendStringUART1("--- END ---\r\n");
     rx_token.ready = false;
 
     //-------------- Kontrola a vysilani
-    if (rx_token.rx_ok && rx_token.net == 15) {  //-- jen kompletne prijate tokeny
-
+    if (rx_token.rx_ok && rx_token.adr == param.netdau[rx_token.net-1])   //-- jen kompletne prijate tokeny pro mne
+//    if (rx_token.rx_ok && rx_token.net==15 && rx_token.adr==3)   //-- jen kompletne prijate tokeny pro mne
+    {
     	LED3_On();
     	tx_token = rx_token;
     	tx_token.net = 15;
-		tx_token.adr = 2;
-		tx_token.dau = 3;
+		tx_token.adr = 4;
+		tx_token.dau = param.netdau[rx_token.net-1];
 //		tx_token.path = 5;
 //		tx_token.system_token = 1;
 //		tx_token.master = 7;
@@ -831,5 +824,8 @@ void POCSAG_process(void) {
 //	    sprintf(buf, "TOTAL WORDS: %u\r\n", tx_token.total_words);
 //	    sendStringUART1(buf);
 		tx_start();
+    }
+    else {
+    	sendStringUART1("Neni pro mne NEVYSILAM.\r\n");
     }
 }
