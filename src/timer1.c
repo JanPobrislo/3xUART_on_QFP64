@@ -5,6 +5,12 @@
  * @note HFCLK = 72 MHz, PRESC = DIV16, TOP = 3750
  *       72 000 000 / 16 / 3750 = 1200 Hz
  *
+ * PREDELANO:
+ * 		Zrusen PRESC (=1) aby citac cital az do 60.000 stejne jako WTIMER0
+ * 		72 000 000 / 1 / 1200 = 60000
+ * 		To zarucuje co nejpresnejsi kalibraci rychlosti.
+ * 		Co bylo namereno bude i nastaveno.
+ *
  * TIMER1 taktuje POCSAG_SampleBit() 1200x za sekundu.
  * Uvnitø POCSAG_SampleBit() se odeète RX
  * Støed bitu - Synchronizaci fáze zajišuje POCSAG_edge_detected() volaná
@@ -26,7 +32,8 @@ void initTIMER1(void)
     TIMER1->CTRL = 0;
     TIMER1->CNT  = 0;
     TIMER1->TOP  = TIMER1_TOP;
-    TIMER1->CTRL = TIMER_CTRL_PRESC_DIV16 | TIMER_CTRL_MODE_UP;
+//    TIMER1->CTRL = TIMER_CTRL_PRESC_DIV16 | TIMER_CTRL_MODE_UP;
+    TIMER1->CTRL = TIMER_CTRL_PRESC_DIV1 | TIMER_CTRL_MODE_UP;
     TIMER1->IFC  = _TIMER_IFC_MASK;
     TIMER1->IEN  = TIMER_IEN_OF;
 
@@ -56,7 +63,7 @@ void TIMER1_IRQHandler(void) {
     TIMER1->IFC = TIMER_IFC_OF;
     LED2_Toggle();
     LED_TX_Off();
-    POCSAG_sample_bit(); // Tato funkce nyní øeší èasování
+    POCSAG_sample_bit(); // Tato funkce øeší RX/TX jednoho bitu.
 //    GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
 
 }
@@ -64,15 +71,16 @@ void TIMER1_IRQHandler(void) {
 //------------------------------------------------------------------------------
 // Kalibrace - nastavi TOP podle namerene rychlosti v preamble
 // Rychlost se meri pomoci wtimer0 - 72MHz t.j. pro 1200Hz nacita 60000x
-// TOP = (72M / 16 / f) -1
-// pro f=1200Hz to je 3750-1
-// pri vzorkovani 72MHz (13,88nsec) je TOP kalibrovane f => count / 16
+// TOP = (72M / f) -1
+// pro f=1200Hz to je 60000-1
+// pri vzorkovani 72MHz je TOP kalibrovane s presnosti +/- 13,88nsec
 //------------------------------------------------------------------------------
 void TIMER1_Calibrate(uint32_t calib_counter)
 {
-	//-- Ochrana, kalibrujeme jen pri odchylce +/- 10Hz
-	if (calib_counter>59500 && calib_counter<60500) {
-		TIMER1->TOP = ((calib_counter/16)+0.5)-1;
+	//-- Ochrana, kalibrujeme jen pri odchylce +/- 24Hz (2%) t.j. <1176,1224>
+	if (calib_counter>58823 && calib_counter<61177) {
+//		TIMER1->TOP = ((calib_counter/16)+0.5)-1;
+		TIMER1->TOP = calib_counter - 1;
 	}
 }
 

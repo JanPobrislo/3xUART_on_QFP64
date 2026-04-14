@@ -250,7 +250,8 @@ void tx_bit(void) {
 				sendStringUART1("\n");
 				if(number_of_words >= tx_token.total_words) {  //-- vyslan cely token
 					tx_stop();
-					sendStringUART1("\nEND");
+					sendStringUART1("--------------------------------\n");
+					sendStringUART1("TxEND\n");
 				}
 				else {
 					if(number_of_words%16 == 0) {  //-- konec batch nasleduje SYNC WORD
@@ -652,11 +653,11 @@ void POCSAG_process(void) {
 
 //    sendStringUART1("-----------------------------\r\n");
     if (rx_token.rx_ok) {
-    	sprintf(buf, "--- OK ---\r\n");
+    	sprintf(buf, "--- OK: ");
 //    	sprintf(buf, "--- OK ALL %u WORDS ---\r\n", rx_token.total_words);
     }
     else {
-    	sprintf(buf, "--- ERROR ---\r\n");
+    	sprintf(buf, "--- ERROR: ");
     }
     sendStringUART1(buf);
 //    sprintf(buf, "TOTAL WORDS: %u\r\n", rx_token.total_words);
@@ -674,14 +675,19 @@ void POCSAG_process(void) {
 
     //--- Vypise hlavicku
 	if(rx_token.system_token==1) {
-		sendStringUART1("SYSTEM TOKEN: ");
+		sendStringUART1("SYSTEM ");
 	}
 	else {
-		sendStringUART1("NORMAL TOKEN: ");
+		sendStringUART1("NORMAL ");
 	}
 	sprintf(buf,"NET=%02u DAU=%02u ADR=%02u PATH=%u ",rx_token.net,rx_token.dau,rx_token.adr,rx_token.path);
     sendStringUART1(buf);
-	sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u\r\n",rx_token.token_id,rx_token.batch,rx_token.master);
+	sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u ",rx_token.token_id,rx_token.batch,rx_token.master);
+    sendStringUART1(buf);
+//    sprintf(buf, "KALIBR:%lu\r\n",calib_count_per_bit);
+    // Výpočet v milihertzech pomocí celých čísel
+    uint32_t freq_mHz = (72000000ULL * 1000) / calib_count_per_bit;
+    sprintf(buf, "f=%lu.%03luHz\r\n", freq_mHz / 1000, freq_mHz % 1000);
     sendStringUART1(buf);
 
     //--- Dekódování adresy a textu --- az od ctvrteho codewordu, za hlavickou
@@ -724,10 +730,11 @@ void POCSAG_process(void) {
         sendStringUART1(textMsg);
     }
 
-    sendStringUART1("\r\n------------------------------------------\r\n");
+    sendStringUART1("\r\n");
+//    sendStringUART1("------------------------------------------\r\n");
 //	sprintf(buf, "KALIBRACE: %lu = %0.2f Hz \r\n",calib_count_per_bit,(float)(72000000UL/calib_count_per_bit));
-	sprintf(buf, "KALIBRACE: %lu\r\n",calib_count_per_bit);
-	sendStringUART1(buf);
+//	sprintf(buf, "KALIBRACE: %lu\r\n",calib_count_per_bit);
+//	sendStringUART1(buf);
 /*
 	sprintf(buf, "KALIBRACE: %lu  1-bit: %lu ", calib_stop_counter-calib_start_counter, (calib_stop_counter-calib_start_counter)/calib_bits);
 	sendStringUART1(buf);
@@ -824,6 +831,9 @@ void POCSAG_process(void) {
 		tx_start();
     }
     else {
-    	sendStringUART1("Neni pro mne NEVYSILAM.\r\n");
+    	if (rx_token.rx_ok) {
+    		sendStringUART1("NEVYSILAM\r\n");
+    	}
     }
+//    sendStringUART1("------------------------------------------\r\n");
 }
