@@ -77,7 +77,9 @@ void TIMER1_IRQHandler(void) {
 //------------------------------------------------------------------------------
 void TIMER1_Calibrate(uint32_t calib_counter)
 {
-	//-- Ochrana, kalibrujeme jen pri odchylce +/- 24Hz (2%) t.j. <1176,1224>
+	//-- Ochrana, kalibrujeme jen pri odchylce +/-24Hz (2%) t.j. <1176,1224>Hz
+	//   Norma povoluje max. odchylku ±10ppm (0,012 bps)
+	//   povolený je rozsah 1199,988 až 1200,012 Hz
 	if (calib_counter>58823 && calib_counter<61177) {
 //		TIMER1->TOP = ((calib_counter/16)+0.5)-1;
 		TIMER1->TOP = calib_counter - 1;

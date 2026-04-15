@@ -626,7 +626,7 @@ void POCSAG_process(void) {
 
     sendStringUART1("\r\n--- RX POCSAG START ---\r\n");
 
-    rx_token.rx_ok = true; // Neopravena chyba to schodi
+    rx_token.rx_ok = true; // Neopravena chyba to pripadne schodi
 
     //--- Výpis surových dat a kontrola/oprava CDW
     for (uint16_t i = 0; i < rx_token.total_words; i++) {
@@ -642,12 +642,18 @@ void POCSAG_process(void) {
         uint32_t clean = try_fix_word(raw, &fixed);
         bool valid = (calculate_syndrom(clean) == 0 && check_parity(clean));
 
-        if (valid==false && fixed==false) {
+        if (valid) {
+            rx_token.data[i] = clean;  // uložit opravenou hodnotu zpět
+        }
+        else {
         	rx_token.rx_ok = false;
         }
 
         sprintf(buf, "W[%02d]: %08X %s %s\r\n",
-                i+1, (unsigned int)raw, valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
+                i+1, (unsigned int)rx_token.data[i], valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
+//        sprintf(buf, "W[%02d]: %08X->%08X %s %s\r\n",
+//                i+1, (unsigned int)raw, (unsigned int)clean,
+//                valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
         sendStringUART1(buf);
     }
 

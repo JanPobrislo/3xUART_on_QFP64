@@ -3984,7 +3984,7 @@ OUTPUT(3xUART_on_QFP64.axf elf32-littlearm)
  .debug_macro   0x0004c78f      0x34a ./src/usart0.o
  .debug_macro   0x0004cad9      0x335 ./src/wtimer0.o
 
-.debug_line     0x00000000     0xd50e
+.debug_line     0x00000000     0xd508
  .debug_line    0x00000000     0x16c8 ./src/em_cmu.o
  .debug_line    0x000016c8      0xc0b ./src/em_gpio.o
  .debug_line    0x000022d3      0xd9c ./src/em_usart.o
@@ -3996,13 +3996,13 @@ OUTPUT(3xUART_on_QFP64.axf elf32-littlearm)
  .debug_line    0x00006b92      0xb3d ./src/inputs.o
  .debug_line    0x000076cf      0xc02 ./src/led.o
  .debug_line    0x000082d1      0x3e1 ./src/parameters.o
- .debug_line    0x000086b2      0xfd1 ./src/pocsag.o
- .debug_line    0x00009683      0xa64 ./src/timer0.o
- .debug_line    0x0000a0e7      0xaa6 ./src/timer1.o
- .debug_line    0x0000ab8d      0xa77 ./src/uart0.o
- .debug_line    0x0000b604      0xa8d ./src/uart1.o
- .debug_line    0x0000c091      0xa82 ./src/usart0.o
- .debug_line    0x0000cb13      0x9fb ./src/wtimer0.o
+ .debug_line    0x000086b2      0xfcb ./src/pocsag.o
+ .debug_line    0x0000967d      0xa64 ./src/timer0.o
+ .debug_line    0x0000a0e1      0xaa6 ./src/timer1.o
+ .debug_line    0x0000ab87      0xa77 ./src/uart0.o
+ .debug_line    0x0000b5fe      0xa8d ./src/uart1.o
+ .debug_line    0x0000c08b      0xa82 ./src/usart0.o
+ .debug_line    0x0000cb0d      0x9fb ./src/wtimer0.o
 
 .debug_str      0x00000000   0x1e88dc
  .debug_str     0x00000000   0x1e1b0f ./src/em_cmu.o
