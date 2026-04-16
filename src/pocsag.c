@@ -24,7 +24,7 @@ typedef enum {
 static volatile POCSAG_Rx_State rx_state = STATE_RX_IDLE;
 static volatile uint32_t shiftReg = 0;
 static volatile uint16_t bitCounter = 0;
-volatile POCSAG_token rx_token;
+POCSAG_token rx_token;
 static uint32_t bitBuffer = 0;
 static uint8_t bitsInBuffer = 0;
 
@@ -552,45 +552,54 @@ void make_bch(POCSAG_token *token) {
 }
 
 //------------------------------------------------------------------------------
-//  Nastavi binární hlavičku v poli data[] na základě všech hodnot ve struktuře
+//  Z binární hlavičky v poli data[] nastavi všechny promnene ve struktuře
+//------------------------------------------------------------------------------
+void read_header(POCSAG_token *token) {
+    if (token == NULL) return;
+
+    token->token_id = (token->data[2]>>16)&0x1F;
+    token->batch= (token->data[1]>>25)&0x3F;
+    token->net =  (token->data[0]>>24)&0x0F;
+    token->adr =  (token->data[0]>>16)&0x1F;
+    token->dau =  (token->data[2]>>26)&0x1F;
+    token->path = (token->data[0]>>12)&0x0F;
+    token->master =(token->data[1]>>16)&0x1F;
+    token->system_token = 0x01==((token->data[0]>>21)&0x07);
+
+}
+
+//------------------------------------------------------------------------------
+//  Nastavi binární hlavičku v poli data[] na základě všech promnenych ve struktuře
 //------------------------------------------------------------------------------
 void make_header(POCSAG_token *token) {
     if (token == NULL) return;
 
-    /*
-     *   data[0]:
-     *     net          = (data[0] >> 24) & 0x0F   → bity 27..24  (4 bity)
-     *     system_token = (data[0] >> 21) & 0x07 == 1 → bit 21    (1 bit)
-     *     adr          = (data[0] >> 16) & 0x1F   → bity 20..16  (5 bitů)
-     *     path         = (data[0] >> 12) & 0x0F   → bity 15..12  (4 bity)
-     *
-     *   data[1]:
-     *     batch        = (data[1] >> 25) & 0x3F   → bity 30..25  (6 bitů)
-     *     master       = (data[1] >> 16) & 0x1F   → bity 20..16  (5 bitů)
-     *
-     *   data[2]:
-     *     dau          = (data[2] >> 26) & 0x1F   → bity 30..26  (5 bitů)
-     *     token_id     = (data[2] >> 16) & 0x1F   → bity 20..16  (5 bitů)
-     */
-
     /* --- data[0] --- */
-    uint32_t d0 = 0;
-    d0 |= ((uint32_t)(token->net          & 0x0F) << 24);  /* bity 27..24 */
-    d0 |= ((uint32_t)(token->system_token & 0x01) << 21);  /* bit  21     */
-    d0 |= ((uint32_t)(token->adr          & 0x1F) << 16);  /* bity 20..16 */
-    d0 |= ((uint32_t)(token->path         & 0x0F) << 12);  /* bity 15..12 */
+    uint32_t d0 = token->data[0];           // zachovat původní obsah
+    d0 &= ~(0x0FUL << 24);                  // vymazat bity 27..24
+    d0 &= ~(0x01UL << 21);                  // vymazat bit  21
+    d0 &= ~(0x1FUL << 16);                  // vymazat bity 20..16
+    d0 &= ~(0x0FUL << 12);                  // vymazat bity 15..12
+    d0 |= ((uint32_t)(token->net          & 0x0F) << 24);
+    d0 |= ((uint32_t)(token->system_token & 0x01) << 21);
+    d0 |= ((uint32_t)(token->adr          & 0x1F) << 16);
+    d0 |= ((uint32_t)(token->path         & 0x0F) << 12);
     token->data[0] = d0;
 
     /* --- data[1] --- */
-    uint32_t d1 = 0;
-    d1 |= ((uint32_t)(token->batch        & 0x3F) << 25);  /* bity 30..25 */
-    d1 |= ((uint32_t)(token->master       & 0x1F) << 16);  /* bity 20..16 */
+    uint32_t d1 = token->data[1];           // zachovat původní obsah
+    d1 &= ~(0x3FUL << 25);                  // vymazat bity 30..25
+    d1 &= ~(0x1FUL << 16);                  // vymazat bity 20..16
+    d1 |= ((uint32_t)(token->batch        & 0x3F) << 25);
+    d1 |= ((uint32_t)(token->master       & 0x1F) << 16);
     token->data[1] = d1;
 
     /* --- data[2] --- */
-    uint32_t d2 = 0;
-    d2 |= ((uint32_t)(token->dau          & 0x1F) << 26);  /* bity 30..26 */
-    d2 |= ((uint32_t)(token->token_id     & 0x1F) << 16);  /* bity 20..16 */
+    uint32_t d2 = token->data[2];           // zachovat původní obsah
+    d2 &= ~(0x1FUL << 26);                  // vymazat bity 30..26
+    d2 &= ~(0x1FUL << 16);                  // vymazat bity 20..16
+    d2 |= ((uint32_t)(token->dau          & 0x1F) << 26);
+    d2 |= ((uint32_t)(token->token_id     & 0x1F) << 16);
     token->data[2] = d2;
 }
 
@@ -670,6 +679,7 @@ void POCSAG_process(void) {
 //    sendStringUART1(buf);
 
 	//---------------------- Nacte udaje z hlavicky
+/*
     rx_token.token_id= (rx_token.data[2]>>16)&0x1F;
     rx_token.batch= (rx_token.data[1]>>25)&0x3F;
     rx_token.net =  (rx_token.data[0]>>24)&0x0F;
@@ -678,6 +688,8 @@ void POCSAG_process(void) {
     rx_token.path = (rx_token.data[0]>>12)&0x0F;
     rx_token.master=(rx_token.data[1]>>16)&0x1F;
     rx_token.system_token=0x01==((rx_token.data[0]>>21)&0x07);
+*/
+    read_header(&rx_token);
 
     //--- Vypise hlavicku
 	if(rx_token.system_token==1) {
@@ -760,6 +772,7 @@ void POCSAG_process(void) {
     if (rx_token.rx_ok && rx_token.adr == param.netdau[rx_token.net-1])   //-- jen kompletne prijate tokeny pro mne
 //    if (rx_token.rx_ok && rx_token.net==15 && rx_token.adr==3)   //-- jen kompletne prijate tokeny pro mne
     {
+    	//-- Vysilam
     	LED3_On();
     	tx_token = rx_token;
     	tx_token.net = 15;

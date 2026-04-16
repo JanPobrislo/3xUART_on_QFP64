@@ -25,7 +25,7 @@ typedef struct {
 	unsigned char system_token;	// =1 pro sytemovy token
 } POCSAG_token;
 
-extern volatile POCSAG_token rx_token;
+//extern POCSAG_token rx_token;
 
 void POCSAG_rx_init(void);
 void POCSAG_edge_detected(void); // volano interuptem GPIO_EVEN_IRQHandler()
