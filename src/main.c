@@ -147,11 +147,16 @@ int main(void)
     					sendStringUART1(" t : start TX TOKEN\r\n");
     					sendStringUART1(" T : stop timer1 1200Hz\r\n");
     					sendStringUART1(" x : GPIO_IntEnable(RX_PIN)\r\n");
+    					sendStringUART1(" p : show parameters\r\n");
     					sendStringUART1(" h : display this help\r\n");
     					sendStringUART1(" --------------------------------\r\n");
     					POCSAG_show_rx_state();
     					sendStringUART1(" --------------------------------\r\n");
 						break;
+
+    		case 'p' : 	Parameters_Show();
+    					break;
+
     		case '1' : 	LED1_Toggle();
     	    			GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
     					sendStringUART1("LED1");
@@ -171,16 +176,20 @@ int main(void)
     		case '6' : 	LED_TX_Toggle();
     					sendStringUART1("LED TX");
     					break;
+
     		case 't' : 	tx_start();
     					sendStringUART1("Tx datagram\r\n");
     					break;
+
     		case 'T' : 	TIMER1_Stop();
     					sendStringUART1("Stop timer1 TX 1200Hz\r\n");
     					break;
+
     		case 'x' : 	sendStringUART1("TX toggle bit\r\n");
 //    					GPIO_PinOutToggle(TX_PORT, TX_PIN);
     					rx_edge_irq_enabled();
     					break;
+
     		default:	break;
     		}
 

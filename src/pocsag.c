@@ -199,7 +199,6 @@ void tx_start(void) {
 	GPIO_PinOutClear(PTT_PORT, PTT_PIN);  	// zaklicuje
 	TIMER1_ResetSpeed();
 	TIMER1_Start();
-	LED4_On();
 }
 
 //------------------------------------------------------------------------------
@@ -208,8 +207,8 @@ void tx_start(void) {
 void tx_stop(void) {
 	tx_state = STATE_TX_IDLE;
 	GPIO_PinOutSet(PTT_PORT, PTT_PIN);  	// odklicuje
+	LED2_Off();
 	LED3_Off();
-	LED4_Off();
 	POCSAG_rx_init();  // inicializuje prijem
 	rx_state = STATE_RX_IDLE;
 }
@@ -293,6 +292,7 @@ void POCSAG_sample_bit(void) {
                 TIMER_CounterSet((TIMER_TypeDef *)WTIMER0, 0); // Nuluje counter
             	calib_bits = 0;
         		calib_start = true;
+            	LED1_On();
             }
             break;
 
@@ -311,15 +311,12 @@ void POCSAG_sample_bit(void) {
 
 
         case STATE_SYNC_WORD:
-            LED4_On();
             if (shiftReg == POCSAG_SYNC_WORD) {
                 rx_state = STATE_RECEIVING;
                 bitCounter = 0;
                 wordsInBatch = 1; // Dalších 16 slov jsou data
                 rx_token.total_words = 0;
             	rx_edge_irq_disabled(); // Vypneme detekci hran - teď už jen pevný čas
-
-            	LED1_On();
 //                GPIO_PinOutSet(DBG_PORT, DBG_PIN);
 
             }
@@ -334,7 +331,6 @@ void POCSAG_sample_bit(void) {
             break;
 
 		case STATE_RECEIVING:
-			LED3_On();
 			bitCounter++;
 			//-- Synchronizoval na prvni dva bity FS, zastavit
 			if (wordsInBatch == 0 && bitCounter == 2) {
@@ -670,6 +666,7 @@ void POCSAG_process(void) {
     if (rx_token.rx_ok) {
     	sprintf(buf, "--- OK: ");
 //    	sprintf(buf, "--- OK ALL %u WORDS ---\r\n", rx_token.total_words);
+    	LED3_On();
     }
     else {
     	sprintf(buf, "--- ERROR: ");
@@ -773,7 +770,7 @@ void POCSAG_process(void) {
 //    if (rx_token.rx_ok && rx_token.net==15 && rx_token.adr==3)   //-- jen kompletne prijate tokeny pro mne
     {
     	//-- Vysilam
-    	LED3_On();
+    	LED2_On();
     	tx_token = rx_token;
     	tx_token.net = 15;
 		tx_token.adr = 4;
@@ -852,6 +849,7 @@ void POCSAG_process(void) {
     else {
     	if (rx_token.rx_ok) {
     		sendStringUART1("NEVYSILAM\r\n");
+        	LED3_Off();
     	}
     }
 //    sendStringUART1("------------------------------------------\r\n");

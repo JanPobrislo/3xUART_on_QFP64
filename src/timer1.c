@@ -61,9 +61,9 @@ void TIMER1_Stop(void)
 
 void TIMER1_IRQHandler(void) {
     TIMER1->IFC = TIMER_IFC_OF;
-    LED2_Toggle();
-    LED_TX_Off();
     POCSAG_sample_bit(); // Tato funkce øeší RX/TX jednoho bitu.
+//    LED2_Toggle();
+//    LED_TX_Off();
 //    GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
 
 }
