@@ -86,7 +86,7 @@ static void delay_ms(uint32_t ms)
 //------------------------------------------------------------------------------
 int main(void)
 {
-	char txt[250] = "";
+//	char txt[250] = "";
 
     CHIP_Init();  	//-- z em_chip.h
 
@@ -203,6 +203,8 @@ int main(void)
     	if (IsSecond==1)
     	{
     		IsSecond=0;
+    		routing_handler();
+    		sendStringUART1(".");
 
     		/*
     		if (Input_GetOnBattery()) {

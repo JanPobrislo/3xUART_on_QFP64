@@ -34,5 +34,6 @@ void POCSAG_process(void);       // volano v main loop
 //void POCSAG_Tx_datagram(void);
 void POCSAG_show_rx_state(void);
 void tx_start(void);
+void routing_handler(void);
 
 #endif

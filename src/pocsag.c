@@ -46,8 +46,10 @@ typedef enum {
 } POCSAG_Route_State;
 
 static POCSAG_Route_State route_state = STATE_ROUTE_IDLE;
-POCSAG_token tx_token;
+static uint32_t route_repeat_counter = 0;
+static uint32_t route_timer = 0;
 
+POCSAG_token tx_token;
 
 // --- BCH (31,21) a Parita ---
 // Pomocná funkce pro zrcadlení bitů v 32-bitovém slově
@@ -185,14 +187,33 @@ void set_tx_bit(uint8_t bit) {
 //  Spusteni vysilani datagramu
 //------------------------------------------------------------------------------
 void tx_start(void) {
-	// Zastavit a zablokovat Rx
+    char buf[160];
+
+	LED2_On();
+
+	//-- Zastavit a zablokovat Rx
 	TIMER1_Stop();
 	rx_edge_irq_disabled(); // Vypneme detekci hran - nevyhodnocuje prijem
 //    GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - nevyhodnocuje prijem
 	rx_state = STATE_TRANSMITING;
 
-	// Spusti vysilani
-//	bitCounter=5000;
+	sendStringUART1("\r\n-------------- TX --------------\r\n");
+	sendStringUART1("TX: ");
+    //--- Vypise TX hlavicku
+	if(tx_token.system_token==1) {
+		sendStringUART1("SYSTEM ");
+	}
+	else {
+		sendStringUART1("NORMAL ");
+	}
+	sprintf(buf,"NET=%02u DAU=%02u ADR=%02u PATH=%u ",tx_token.net,tx_token.dau,tx_token.adr,tx_token.path);
+    sendStringUART1(buf);
+	sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u\r\n",tx_token.token_id,tx_token.batch,tx_token.master);
+    sendStringUART1(buf);
+	sprintf(buf,"FOLLOW=%u ERROR=%u REVERSAL=%02u\r\n",route.follow, route.error, route.revers);
+    sendStringUART1(buf);
+
+	//-- Spusti vysilani
 	tx_state = TX_PREAMBLE;
 	number_of_tx = 0;
 	GPIO_PinOutClear(TX_PORT, TX_PIN);    	// nula aby preamble zacal 1
@@ -597,6 +618,8 @@ void make_header(POCSAG_token *token) {
     d2 |= ((uint32_t)(token->dau          & 0x1F) << 26);
     d2 |= ((uint32_t)(token->token_id     & 0x1F) << 16);
     token->data[2] = d2;
+
+	make_bch(&tx_token);     //-- Opravi BCH a Paritu
 }
 
 //------------------------------------------------------------------------------
@@ -665,27 +688,14 @@ void POCSAG_process(void) {
 //    sendStringUART1("-----------------------------\r\n");
     if (rx_token.rx_ok) {
     	sprintf(buf, "--- OK: ");
-//    	sprintf(buf, "--- OK ALL %u WORDS ---\r\n", rx_token.total_words);
     	LED3_On();
     }
     else {
     	sprintf(buf, "--- ERROR: ");
     }
     sendStringUART1(buf);
-//    sprintf(buf, "TOTAL WORDS: %u\r\n", rx_token.total_words);
-//    sendStringUART1(buf);
 
 	//---------------------- Nacte udaje z hlavicky
-/*
-    rx_token.token_id= (rx_token.data[2]>>16)&0x1F;
-    rx_token.batch= (rx_token.data[1]>>25)&0x3F;
-    rx_token.net =  (rx_token.data[0]>>24)&0x0F;
-    rx_token.adr =  (rx_token.data[0]>>16)&0x1F;
-    rx_token.dau =  (rx_token.data[2]>>26)&0x1F;
-    rx_token.path = (rx_token.data[0]>>12)&0x0F;
-    rx_token.master=(rx_token.data[1]>>16)&0x1F;
-    rx_token.system_token=0x01==((rx_token.data[0]>>21)&0x07);
-*/
     read_header(&rx_token);
 
     //--- Vypise hlavicku
@@ -766,91 +776,102 @@ void POCSAG_process(void) {
     rx_token.ready = false;
 
     //-------------- Kontrola a vysilani
-    if (rx_token.rx_ok && rx_token.adr == param.netdau[rx_token.net-1])   //-- jen kompletne prijate tokeny pro mne
+    if (rx_token.rx_ok)   //-- jen kompletne prijate tokeny
 //    if (rx_token.rx_ok && rx_token.net==15 && rx_token.adr==3)   //-- jen kompletne prijate tokeny pro mne
     {
-    	//-- Vysilam
-    	LED2_On();
-    	tx_token = rx_token;
-    	tx_token.net = 15;
-		tx_token.adr = 4;
-		tx_token.dau = param.netdau[rx_token.net-1];
-//		tx_token.path = 5;
-//		tx_token.system_token = 1;
-//		tx_token.master = 7;
-//		tx_token.token_id = 31;
-//		tx_token.batch = 1;
-//		tx_token.total_words = 16; // jeden BATCH
+        if (rx_token.adr == param.netdau[rx_token.net-1])   //-- je pro mne
+        {
+        	//-- zjisti komu vysilat
+        	make_route(rx_token.net, rx_token.path, rx_token.dau);
 
-	    make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
-	    make_bch(&tx_token);     //-- Opravi BCH a Paritu
+        	//-- Vysilam
+			tx_token = rx_token;
+			tx_token.adr = route.follow;
+			tx_token.dau = param.netdau[rx_token.net-1];
+			make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
 
+			//-- Nastavi cekani na potvrzeni tokenu
+			route_state = WAIT_FOLLOW;
+			route_repeat_counter = param.next_rpt+1;
+			route_timer = param.next_time+1;
+			LED4_On();
 
-//-------------------------------------------------------------------------------------------------
-		sendStringUART1("\r\n-------------- TX --------------\r\n");
-		sendStringUART1("TX: ");
-/*
-		rx_token = tx_token;
-	    //--- Výpis surových dat a kontrola/oprava CDW
-	    for (uint16_t i = 0; i < rx_token.total_words; i++) {
-	        uint32_t raw = rx_token.data[i];
+			tx_start();  //-- Spusti vysilani
 
-	        if (raw == POCSAG_IDLE_WORD) {
-	            sprintf(buf, "TX[%02d]: IDLE\r\n", i+1);
-	            sendStringUART1(buf);
-	            continue;
-	        }
-
-	        bool fixed = false;
-	        uint32_t clean = try_fix_word(raw, &fixed);
-	        bool valid = (calculate_syndrom(clean) == 0 && check_parity(clean));
-
-	        if (valid==false && fixed==false) {
-	        	rx_token.rx_ok = false;
-	        }
-
-	        sprintf(buf, "TX[%02d]: %08X %s %s\r\n",
-	                i+1, (unsigned int)raw, valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
-	        sendStringUART1(buf);
-	    }
-
-	    sprintf(buf, "BCH+PARITY: %s\r\n", rx_token.rx_ok ? "ALL OK" : "ERROR");
-	    sendStringUART1(buf);
-
-		//---------------------- Nacte udaje z hlavicky
-	    rx_token.token_id= (rx_token.data[2]>>16)&0x1F;
-	    rx_token.batch= (rx_token.data[1]>>25)&0x3F;
-	    rx_token.net =  (rx_token.data[0]>>24)&0x0F;
-	    rx_token.adr =  (rx_token.data[0]>>16)&0x1F;
-	    rx_token.dau =  (rx_token.data[2]>>26)&0x1F;
-	    rx_token.path = (rx_token.data[0]>>12)&0x0F;
-	    rx_token.master=(rx_token.data[1]>>16)&0x1F;
-	    rx_token.system_token=0x01==((rx_token.data[0]>>21)&0x07);
-*/
-	    //--- Vypise TX hlavicku
-		if(tx_token.system_token==1) {
-			sendStringUART1("SYSTEM ");
-		}
-		else {
-			sendStringUART1("NORMAL ");
-		}
-		sprintf(buf,"NET=%02u DAU=%02u ADR=%02u PATH=%u ",tx_token.net,tx_token.dau,tx_token.adr,tx_token.path);
-	    sendStringUART1(buf);
-		sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u\r\n",tx_token.token_id,tx_token.batch,tx_token.master);
-	    sendStringUART1(buf);
-//		sendStringUART1("--- TX END ---\r\n");
-//-------------------------------------------------------------------------------------------------
-		//-- Vysila
-//		sendStringUART1("\r\n-------------- TX --------------\r\n");
-//	    sprintf(buf, "TOTAL WORDS: %u\r\n", tx_token.total_words);
-//	    sendStringUART1(buf);
-		tx_start();
-    }
-    else {
-    	if (rx_token.rx_ok) {
+        }
+        else {  //-- token neni pro mne, kontrola routingu
     		sendStringUART1("NEVYSILAM\r\n");
-        	LED3_Off();
-    	}
+
+    		if (route_state == WAIT_FOLLOW || route_state == WAIT_ERROR) {
+        		if (rx_token.net == tx_token.net && rx_token.dau == tx_token.adr) {
+        			//-- je to ten co cekam
+        			route_state = STATE_ROUTE_IDLE;
+        			LED4_Off();
+        			sendStringUART1("Token potvrzen\r\n");
+        		}
+        	}
+        }
     }
-//    sendStringUART1("------------------------------------------\r\n");
+	LED3_Off();
+}
+
+//------------------------------------------------------------------------------
+// Kontrola opakovani tokenu, pripadne Tx chybovou / reverzni cestou
+//------------------------------------------------------------------------------
+void routing_handler(void) {
+	if(rx_state == STATE_RX_IDLE) { //-- Pokud prijima nebo vysila, tak nic nedelej
+		switch (route_state) {
+			case STATE_ROUTE_IDLE:
+				break;
+
+			case WAIT_FOLLOW:
+				route_timer--;
+				if (route_timer==0) {
+					route_repeat_counter--;
+					if (route_repeat_counter==0) {
+						//-- Konec opakovani primou cestou, opakuje chybovou
+						route_state = WAIT_ERROR;
+						tx_token.adr = route.error;
+						route_repeat_counter = param.error_rpt+1;
+						route_timer = param.next_time+1;
+						make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
+						sendStringUART1("ERROR-PATH\r\n");
+						tx_start();
+					}
+					else {
+						//-- opakuje primou cestou
+						route_timer = param.next_time+1;
+						sendStringUART1("REPEAT\r\n");
+						tx_start();
+					}
+				}
+				break;
+
+			case WAIT_ERROR:
+				route_timer--;
+				if (route_timer==0) {
+					route_repeat_counter--;
+					if (route_repeat_counter==0) {
+						//-- Konec opakovani chybovou cestou, posle REVERSAL
+						route_state = STATE_ROUTE_IDLE;  //-- nebude cekat
+						tx_token.adr = route.revers;
+						route_repeat_counter = 0;
+						route_timer = 0;
+						make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
+						sendStringUART1("REVERSAL\r\n");
+						tx_start();
+					}
+					else {
+						//-- opakuje chybovou cestou
+						route_timer = param.next_time+1;
+						sendStringUART1("REPEAT ERROR\r\n");
+						tx_start();
+					}
+				}
+				break;
+
+			case WAIT_REVERS:
+				break;
+		}
+	}
 }

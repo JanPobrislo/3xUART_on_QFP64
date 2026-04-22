@@ -30,7 +30,17 @@ typedef struct {
 
 extern tci_parameters param;
 
+typedef struct {
+	unsigned char follow;	// Adresat (DAU) v prime ceste
+	unsigned char error;	// Adresat (DAU) v chybove ceste
+	unsigned char revers;	// Adresat (DAU) v reverzni ceste
+} POCSAG_route;
+
+extern POCSAG_route route;  // definuje routu pro vysilani
+
+
 void Parameters_Init(void);
 void Parameters_Show(void);
+void make_route(unsigned char net, unsigned char path, unsigned char dau);
 
 #endif

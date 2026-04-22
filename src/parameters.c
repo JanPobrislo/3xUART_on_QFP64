@@ -6,13 +6,16 @@
 
 tci_parameters param;
 
+POCSAG_route route;  // definuje routu pro vysilani
+
+
 void Parameters_Init(void) {
 	unsigned char n;
 
 	param.primary_net = 15;
-	param.next_time = 3;
-	param.next_rpt = 1;
-	param.error_rpt = 1;
+	param.next_time = 5;
+	param.next_rpt = 2;
+	param.error_rpt = 2;
 	param.pretime = 0;
 	param.deadtime = 0;
 	param.sys_tok = 0;
@@ -107,5 +110,14 @@ void Parameters_Show(void) {
 	}
 //	sendStringUART1("       -------------------------\r\n");
 	sendStringUART1("-------------------------------------------------\r\n");
+}
 
+//------------------------------------------------------------------------------
+// Podle parametru NET,PATH,DAU nacte z route table a nastavi promenou route
+//------------------------------------------------------------------------------
+void make_route(unsigned char net, unsigned char path, unsigned char dau)
+{
+	route.follow = 5;
+	route.error  = 2;
+	route.revers = 2;
 }
