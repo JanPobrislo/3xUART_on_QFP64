@@ -13,8 +13,8 @@ void Parameters_Init(void) {
 	unsigned char n;
 
 	param.primary_net = 15;
-	param.next_time = 5;
-	param.next_rpt = 2;
+	param.next_time = 2;
+	param.next_rpt = 1;
 	param.error_rpt = 2;
 	param.pretime = 0;
 	param.deadtime = 0;
@@ -117,7 +117,7 @@ void Parameters_Show(void) {
 //------------------------------------------------------------------------------
 void make_route(unsigned char net, unsigned char path, unsigned char dau)
 {
-	route.follow = 5;
-	route.error  = 2;
+	route.follow = 4;
+	route.error  = 4;
 	route.revers = 2;
 }

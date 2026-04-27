@@ -22,7 +22,7 @@ typedef struct {
 	unsigned char dau;		// Odesilatel (DAU) - vysilac ktery vyslal tento token
 	unsigned char path;	    // Radiova cesta (0-15)
 	unsigned char master;	// Master DAU, ktery zahajil vysilani tokenu
-	unsigned char system_token;	// =1 pro sytemovy token
+	unsigned char token_type;	// 0=normal, 1=sytemovy token, 2=testovaci token (PP test)
 } POCSAG_token;
 
 //extern POCSAG_token rx_token;

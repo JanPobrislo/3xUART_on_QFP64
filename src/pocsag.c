@@ -42,7 +42,7 @@ typedef enum {
     STATE_ROUTE_IDLE,  // Nic nedela, ceka az bude vysilat
     WAIT_FOLLOW,  	// Ceka na vysilac v prime ceste
     WAIT_ERROR,  	// Ceka na vysilac v chybove ceste
-    WAIT_REVERS,  	// Ceka na vysilac v reverzni ceste
+//    WAIT_REVERS,  	// Ceka na vysilac v reverzni ceste
 } POCSAG_Route_State;
 
 static POCSAG_Route_State route_state = STATE_ROUTE_IDLE;
@@ -200,7 +200,7 @@ void tx_start(void) {
 	sendStringUART1("\r\n-------------- TX --------------\r\n");
 	sendStringUART1("TX: ");
     //--- Vypise TX hlavicku
-	if(tx_token.system_token==1) {
+	if(tx_token.token_type==1) {
 		sendStringUART1("SYSTEM ");
 	}
 	else {
@@ -326,7 +326,6 @@ void POCSAG_sample_bit(void) {
                 calib_bits = bitCounter;
         		calib_stop = true;
                 bitCounter = 0;
-//                TIMER1_Calibrate(calib_stop_counter-calib_start_counter);
             }
             break;
 
@@ -338,7 +337,6 @@ void POCSAG_sample_bit(void) {
                 wordsInBatch = 1; // Dalších 16 slov jsou data
                 rx_token.total_words = 0;
             	rx_edge_irq_disabled(); // Vypneme detekci hran - teď už jen pevný čas
-//                GPIO_PinOutSet(DBG_PORT, DBG_PIN);
 
             }
             else {
@@ -346,6 +344,7 @@ void POCSAG_sample_bit(void) {
                 if (bitCounter >= 32) {
                 	//-- FS nenalezen
                 	TIMER1_ResetSpeed();
+					rx_edge_irq_enabled();
 					rx_state = STATE_RX_IDLE;
                 }
             }
@@ -353,25 +352,23 @@ void POCSAG_sample_bit(void) {
 
 		case STATE_RECEIVING:
 			bitCounter++;
-			//-- Synchronizoval na prvni dva bity FS, zastavit
-			if (wordsInBatch == 0 && bitCounter == 2) {
+			//-- Synchronizace na hranu mezi prvnimi dva bity FS (01111100110100100001010111011000)
+			if (wordsInBatch == 0 && bitCounter == 0) {
+            	rx_edge_irq_enabled(); // Zapneme detekci hran - synchr
+			}
+			if (wordsInBatch == 0 && bitCounter == 1) {
             	rx_edge_irq_disabled(); // Vypneme detekci hran - teď už jen pevný čas
 			}
 
+			//-- Právě jsme dočetli 32. bit. Obsah je v shiftReg.
 			if (bitCounter >= 32) {
 				bitCounter = 0;
-//					GPIO_IntEnable(1 << RX_PIN);
-
-				// Právě jsme dočetli 32. bit. Obsah je v shiftReg.
-//	                GPIO_PinOutSet(DBG_PORT, DBG_PIN);
-
 
 				// SCÉNÁŘ A: Čekáme na SYNC slovo (každých 17. slovo v proudu dat)
 				if (wordsInBatch == 0) {
 					if (shiftReg == POCSAG_SYNC_WORD) {
 						// V pořádku, začíná další batch
 						// wordsInBatch necháme na 0, ale nepíšeme SYNC do dat
-						// (Teoreticky zde wordsInBatch nastavíme na 1 po inkrementaci níže)
 					} else {
 						// KONEC DATAGRAMU: Na místě, kde měl být SYNC, je něco jiného
 						rx_token.ready = true;
@@ -398,7 +395,7 @@ void POCSAG_sample_bit(void) {
 				wordsInBatch++;
 				if (wordsInBatch > 16) {
 					wordsInBatch = 0; // Příští slovo MUSÍ být SYNC
-					//-- zrusena synchronizace na kazde FS - uz je kalibrovano
+					//-- Povolena synchronizace na prvni bity FS (uz je kalibrovano)
 //					rx_edge_irq_enabled();
 				}
 
@@ -412,20 +409,9 @@ void POCSAG_sample_bit(void) {
 				}
 			}
 			break;
+
 		case STATE_TRANSMITING:
 			tx_bit();
-/*
-			bitCounter--;
-			if (bitCounter == 0) {
-				//-- Konec vysilani
-				GPIO_PinOutSet(PTT_PORT, PTT_PIN);
-				POCSAG_Init();
-			}
-			else {
-				//-- Vysila
-				GPIO_PinOutToggle(TX_PORT, TX_PIN);
-			}
-*/
 			break;
     }
 }
@@ -581,7 +567,7 @@ void read_header(POCSAG_token *token) {
     token->dau =  (token->data[2]>>26)&0x1F;
     token->path = (token->data[0]>>12)&0x0F;
     token->master =(token->data[1]>>16)&0x1F;
-    token->system_token = 0x01==((token->data[0]>>21)&0x07);
+    token->token_type = 0x01==((token->data[0]>>21)&0x07);
 
 }
 
@@ -598,7 +584,7 @@ void make_header(POCSAG_token *token) {
     d0 &= ~(0x1FUL << 16);                  // vymazat bity 20..16
     d0 &= ~(0x0FUL << 12);                  // vymazat bity 15..12
     d0 |= ((uint32_t)(token->net          & 0x0F) << 24);
-    d0 |= ((uint32_t)(token->system_token & 0x01) << 21);
+    d0 |= ((uint32_t)(token->token_type & 0x01) << 21);
     d0 |= ((uint32_t)(token->adr          & 0x1F) << 16);
     d0 |= ((uint32_t)(token->path         & 0x0F) << 12);
     token->data[0] = d0;
@@ -686,6 +672,15 @@ void POCSAG_process(void) {
     }
 
 //    sendStringUART1("-----------------------------\r\n");
+
+    //---------------------- Nacte udaje z hlavicky
+    read_header(&rx_token);
+
+    //-- Kontrola delky prijateho tokenu
+    if (rx_token.rx_ok) {
+   		rx_token.rx_ok = (rx_token.batch*16) == rx_token.total_words;
+    }
+
     if (rx_token.rx_ok) {
     	sprintf(buf, "--- OK: ");
     	LED3_On();
@@ -695,11 +690,8 @@ void POCSAG_process(void) {
     }
     sendStringUART1(buf);
 
-	//---------------------- Nacte udaje z hlavicky
-    read_header(&rx_token);
-
     //--- Vypise hlavicku
-	if(rx_token.system_token==1) {
+	if(rx_token.token_type==1) {
 		sendStringUART1("SYSTEM ");
 	}
 	else {
@@ -717,7 +709,7 @@ void POCSAG_process(void) {
 
     //--- Dekódování adresy a textu --- az od ctvrteho codewordu, za hlavickou
     if (rx_token.rx_ok) {
-		if(rx_token.system_token==0) {
+		if(rx_token.token_type==0) {
 //			sendStringUART1("--- MESSAGES ---\r\n");
 
 			for (uint16_t i = 3; i < rx_token.total_words; i++) {
@@ -870,8 +862,8 @@ void routing_handler(void) {
 				}
 				break;
 
-			case WAIT_REVERS:
-				break;
+//			case WAIT_REVERS:
+//				break;
 		}
 	}
 }
