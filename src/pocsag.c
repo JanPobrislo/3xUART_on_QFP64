@@ -149,6 +149,7 @@ void POCSAG_rx_init(void) {
 
     // Povolení přerušení od hran PA0
     GPIO_ExtIntConfig(RX_PORT, RX_PIN, RX_PIN, true, true, true);
+    GPIO_IntClear(1 << RX_PIN);   // vymazat pending flag PŘED povolením
     rx_edge_irq_enabled();
 
     // Timer1 na vychozi hodnoty
@@ -164,8 +165,10 @@ void POCSAG_edge_detected(void) {
 //    if (rx_state == STATE_RX_IDLE)
     {
 		// Resetujeme časovač na polovinu periody, aby první Sample přišel do středu bitu
-        TIMER1->CNT = TIMER1_TOP / 2;
-        LED_TX_On();
+//        TIMER1->CNT = TIMER1_TOP / 2;
+        TIMER1->CNT = TIMER1->TOP / 2;    // v TOP je kalibrovana hodnota
+//        LED_TX_On();
+    	LED_RX_Off();
     }
 }
 
@@ -295,7 +298,7 @@ void POCSAG_sample_bit(void) {
 	uint8_t bit = (Input_GetRX() > 0) ? 1 : 0;
     shiftReg = (shiftReg << 1) | bit;
 
-    GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
+//    GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
     //LED2_Toggle();
 
     switch (rx_state) {
@@ -323,7 +326,7 @@ void POCSAG_sample_bit(void) {
 			if ((shiftReg != 0xAAAAAAAA) && (shiftReg != 0x55555555)) {
 				//-- Zkusi nacist FS (sync.word)
                 rx_state = STATE_SYNC_WORD;
-                calib_bits = bitCounter;
+//                calib_bits = bitCounter;  // predelano do IRQ od RX (PA0)
         		calib_stop = true;
                 bitCounter = 0;
             }
@@ -337,7 +340,6 @@ void POCSAG_sample_bit(void) {
                 wordsInBatch = 1; // Dalších 16 slov jsou data
                 rx_token.total_words = 0;
             	rx_edge_irq_disabled(); // Vypneme detekci hran - teď už jen pevný čas
-
             }
             else {
                 bitCounter++;
@@ -353,16 +355,21 @@ void POCSAG_sample_bit(void) {
 		case STATE_RECEIVING:
 			bitCounter++;
 			//-- Synchronizace na hranu mezi prvnimi dva bity FS (01111100110100100001010111011000)
-			if (wordsInBatch == 0 && bitCounter == 0) {
-            	rx_edge_irq_enabled(); // Zapneme detekci hran - synchr
-			}
 			if (wordsInBatch == 0 && bitCounter == 1) {
+            	rx_edge_irq_enabled(); // Zapneme detekci hran - synchr
+//                TIMER1->CNT  = 0; // Nuluje timer aby IRQ od hrany mel sanci
+                TIMER1_Start();
+                LED_RX_On();
+			}
+			if (wordsInBatch == 0 && bitCounter == 2) {
             	rx_edge_irq_disabled(); // Vypneme detekci hran - teď už jen pevný čas
+//            	LED_RX_Off();
 			}
 
 			//-- Právě jsme dočetli 32. bit. Obsah je v shiftReg.
 			if (bitCounter >= 32) {
 				bitCounter = 0;
+            	LED_RX_Off();
 
 				// SCÉNÁŘ A: Čekáme na SYNC slovo (každých 17. slovo v proudu dat)
 				if (wordsInBatch == 0) {
@@ -395,8 +402,6 @@ void POCSAG_sample_bit(void) {
 				wordsInBatch++;
 				if (wordsInBatch > 16) {
 					wordsInBatch = 0; // Příští slovo MUSÍ být SYNC
-					//-- Povolena synchronizace na prvni bity FS (uz je kalibrovano)
-//					rx_edge_irq_enabled();
 				}
 
 				// Ochrana proti přetečení celkového pole

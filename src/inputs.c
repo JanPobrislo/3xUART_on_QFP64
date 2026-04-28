@@ -49,6 +49,10 @@ void GPIO_EVEN_IRQHandler(void) {
 //            TIMER_CounterSet((TIMER_TypeDef *)WTIMER0, 0); // Nuluje counter
     		calib_start_counter = TIMER_CounterGet((TIMER_TypeDef *)WTIMER0);
     		calib_start = false;
+    		calib_bits = 1;
+    	}
+    	else {
+    		calib_bits++;   // Bude incrementovat ikdyz nemerime, takze pretece, ale nevadi
     	}
 
 		if (calib_stop) {
@@ -63,7 +67,8 @@ void GPIO_EVEN_IRQHandler(void) {
 }
 
 void rx_edge_irq_enabled(void) {
-	GPIO_IntEnable(1 << RX_PIN);
+    GPIO_IntClear(1 << RX_PIN);   // vymazat pending flag PØED povolením
+    GPIO_IntEnable(1 << RX_PIN);
 }
 
 void rx_edge_irq_disabled(void) {
