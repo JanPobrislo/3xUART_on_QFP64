@@ -38,6 +38,7 @@ typedef struct {
 
 extern POCSAG_route route;  // definuje routu pro vysilani
 
+extern unsigned char show_timetick;
 
 void Parameters_Init(void);
 void Parameters_Show(void);

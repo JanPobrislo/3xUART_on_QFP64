@@ -1,6 +1,6 @@
 /******************************************************************************
  * @file timer0.c
- * @brief Obsluha TIMER0 - preruseni 1 Hz pro toggle LED2
+ * @brief Obsluha TIMER0 - preruseni 1 Hz
  * @note HFCLK = 72 MHz, PRESC = DIV1024, TOP = 8789, softwarovy delitel = 8
  *       72 000 000 / 1024 / 8790 / 8 = 1,0005 Hz
  *****************************************************************************/

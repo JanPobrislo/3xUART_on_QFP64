@@ -143,11 +143,12 @@ int main(void)
     					sendStringUART1(" --------------------------------\r\n");
     					sendStringUART1(" TCI commands:\r\n");
     					sendStringUART1(" --------------------------------\r\n");
-    					sendStringUART1(" 1..6 : Toggle LED: 1,2,3,4,RX,TX\r\n");
+    					sendStringUART1(" 1..6 : toggle LED: 1,2,3,4,RX,TX\r\n");
     					sendStringUART1(" t : start TX TOKEN\r\n");
     					sendStringUART1(" T : stop timer1 1200Hz\r\n");
     					sendStringUART1(" x : GPIO_IntEnable(RX_PIN)\r\n");
     					sendStringUART1(" p : show parameters\r\n");
+    					sendStringUART1(" s : toggle second time-tick\r\n");
     					sendStringUART1(" h : display this help\r\n");
     					sendStringUART1(" --------------------------------\r\n");
     					POCSAG_show_rx_state();
@@ -189,6 +190,9 @@ int main(void)
     					rx_edge_irq_enabled();
     					break;
 
+    		case 's' : 	show_timetick = !show_timetick;
+    					break;
+
     		default:	break;
     		}
 
@@ -202,8 +206,11 @@ int main(void)
     	if (IsSecond==1)
     	{
     		IsSecond=0;
-    		routing_handler();
-    		sendStringUART1(".");
+    		POCSAG_routing_handler();
+
+    		if(show_timetick==1) {
+    			sendStringUART1(".");
+    		}
 
     		/*
     		if (Input_GetOnBattery()) {

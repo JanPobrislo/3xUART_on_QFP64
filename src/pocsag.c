@@ -809,7 +809,7 @@ void POCSAG_process(void) {
 //------------------------------------------------------------------------------
 // Kontrola opakovani tokenu, pripadne Tx chybovou / reverzni cestou
 //------------------------------------------------------------------------------
-void routing_handler(void) {
+void POCSAG_routing_handler(void) {
 	if(rx_state == STATE_RX_IDLE) { //-- Pokud prijima nebo vysila, tak nic nedelej
 		switch (route_state) {
 			case STATE_ROUTE_IDLE:
