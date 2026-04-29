@@ -787,9 +787,13 @@ void POCSAG_process(void) {
     sendStringUART1(buf);
 
     //--- Dekódování adresy a textu --- az od ctvrteho codewordu, za hlavickou
-    if (rx_token.rx_ok) {
+	if (rx_token.rx_ok) {
 		if(rx_token.token_type == NORMAL_TOKEN) {
-//			sendStringUART1("--- MESSAGES ---\r\n");
+
+			textMsg[0] = '\0';
+			bitBuffer = 0;
+			bitsInBuffer = 0;
+			bool has_address = false;
 
 			for (uint16_t i = 3; i < rx_token.total_words; i++) {
 				uint32_t raw = rx_token.data[i];
@@ -800,7 +804,14 @@ void POCSAG_process(void) {
 				if (calculate_syndrom(clean) != 0 || !check_parity(clean)) continue;
 
 				if ((clean & 0x80000000) == 0) {
-					// Výpočet úplné RIC adresy (Adresa + Frame Index)
+					// Nová adresa - vypsat zprávu předchozí adresy
+					if (has_address) {
+						sendStringUART1("MSG=");
+						sendStringUART1(textMsg[0] != '\0' ? textMsg : "(prazdna)");
+						sendStringUART1("\r\n");
+					}
+
+					// Výpočet úplné RIC adresy
 					uint8_t wordInBatchPos = i % 16;
 					uint8_t frameIndex = wordInBatchPos / 2;
 					uint32_t addrPart = (clean >> 13) & 0x3FFFF;
@@ -810,22 +821,28 @@ void POCSAG_process(void) {
 					sprintf(buf, "    ADR=%07lu FCE=%d ", (unsigned long)fullRIC, func);
 					sendStringUART1(buf);
 
+					// Reset bufferu pro zprávu nové adresy
 					textMsg[0] = '\0';
 					bitBuffer = 0;
 					bitsInBuffer = 0;
+					has_address = true;
 				}
 				else {
-					decode_ascii_part(clean, textMsg);
+					// Datové slovo - dekóduj do textMsg
+					if (has_address) {
+						decode_ascii_part(clean, textMsg);
+					}
 				}
 			}
-		}
-    }
 
-    if (textMsg[0] != '\0') {
-        sendStringUART1("MSG=");
-        sendStringUART1(textMsg);
-    	sendStringUART1("\r\n");
-    }
+			// Vypsat zprávu poslední adresy
+			if (has_address) {
+				sendStringUART1("MSG=");
+				sendStringUART1(textMsg[0] != '\0' ? textMsg : "(prazdna)");
+				sendStringUART1("\r\n");
+			}
+		}
+	}
 
 	sendStringUART1("--- END ---\r\n");
 
