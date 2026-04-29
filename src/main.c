@@ -143,7 +143,7 @@ int main(void)
     					sendStringUART1(" --------------------------------\r\n");
     					sendStringUART1(" TCI commands:\r\n");
     					sendStringUART1(" --------------------------------\r\n");
-    					sendStringUART1(" 1..6 : Toggle LED\r\n");
+    					sendStringUART1(" 1..6 : Toggle LED: 1,2,3,4,RX,TX\r\n");
     					sendStringUART1(" t : start TX TOKEN\r\n");
     					sendStringUART1(" T : stop timer1 1200Hz\r\n");
     					sendStringUART1(" x : GPIO_IntEnable(RX_PIN)\r\n");
@@ -158,7 +158,6 @@ int main(void)
     					break;
 
     		case '1' : 	LED1_Toggle();
-    	    			GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
     					sendStringUART1("LED1");
     					break;
     		case '2' : 	LED2_Toggle();
