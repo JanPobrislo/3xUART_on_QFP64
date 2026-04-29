@@ -14,6 +14,7 @@ typedef struct {
     uint16_t total_words;
     volatile bool ready;    // Dokoncen prijem tokenu
     bool rx_ok;             // Token prijat bezchybne nebo chyby opraveny
+    bool header_ok;         // Hlavicka tokenu (3xCDW] prijat bezchybne nebo chyby opraveny
     //------------------------------ Hlavicka prijateho POCSAG tokenu.
 	unsigned char batch;	// Pocet batch - udaj uvedeny v hlavicce tokenu (nikoliv prijatych)
 	unsigned char net;		// Cislo site
@@ -22,8 +23,22 @@ typedef struct {
 	unsigned char dau;		// Odesilatel (DAU) - vysilac ktery vyslal tento token
 	unsigned char path;	    // Radiova cesta (0-15)
 	unsigned char master;	// Master DAU, ktery zahajil vysilani tokenu
-	unsigned char token_type;	// 0=normal, 1=sytemovy token, 2=testovaci token (PP test)
+	unsigned char token_type;	// 000=normal, 001=sytemovy token, 010=testovaci token (PP test)
+	unsigned char distribution; // 00=direct(nepotvrzovany), 10=repair(potvrzovany), 01=reverzal
+	unsigned char pass_dau;		// vysilac ktery nevyslal (byl obejit)
+	unsigned char alarm_dau;	// vysilac ktery hlasi poruchu
+	unsigned char alarm_no;	    // cislo poruchu
 } POCSAG_token;
+
+//-- typy tokenu
+#define NORMAL_TOKEN 0  // 000
+#define SYSTEM_TOKEN 1  // 001
+#define TEST_TOKEN   2  // 010
+
+//-- distribuce tokenu
+#define DIRECT_TOKEN  0  // 00
+#define REPAIR_TOKEN  2  // 10
+#define REVERSE_TOKEN 1  // 01
 
 //extern POCSAG_token rx_token;
 

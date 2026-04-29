@@ -201,7 +201,7 @@ void tx_start(void) {
 	sendStringUART1("\r\n-------------- TX --------------\r\n");
 	sendStringUART1("TX: ");
     //--- Vypise TX hlavicku
-	if(tx_token.token_type==1) {
+	if(tx_token.token_type == SYSTEM_TOKEN) {
 		sendStringUART1("SYSTEM ");
 	}
 	else {
@@ -566,29 +566,32 @@ void read_header(POCSAG_token *token) {
     token->dau =  (token->data[2]>>26)&0x1F;
     token->path = (token->data[0]>>12)&0x0F;
     token->master =(token->data[1]>>16)&0x1F;
-    token->token_type = 0x01==((token->data[0]>>21)&0x07);
+    token->token_type = (token->data[0]>>21)&0x07;
 
+    token->distribution = (token->data[0]>>28)&0x03;
+    token->pass_dau = (token->data[2]>>21)&0x1F;
+    token->alarm_dau = (token->data[1]>>11)&0x1F;
+    token->alarm_no = (token->data[1]>>21)&0x0F;
 }
 
 //------------------------------------------------------------------------------
 //  Nastavi binární hlavičku v poli data[] na základě všech promnenych ve struktuře
 //------------------------------------------------------------------------------
+/*
 void make_header(POCSAG_token *token) {
     if (token == NULL) return;
 
-    /* --- data[0] --- */
     uint32_t d0 = token->data[0];           // zachovat původní obsah
     d0 &= ~(0x0FUL << 24);                  // vymazat bity 27..24
     d0 &= ~(0x01UL << 21);                  // vymazat bit  21
     d0 &= ~(0x1FUL << 16);                  // vymazat bity 20..16
     d0 &= ~(0x0FUL << 12);                  // vymazat bity 15..12
     d0 |= ((uint32_t)(token->net          & 0x0F) << 24);
-    d0 |= ((uint32_t)(token->token_type & 0x01) << 21);
+    d0 |= ((uint32_t)(token->token_type   & 0x07) << 21);
     d0 |= ((uint32_t)(token->adr          & 0x1F) << 16);
     d0 |= ((uint32_t)(token->path         & 0x0F) << 12);
     token->data[0] = d0;
 
-    /* --- data[1] --- */
     uint32_t d1 = token->data[1];           // zachovat původní obsah
     d1 &= ~(0x3FUL << 25);                  // vymazat bity 30..25
     d1 &= ~(0x1FUL << 16);                  // vymazat bity 20..16
@@ -596,7 +599,6 @@ void make_header(POCSAG_token *token) {
     d1 |= ((uint32_t)(token->master       & 0x1F) << 16);
     token->data[1] = d1;
 
-    /* --- data[2] --- */
     uint32_t d2 = token->data[2];           // zachovat původní obsah
     d2 &= ~(0x1FUL << 26);                  // vymazat bity 30..26
     d2 &= ~(0x1FUL << 16);                  // vymazat bity 20..16
@@ -606,7 +608,48 @@ void make_header(POCSAG_token *token) {
 
 	make_bch(&tx_token);     //-- Opravi BCH a Paritu
 }
+*/
+void make_header(POCSAG_token *token) {
+    if (token == NULL) return;
 
+    /* --- data[0] --- */
+    uint32_t d0 = token->data[0];
+    d0 &= ~(0x03UL << 28);                  // vymazat bity 29..28  (distribution)
+    d0 &= ~(0x0FUL << 24);                  // vymazat bity 27..24  (net)
+    d0 &= ~(0x07UL << 21);                  // vymazat bity 23..21  (token_type)
+    d0 &= ~(0x1FUL << 16);                  // vymazat bity 20..16  (adr)
+    d0 &= ~(0x0FUL << 12);                  // vymazat bity 15..12  (path)
+    d0 |= ((uint32_t)(token->distribution & 0x03) << 28);
+    d0 |= ((uint32_t)(token->net          & 0x0F) << 24);
+    d0 |= ((uint32_t)(token->token_type   & 0x07) << 21);
+    d0 |= ((uint32_t)(token->adr          & 0x1F) << 16);
+    d0 |= ((uint32_t)(token->path         & 0x0F) << 12);
+    token->data[0] = d0;
+
+    /* --- data[1] --- */
+    uint32_t d1 = token->data[1];
+    d1 &= ~(0x3FUL << 25);                  // vymazat bity 30..25  (batch)
+    d1 &= ~(0x0FUL << 21);                  // vymazat bity 24..21  (alarm_no)
+    d1 &= ~(0x1FUL << 16);                  // vymazat bity 20..16  (master)
+    d1 &= ~(0x1FUL << 11);                  // vymazat bity 15..11  (alarm_dau)
+    d1 |= ((uint32_t)(token->batch        & 0x3F) << 25);
+    d1 |= ((uint32_t)(token->alarm_no     & 0x0F) << 21);
+    d1 |= ((uint32_t)(token->master       & 0x1F) << 16);
+    d1 |= ((uint32_t)(token->alarm_dau    & 0x1F) << 11);
+    token->data[1] = d1;
+
+    /* --- data[2] --- */
+    uint32_t d2 = token->data[2];
+    d2 &= ~(0x1FUL << 26);                  // vymazat bity 30..26  (dau)
+    d2 &= ~(0x1FUL << 21);                  // vymazat bity 25..21  (pass_dau)
+    d2 &= ~(0x1FUL << 16);                  // vymazat bity 20..16  (token_id)
+    d2 |= ((uint32_t)(token->dau          & 0x1F) << 26);
+    d2 |= ((uint32_t)(token->pass_dau     & 0x1F) << 21);
+    d2 |= ((uint32_t)(token->token_id     & 0x1F) << 16);
+    token->data[2] = d2;
+
+    make_bch(token);
+}
 //------------------------------------------------------------------------------
 //  Vysilani datagramu
 //------------------------------------------------------------------------------
@@ -637,7 +680,7 @@ void POCSAG_process(void) {
     bitBuffer = 0;
     bitsInBuffer = 0;
 
-    sendStringUART1("\r\n--- RX POCSAG START ---\r\n");
+    sendStringUART1("\r\n--- RX START ---\r\n");
 
     rx_token.rx_ok = true; // Neopravena chyba to pripadne schodi
 
@@ -646,7 +689,7 @@ void POCSAG_process(void) {
         uint32_t raw = rx_token.data[i];
 
         if (raw == POCSAG_IDLE_WORD) {
-            sprintf(buf, "W[%02d]: IDLE\r\n", i+1);
+            sprintf(buf, "%02d: IDLE\r\n", i+1);
             sendStringUART1(buf);
             continue;
         }
@@ -662,12 +705,15 @@ void POCSAG_process(void) {
         	rx_token.rx_ok = false;
         }
 
-        sprintf(buf, "W[%02d]: %08X %s %s\r\n",
-                i+1, (unsigned int)rx_token.data[i], valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
-//        sprintf(buf, "W[%02d]: %08X->%08X %s %s\r\n",
-//                i+1, (unsigned int)raw, (unsigned int)clean,
-//                valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
+        sprintf(buf, "%02d: %08X %s %s\r\n",
+                i+1, (unsigned int)rx_token.data[i],
+				valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
         sendStringUART1(buf);
+
+        //-- Pro hlavicku staci OK prvni 3 CDW
+        if (i == 2) {
+        	rx_token.header_ok = rx_token.rx_ok;
+        }
     }
 
 //    sendStringUART1("-----------------------------\r\n");
@@ -680,27 +726,46 @@ void POCSAG_process(void) {
    		rx_token.rx_ok = (rx_token.batch*16) == rx_token.total_words;
     }
 
+    //------------------------------------------------------------------------------
+    //  Zpracovani tokenu
+    //------------------------------------------------------------------------------
+
     if (rx_token.rx_ok) {
-    	sprintf(buf, "--- OK: ");
+    	sendStringUART1("--- OK: ");
     	LED3_On();
     }
     else {
-    	sprintf(buf, "--- ERROR: ");
+    	sendStringUART1("--- ERROR");
+        if (rx_token.header_ok) {
+        	sendStringUART1("(HEAD:OK):");
+        	LED3_On();
+        }
+        else {
+        	sendStringUART1("(HEAD:ERR):");
+        }
+
     }
-    sendStringUART1(buf);
 
     //--- Vypise hlavicku
-	if(rx_token.token_type==1) {
-		sendStringUART1("SYSTEM ");
+
+    switch (rx_token.token_type) {
+		case SYSTEM_TOKEN:
+			sendStringUART1("SYSTEM ");
+			break;
+		case NORMAL_TOKEN:
+			sendStringUART1("NORMAL ");
+			break;
+		case TEST_TOKEN:
+			sendStringUART1("PP-TEST ");
+			break;
 	}
-	else {
-		sendStringUART1("NORMAL ");
-	}
+
 	sprintf(buf,"NET=%02u DAU=%02u ADR=%02u PATH=%u ",rx_token.net,rx_token.dau,rx_token.adr,rx_token.path);
     sendStringUART1(buf);
 	sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u ",rx_token.token_id,rx_token.batch,rx_token.master);
     sendStringUART1(buf);
-//    sprintf(buf, "KALIBR:%lu\r\n",calib_count_per_bit);
+
+    //    sprintf(buf, "KALIBR:%lu\r\n",calib_count_per_bit);
     // Výpočet v milihertzech pomocí celých čísel
     uint32_t freq_mHz = (72000000ULL * 1000) / calib_count_per_bit;
     sprintf(buf, "f=%lu.%03luHz\r\n", freq_mHz / 1000, freq_mHz % 1000);
@@ -708,7 +773,7 @@ void POCSAG_process(void) {
 
     //--- Dekódování adresy a textu --- az od ctvrteho codewordu, za hlavickou
     if (rx_token.rx_ok) {
-		if(rx_token.token_type==0) {
+		if(rx_token.token_type == NORMAL_TOKEN) {
 //			sendStringUART1("--- MESSAGES ---\r\n");
 
 			for (uint16_t i = 3; i < rx_token.total_words; i++) {
@@ -727,7 +792,7 @@ void POCSAG_process(void) {
 					uint32_t fullRIC = (addrPart << 3) | (frameIndex & 0x07);
 					uint8_t func = (clean >> 11) & 0x03;
 
-					sprintf(buf, "ADR=%07lu FCE=%d ", (unsigned long)fullRIC, func);
+					sprintf(buf, "    ADR=%07lu FCE=%d ", (unsigned long)fullRIC, func);
 					sendStringUART1(buf);
 
 					textMsg[0] = '\0';
@@ -744,64 +809,59 @@ void POCSAG_process(void) {
     if (textMsg[0] != '\0') {
         sendStringUART1("MSG=");
         sendStringUART1(textMsg);
+    	sendStringUART1("\r\n");
     }
 
-    sendStringUART1("\r\n");
-//    sendStringUART1("------------------------------------------\r\n");
-//	sprintf(buf, "KALIBRACE: %lu = %0.2f Hz \r\n",calib_count_per_bit,(float)(72000000UL/calib_count_per_bit));
-//	sprintf(buf, "KALIBRACE: %lu\r\n",calib_count_per_bit);
-//	sendStringUART1(buf);
-/*
-	sprintf(buf, "KALIBRACE: %lu  1-bit: %lu ", calib_stop_counter-calib_start_counter, (calib_stop_counter-calib_start_counter)/calib_bits);
-	sendStringUART1(buf);
-	sprintf(buf, " pocet bitu: %u ", calib_bits);
-	sendStringUART1(buf);
-
-	sprintf(buf, "  start: %lu  stop: %lu\r\n", calib_start_counter, calib_stop_counter);
-	sendStringUART1(buf);
-
-	sprintf(buf, "calib_counter: %lu\r\n",(calib_stop_counter-calib_start_counter)/calib_bits);
-	sendStringUART1(buf);
-*/
 	sendStringUART1("--- END ---\r\n");
-    rx_token.ready = false;
 
-    //-------------- Kontrola a vysilani
-    if (rx_token.rx_ok)   //-- jen kompletne prijate tokeny
-//    if (rx_token.rx_ok && rx_token.net==15 && rx_token.adr==3)   //-- jen kompletne prijate tokeny pro mne
-    {
-        if (rx_token.adr == param.netdau[rx_token.net-1])   //-- je pro mne
-        {
-        	//-- zjisti komu vysilat
-        	make_route(rx_token.net, rx_token.path, rx_token.dau);
+	rx_token.ready = false;
 
-        	//-- Vysilam
-			tx_token = rx_token;
-			tx_token.adr = route.follow;
-			tx_token.dau = param.netdau[rx_token.net-1];
-			make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
+	//------------------------------------------------------------------------------
+    //  Vysilani
+	//------------------------------------------------------------------------------
+    if(rx_token.token_type != TEST_TOKEN) {
 
-			//-- Nastavi cekani na potvrzeni tokenu
-			route_state = WAIT_FOLLOW;
-			route_repeat_counter = param.next_rpt+1;
-			route_timer = param.next_time+1;
-			LED4_On();
+		if (rx_token.rx_ok)   //-- jen kompletne prijate tokeny
+		{
+			if (rx_token.adr == param.netdau[rx_token.net-1])   //-- je pro mne
+			{
+				//-- zjisti komu vysilat
+				make_route(rx_token.net, rx_token.path, rx_token.dau);
 
-			tx_start();  //-- Spusti vysilani
+				//-- Vysilam
+				tx_token = rx_token;
+				tx_token.adr = route.follow;
+				tx_token.dau = param.netdau[rx_token.net-1];
+				make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
 
-        }
-        else {  //-- token neni pro mne, kontrola routingu
-    		sendStringUART1("NEVYSILAM\r\n");
+				//-- Nastavi cekani na potvrzeni tokenu
+				route_state = WAIT_FOLLOW;
+				route_repeat_counter = param.next_rpt+1;
+				route_timer = param.next_time+1;
+				LED4_On();
 
-    		if (route_state == WAIT_FOLLOW || route_state == WAIT_ERROR) {
-        		if (rx_token.net == tx_token.net && rx_token.dau == tx_token.adr) {
-        			//-- je to ten co cekam
-        			route_state = STATE_ROUTE_IDLE;
-        			LED4_Off();
-        			sendStringUART1("Token potvrzen\r\n");
-        		}
-        	}
-        }
+				tx_start();  //-- Spusti vysilani
+
+			}
+			else {  //-- token neni pro mne, kontrola routingu
+				sendStringUART1("NEVYSILAM\r\n");
+
+				if (route_state == WAIT_FOLLOW || route_state == WAIT_ERROR) {
+					if (rx_token.net == tx_token.net && rx_token.dau == tx_token.adr) {
+						//-- je to ten co cekam
+						route_state = STATE_ROUTE_IDLE;
+						LED4_Off();
+						sendStringUART1("Token potvrzen\r\n");
+					}
+				}
+			}
+		}
+    }
+    else {
+    	//-- TO DO zpracovani PP Testu - vysilat odpoved
+    	if (rx_token.header_ok){
+			sendStringUART1("TO DO: vysilat odpoved na PP-TEST\r\n");
+    	}
     }
 	LED3_Off();
 }
