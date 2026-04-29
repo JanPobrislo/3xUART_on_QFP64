@@ -771,6 +771,21 @@ void POCSAG_process(void) {
     sprintf(buf, "f=%lu.%03luHz\r\n", freq_mHz / 1000, freq_mHz % 1000);
     sendStringUART1(buf);
 
+	sendStringUART1("    DISTR=");
+    switch (rx_token.distribution) {
+		case DIRECT_TOKEN:
+			sendStringUART1("DIRECT ");
+			break;
+		case REPAIR_TOKEN:
+			sendStringUART1("REPAIR ");
+			break;
+		case REVERSE_TOKEN:
+			sendStringUART1("REVERSE ");
+			break;
+	}
+	sprintf(buf,"PASS-DAU=%02u ALARM-DAU=%02u ALARM-NO=%u\r\n",rx_token.pass_dau,rx_token.alarm_dau,rx_token.alarm_no);
+    sendStringUART1(buf);
+
     //--- Dekódování adresy a textu --- az od ctvrteho codewordu, za hlavickou
     if (rx_token.rx_ok) {
 		if(rx_token.token_type == NORMAL_TOKEN) {
