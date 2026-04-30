@@ -60,4 +60,19 @@ Pøidej kontrolu BCH kódu a parity.
 Pøidej do hlavní smyèky programu výpis na UART1 pøijatého datagramu. 
 Vypiš zda byl pøijat bezchybnì nebo zda probìhly opravy.
 Nové funkce vytvoø v souboru pocsag.c a pocsag.h
+----------------------------------------------------------------------------------------------------------------
+Vytvoø funkci make_tx_route(), která projde tabulku param.route[] a podle zadaných parametrù net, path, dau 
+nastavi promnenou tx_route, polozky follow, error, revers. 
+Záznamy v tabulce mají rùznou prioritu a je tøeba vybrat ten s nejvyžší proiritou. 
+Vybírá se podle shody parametru net,path,dau. Pøitom v tabulce mùže být hodnota 255, 
+v tom pøípadì mùže být odpovídající parametr libovolný (jakákoliv hodnota). 
+Priority pro typy záznamù:
+1: net,255,255
+2: net,255,dau
+3: net,path,255
+4: net,path,dau
+To znamená, že pokud se najde záznam kde se schoduje net, path i dau, tak je nastaveno tx_route.follow,error,revers 
+podle tohoto záznamu s nejvyžší prioritou. Pokud ne hledá se shoda se záznamy s nižší prioritou. 
+Nejnižší prioritu má záznam kde se shoduje pouze net a path i dau mùže být libovolné (255).
+Funkce by mìla vracet, zda se povedlo nastavit tx_route. V tom pøípadì funkce nabývá hodnoty 0, jinak èíslo chyby.
 

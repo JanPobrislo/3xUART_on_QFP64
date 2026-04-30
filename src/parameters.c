@@ -6,7 +6,7 @@
 
 tci_parameters param;
 
-POCSAG_route route;  // definuje routu pro vysilani
+routes_for_tx tx_route;  // definuje routu pro vysilani
 
 unsigned char show_timetick = 0;  // povoluje zobrazovani . kazdou sec
 
@@ -14,7 +14,7 @@ void Parameters_Init(void) {
 	unsigned char n;
 
 	param.primary_net = 15;
-	param.next_time = 2;
+	param.next_time = 3;
 	param.next_rpt = 1;
 	param.error_rpt = 2;
 	param.pretime = 0;
@@ -36,12 +36,34 @@ void Parameters_Init(void) {
 
 	//---- Default pro ladeni
 	param.netdau[14] = 3;
+
 	param.route[0].net = 15;
 	param.route[0].path = 255;
 	param.route[0].dau = 255;
-	param.route[0].follow = 2;
+	param.route[0].follow = 7;
 	param.route[0].error = 2;
 	param.route[0].revers = 2;
+
+	param.route[1].net = 15;
+	param.route[1].path = 255;
+	param.route[1].dau = 2;
+	param.route[1].follow = 8;
+	param.route[1].error = 2;
+	param.route[1].revers = 2;
+
+	param.route[2].net = 15;
+	param.route[2].path = 0;
+	param.route[2].dau = 255;
+	param.route[2].follow = 9;
+	param.route[2].error = 2;
+	param.route[2].revers = 2;
+
+	param.route[3].net = 15;
+	param.route[3].path = 0;
+	param.route[3].dau = 2;
+	param.route[3].follow = 4;
+	param.route[3].error = 2;
+	param.route[3].revers = 2;
 }
 
 void Parameters_Show(void) {
@@ -84,41 +106,91 @@ void Parameters_Show(void) {
 	sendStringUART1("\r\nROUTE: NET PTH DAU -> FLW ERR REV\r\n");
 //	for (n=0; n<MAX_ROUTES; n++) {
 	n=0;
-	while ((n<MAX_ROUTES)&&(param.route[n].path!=0)) {
-		sprintf(txt,"       %02u",param.route[n].net);
-		sendStringUART1(txt);
-		if (param.route[n].path==255) {
-			sendStringUART1("  * ");
-		}
-		else {
-			sprintf(txt,"  %02u",param.route[n].path);
+//	while ((n<MAX_ROUTES)&&(param.route[n].path!=0)) {
+	for (n=0; n<MAX_ROUTES; n++) {
+		if (param.route[n].net != 0) {
+			sprintf(txt,"       %02u",param.route[n].net);
+			sendStringUART1(txt);
+			if (param.route[n].path==255) {
+				sendStringUART1("  * ");
+			}
+			else {
+				sprintf(txt,"  %02u",param.route[n].path);
+				sendStringUART1(txt);
+			}
+			if (param.route[n].dau==255) {
+				sendStringUART1("  * ");
+			}
+			else {
+				sprintf(txt,"  %02u",param.route[n].dau);
+				sendStringUART1(txt);
+			}
+			sprintf(txt,"  -> %02u",param.route[n].follow);
+			sendStringUART1(txt);
+			sprintf(txt,"  %02u",param.route[n].error);
+			sendStringUART1(txt);
+			sprintf(txt,"  %02u\r\n",param.route[n].revers);
 			sendStringUART1(txt);
 		}
-		if (param.route[n].dau==255) {
-			sendStringUART1("  * ");
-		}
-		else {
-			sprintf(txt,"  %02u",param.route[n].dau);
-			sendStringUART1(txt);
-		}
-		sprintf(txt,"  -> %02u",param.route[n].follow);
-		sendStringUART1(txt);
-		sprintf(txt,"  %02u",param.route[n].error);
-		sendStringUART1(txt);
-		sprintf(txt,"  %02u\r\n",param.route[n].revers);
-		sendStringUART1(txt);
-		n++;
 	}
 //	sendStringUART1("       -------------------------\r\n");
 	sendStringUART1("-------------------------------------------------\r\n");
 }
 
 //------------------------------------------------------------------------------
-// Podle parametru NET,PATH,DAU nacte z route table a nastavi promenou route
+// Podle parametru NET,PATH,DAU nacte z route table a nastavi promenou tx_route
 //------------------------------------------------------------------------------
-void make_route(unsigned char net, unsigned char path, unsigned char dau)
+/*	tx_route.follow = 4;
+	tx_route.error  = 4;
+	tx_route.revers = 2;
+*/
+unsigned char make_tx_route(unsigned char net, unsigned char path, unsigned char dau)
 {
-	route.follow = 4;
-	route.error  = 4;
-	route.revers = 2;
+    unsigned char p;
+    unsigned char d;
+    // Index nalezeného záznamu pro každou prioritu, -1 = nenalezen
+    int found[4] = { -1, -1, -1, -1 };
+
+    for (int n = 0; n < MAX_ROUTES; n++) {
+
+        if (param.route[n].net == net) {  // net se musí vždy shodovat
+
+			p = param.route[n].path;
+			d = param.route[n].dau;
+
+			if (p == 255 && d == 255) {
+				if (found[0] == -1) found[0] = n;  // priorita 1: net,*,*
+			}
+			else if (p == 255 && d == dau) {
+				if (found[1] == -1) found[1] = n;  // priorita 2: net,*,dau
+			}
+			else if (p == path && d == 255) {
+				if (found[2] == -1) found[2] = n;  // priorita 3: net,path,*
+			}
+			else if (p == path && d == dau) {
+				if (found[3] == -1) found[3] = n;  // priorita 4: net,path,dau
+			}
+        }
+    }
+
+    // Vybrat záznam s nejvyšší prioritou (4 > 3 > 2 > 1)
+    int best = -1;
+    for (int pri = 3; pri >= 0; pri--) {
+        if (found[pri] != -1) {
+            best = found[pri];
+            break;
+        }
+    }
+
+    if (best == -1) {
+        tx_route.follow = 0;
+        tx_route.error  = 0;
+        tx_route.revers = 0;
+        return 1;  // chyba: žádný záznam nenalezen
+    }
+
+    tx_route.follow = param.route[best].follow;
+    tx_route.error  = param.route[best].error;
+    tx_route.revers = param.route[best].revers;
+    return 0;  // OK
 }

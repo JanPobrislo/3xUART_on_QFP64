@@ -211,7 +211,7 @@ void tx_start(void) {
     sendStringUART1(buf);
 	sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u\r\n",tx_token.token_id,tx_token.batch,tx_token.master);
     sendStringUART1(buf);
-	sprintf(buf,"FOLLOW=%u ERROR=%u REVERSAL=%02u\r\n",route.follow, route.error, route.revers);
+	sprintf(buf,"FOLLOW=%u ERROR=%u REVERSAL=%02u\r\n",tx_route.follow, tx_route.error, tx_route.revers);
     sendStringUART1(buf);
 
 	//-- Spusti vysilani
@@ -858,21 +858,25 @@ void POCSAG_process(void) {
 			if (rx_token.adr == param.netdau[rx_token.net-1])   //-- je pro mne
 			{
 				//-- zjisti komu vysilat
-				make_route(rx_token.net, rx_token.path, rx_token.dau);
+				if (0==make_tx_route(rx_token.net, rx_token.path, rx_token.dau)) {
 
-				//-- Vysilam
-				tx_token = rx_token;
-				tx_token.adr = route.follow;
-				tx_token.dau = param.netdau[rx_token.net-1];
-				make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
+					//-- Vysilam
+					tx_token = rx_token;
+					tx_token.adr = tx_route.follow;
+					tx_token.dau = param.netdau[rx_token.net-1];
+					make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
 
-				//-- Nastavi cekani na potvrzeni tokenu
-				route_state = WAIT_FOLLOW;
-				route_repeat_counter = param.next_rpt+1;
-				route_timer = param.next_time+1;
-				LED4_On();
+					//-- Nastavi cekani na potvrzeni tokenu
+					route_state = WAIT_FOLLOW;
+					route_repeat_counter = param.next_rpt+1;
+					route_timer = param.next_time+1;
+					LED4_On();
 
-				tx_start();  //-- Spusti vysilani
+					tx_start();  //-- Spusti vysilani
+				}
+				else {
+					sendStringUART1("NEVYSILAM - Nenalezen zaznam v ROUTE TABLE\r\n");
+				}
 
 			}
 			else {  //-- token neni pro mne, kontrola routingu
@@ -914,7 +918,7 @@ void POCSAG_routing_handler(void) {
 					if (route_repeat_counter==0) {
 						//-- Konec opakovani primou cestou, opakuje chybovou
 						route_state = WAIT_ERROR;
-						tx_token.adr = route.error;
+						tx_token.adr = tx_route.error;
 						route_repeat_counter = param.error_rpt+1;
 						route_timer = param.next_time+1;
 						make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
@@ -937,7 +941,7 @@ void POCSAG_routing_handler(void) {
 					if (route_repeat_counter==0) {
 						//-- Konec opakovani chybovou cestou, posle REVERSAL
 						route_state = STATE_ROUTE_IDLE;  //-- nebude cekat
-						tx_token.adr = route.revers;
+						tx_token.adr = tx_route.revers;
 						route_repeat_counter = 0;
 						route_timer = 0;
 						make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
