@@ -201,18 +201,36 @@ void tx_start(void) {
 	sendStringUART1("\r\n-------------- TX --------------\r\n");
 	sendStringUART1("TX: ");
     //--- Vypise TX hlavicku
-	if(tx_token.token_type == SYSTEM_TOKEN) {
-		sendStringUART1("SYSTEM ");
-	}
-	else {
-		sendStringUART1("NORMAL ");
+    switch (tx_token.token_type) {
+		case SYSTEM_TOKEN:
+			sendStringUART1("SYSTEM ");
+			break;
+		case NORMAL_TOKEN:
+			sendStringUART1("NORMAL ");
+			break;
+		case TEST_TOKEN:
+			sendStringUART1("PP-TEST ");
+			break;
 	}
 	sprintf(buf,"NET=%02u DAU=%02u ADR=%02u PATH=%u ",tx_token.net,tx_token.dau,tx_token.adr,tx_token.path);
     sendStringUART1(buf);
 	sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u\r\n",tx_token.token_id,tx_token.batch,tx_token.master);
     sendStringUART1(buf);
-	sprintf(buf,"FOLLOW=%u ERROR=%u REVERSAL=%02u\r\n",tx_route.follow, tx_route.error, tx_route.revers);
+	sprintf(buf,"ROUTE: FOLLOW=%02u ERROR=%02u REVERSAL=%02u",tx_route.follow, tx_route.error, tx_route.revers);
     sendStringUART1(buf);
+
+    sendStringUART1("  DISTRIBUTION: ");
+    switch (rx_token.distribution) {
+		case DIRECT_TOKEN:
+			sendStringUART1("DIRECT\r\n");
+			break;
+		case REPAIR_TOKEN:
+			sendStringUART1("REPAIR\r\n");
+			break;
+		case REVERSE_TOKEN:
+			sendStringUART1("REVERSE\r\n");
+			break;
+	}
 
 	//-- Spusti vysilani
 	tx_state = TX_PREAMBLE;
@@ -861,16 +879,18 @@ void POCSAG_process(void) {
 				if (0==make_tx_route(rx_token.net, rx_token.path, rx_token.dau)) {
 
 					//-- Vysilam
+					LED4_On();
 					tx_token = rx_token;
 					tx_token.adr = tx_route.follow;
 					tx_token.dau = param.netdau[rx_token.net-1];
 					make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
 
-					//-- Nastavi cekani na potvrzeni tokenu
-					route_state = WAIT_FOLLOW;
-					route_repeat_counter = param.next_rpt+1;
-					route_timer = param.next_time+1;
-					LED4_On();
+					//-- Nastavi cekani na potvrzeni tokenu (jen pro REPAIR tokeny)
+					if (rx_token.distribution == REPAIR_TOKEN) {
+						route_state = WAIT_FOLLOW;
+						route_repeat_counter = param.next_rpt+1;
+						route_timer = param.next_time+1;
+					}
 
 					tx_start();  //-- Spusti vysilani
 				}
@@ -942,10 +962,11 @@ void POCSAG_routing_handler(void) {
 						//-- Konec opakovani chybovou cestou, posle REVERSAL
 						route_state = STATE_ROUTE_IDLE;  //-- nebude cekat
 						tx_token.adr = tx_route.revers;
+						tx_token.distribution = REVERSE_TOKEN;
 						route_repeat_counter = 0;
 						route_timer = 0;
 						make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
-						sendStringUART1("REVERSAL\r\n");
+						sendStringUART1("REVERSE TOKEN\r\n");
 						tx_start();
 					}
 					else {

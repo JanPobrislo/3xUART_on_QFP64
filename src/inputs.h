@@ -18,8 +18,8 @@ extern uint32_t calib_count_per_bit; //-- Pocet tiku na bit (aby to nemusel pora
 
 void     initInputs(void);
 uint32_t Input_GetRX(void);
-uint32_t Input_GetOnBattery(void);
-uint32_t Input_GetTamper(void);
+unsigned char Input_GetOnBattery(void);
+unsigned char Input_GetTamper(void);
 
 void rx_edge_irq_enabled(void);
 void rx_edge_irq_disabled(void);

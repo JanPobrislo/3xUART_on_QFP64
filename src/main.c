@@ -86,7 +86,7 @@ static void delay_ms(uint32_t ms)
 //------------------------------------------------------------------------------
 int main(void)
 {
-//	char txt[250] = "";
+    char buf[250];
 
     CHIP_Init();  	//-- z em_chip.h
 
@@ -149,6 +149,7 @@ int main(void)
     					sendStringUART1(" x : GPIO_IntEnable(RX_PIN)\r\n");
     					sendStringUART1(" p : show parameters\r\n");
     					sendStringUART1(" s : toggle second time-tick\r\n");
+    					sendStringUART1(" i : toggle the display of inputs\r\n");
     					sendStringUART1(" h : display this help\r\n");
     					sendStringUART1(" --------------------------------\r\n");
     					POCSAG_show_rx_state();
@@ -193,6 +194,9 @@ int main(void)
     		case 's' : 	show_timetick = !show_timetick;
     					break;
 
+    		case 'i' : 	show_inputs = !show_inputs;
+    					break;
+
     		default:	break;
     		}
 
@@ -211,6 +215,13 @@ int main(void)
     		if(show_timetick==1) {
     			sendStringUART1(".");
     		}
+
+			if(show_inputs==1) {
+				sprintf(buf,"INPUT POWER: %u   ",Input_GetOnBattery());
+				sendStringUART1(buf);
+				sprintf(buf,"INPUT TAMPER: %u\r\n",Input_GetTamper());
+				sendStringUART1(buf);
+			}
 
     		/*
     		if (Input_GetOnBattery()) {

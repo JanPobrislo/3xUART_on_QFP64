@@ -34,8 +34,8 @@ void initInputs(void) {
 }
 
 uint32_t Input_GetRX(void)         { return GPIO_PinInGet(RX_PORT,        RX_PIN);        }
-uint32_t Input_GetOnBattery(void)  { return GPIO_PinInGet(ONBATTERY_PORT, ONBATTERY_PIN); }
-uint32_t Input_GetTamper(void)     { return GPIO_PinInGet(TAMPER_PORT,    TAMPER_PIN);    }
+unsigned char Input_GetOnBattery(void)  { return GPIO_PinInGet(ONBATTERY_PORT, ONBATTERY_PIN); }
+unsigned char Input_GetTamper(void)     { return GPIO_PinInGet(TAMPER_PORT,    TAMPER_PIN);    }
 
 //------------------------------------------------------------------------------
 // GPIO preruseni od PA0 - detekce hrany POCSAG signalu
