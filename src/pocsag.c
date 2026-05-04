@@ -619,18 +619,18 @@ void make_header(POCSAG_token *token) {
 void make_system_status(POCSAG_token *token) {
     if (token == NULL) return;
 
-    unsigned char cdw,pos,stat,counter;
+    unsigned char cdw,pos,status,counter;
 
     cdw = ((token->dau-1)/4)+3;				//-- v kterem CDW je status
     pos = ((3-((token->dau-1)%4)) * 5)+11;  //-- na jake pozici
 
-    stat = 1;
-    if (Input_GetOnBattery()==1) {stat += 16; }
-    if (Input_GetTamper()==1) {stat += 8; }
+    status = token->tx_status;
+    if (Input_GetOnBattery()==1) {status += 16; }
+    if (Input_GetTamper()==1) {status += 8; }
 
     //-- zapise status DAU
     token->data[cdw] &= ~(0x1FUL << pos);   // vymazat 5 bitu status dau
-    token->data[cdw] |= ((uint32_t)(stat & 0x1F) << pos);
+    token->data[cdw] |= ((uint32_t)(status & 0x1F) << pos);
 
     //-- inkrementuje TxCounter
     counter =(token->data[11]>>23)&0xFF;
@@ -641,7 +641,7 @@ void make_system_status(POCSAG_token *token) {
 //    make_bch(token);  //udela tesne pred vysilanim
 
     char buf[160];
-    sprintf(buf, "\r\nSTATUS DAU:0x%X on CDW=%u POS=%u\r\n ",stat,cdw,pos);
+    sprintf(buf, "\r\nSTATUS DAU:0x%X on CDW=%u POS=%u\r\n ",status,cdw,pos);
 	sendStringUART1(buf);
 }
 
@@ -932,6 +932,7 @@ void POCSAG_process(void) {
 						route_timer = param.next_time+1;
 					}
 
+					tx_token.tx_status = TX_DIRECT_WAY;
 					tx_start();  //-- Spusti vysilani
 				}
 				else {
@@ -982,12 +983,14 @@ void POCSAG_routing_handler(void) {
 						route_repeat_counter = param.error_rpt+1;
 						route_timer = param.next_time+1;
 						sendStringUART1("ERROR-PATH\r\n");
+						tx_token.tx_status = TX_ERROR_WAY;
 						tx_start();
 					}
 					else {
 						//-- opakuje primou cestou
 						route_timer = param.next_time+1;
 						sendStringUART1("REPEAT\r\n");
+						tx_token.tx_status = TX_REPEAT_DIRECT;
 						tx_start();
 					}
 				}
@@ -1005,12 +1008,14 @@ void POCSAG_routing_handler(void) {
 						route_repeat_counter = 0;
 						route_timer = 0;
 						sendStringUART1("REVERSE TOKEN\r\n");
+						tx_token.tx_status = tx_token.tx_status + TX_REVERSAL_WAY;
 						tx_start();
 					}
 					else {
 						//-- opakuje chybovou cestou
 						route_timer = param.next_time+1;
 						sendStringUART1("REPEAT ERROR\r\n");
+						tx_token.tx_status = TX_ERROR_WAY;
 						tx_start();
 					}
 				}

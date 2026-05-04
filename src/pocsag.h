@@ -28,6 +28,8 @@ typedef struct {
 	unsigned char pass_dau;		// vysilac ktery nevyslal (byl obejit)
 	unsigned char alarm_dau;	// vysilac ktery hlasi poruchu
 	unsigned char alarm_no;	    // cislo poruchu
+    //------------------------------ Neni v hlavicce tokenu, ale v tele system.tokenu
+	unsigned char tx_status;    // transmit status
 } POCSAG_token;
 
 //-- typy tokenu
@@ -39,6 +41,13 @@ typedef struct {
 #define DIRECT_TOKEN  0  // 00
 #define REPAIR_TOKEN  2  // 10
 #define REVERSE_TOKEN 1  // 01
+
+//-- transmit status
+#define TX_NO_TRANSMIT   0  // 000
+#define TX_DIRECT_WAY  	 1  // 001
+#define TX_REPEAT_DIRECT 2  // 010
+#define TX_ERROR_WAY  	 3  // 011
+#define TX_REVERSAL_WAY  4  // 1xx - nemeni bity 1. a 2.
 
 //extern POCSAG_token rx_token;
 
