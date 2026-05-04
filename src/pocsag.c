@@ -243,6 +243,18 @@ void POCSAG_edge_detected(void) {
 }
 
 //------------------------------------------------------------------------------
+//  Ukonceni vysilani datagramu
+//------------------------------------------------------------------------------
+void tx_stop(void) {
+	tx_state = STATE_TX_IDLE;
+	GPIO_PinOutSet(PTT_PORT, PTT_PIN);  	// odklicuje
+	LED2_Off();
+	LED3_Off();
+	POCSAG_rx_init();  // inicializuje prijem
+	rx_state = STATE_RX_IDLE;
+}
+
+//------------------------------------------------------------------------------
 // Nastavi TX BIT
 //------------------------------------------------------------------------------
 void set_tx_bit(uint8_t bit) {
@@ -254,77 +266,6 @@ void set_tx_bit(uint8_t bit) {
 		GPIO_PinOutClear(TX_PORT, TX_PIN);
 		sendStringUART1("0");
 	}
-}
-
-//------------------------------------------------------------------------------
-//  Spusteni vysilani datagramu
-//------------------------------------------------------------------------------
-void tx_start(void) {
-    char buf[160];
-
-	LED2_On();
-
-	//-- Zastavit a zablokovat Rx
-	TIMER1_Stop();
-	rx_edge_irq_disabled(); // Vypneme detekci hran - nevyhodnocuje prijem
-//    GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - nevyhodnocuje prijem
-	rx_state = STATE_TRANSMITING;
-
-    make_bch(&tx_token); // Opravi BCH+PARITU celeho tokenu
-
-	sendStringUART1("\r\n-------------- TX --------------\r\n");
-	sendStringUART1("TX: ");
-    //--- Vypise TX hlavicku
-    switch (tx_token.token_type) {
-		case SYSTEM_TOKEN:
-			sendStringUART1("SYSTEM ");
-			break;
-		case NORMAL_TOKEN:
-			sendStringUART1("NORMAL ");
-			break;
-		case TEST_TOKEN:
-			sendStringUART1("PP-TEST ");
-			break;
-	}
-	sprintf(buf,"NET=%02u DAU=%02u ADR=%02u PATH=%u ",tx_token.net,tx_token.dau,tx_token.adr,tx_token.path);
-    sendStringUART1(buf);
-	sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u\r\n",tx_token.token_id,tx_token.batch,tx_token.master);
-    sendStringUART1(buf);
-	sprintf(buf,"ROUTE: FOLLOW=%02u ERROR=%02u REVERSAL=%02u",tx_route.follow, tx_route.error, tx_route.revers);
-    sendStringUART1(buf);
-
-    sendStringUART1("  DISTRIBUTION: ");
-    switch (rx_token.distribution) {
-		case DIRECT_TOKEN:
-			sendStringUART1("DIRECT\r\n");
-			break;
-		case REPAIR_TOKEN:
-			sendStringUART1("REPAIR\r\n");
-			break;
-		case REVERSE_TOKEN:
-			sendStringUART1("REVERSE\r\n");
-			break;
-	}
-
-	//-- Spusti vysilani
-	tx_state = TX_PREAMBLE;
-	number_of_tx = 0;
-	GPIO_PinOutClear(TX_PORT, TX_PIN);    	// nula aby preamble zacal 1
-	GPIO_PinOutClear(PTT_PORT, PTT_PIN);  	// zaklicuje
-	TIMER1_ResetSpeed();
-	TIMER1_Start();
-}
-
-//------------------------------------------------------------------------------
-//  Ukonceni vysilani datagramu
-//------------------------------------------------------------------------------
-void tx_stop(void) {
-	tx_state = STATE_TX_IDLE;
-	GPIO_PinOutSet(PTT_PORT, PTT_PIN);  	// odklicuje
-	LED2_Off();
-	LED3_Off();
-	POCSAG_rx_init();  // inicializuje prijem
-	rx_state = STATE_RX_IDLE;
 }
 
 //------------------------------------------------------------------------------
@@ -669,16 +610,16 @@ void make_header(POCSAG_token *token) {
     d2 |= ((uint32_t)(token->token_id     & 0x1F) << 16);
     token->data[2] = d2;
 
-//    make_bch(token);
+//    make_bch(token);  //udela tesne pred vysilanim
 }
 
 //------------------------------------------------------------------------------
-//  Zapise status tohoto DAU do systemoveho tokenu
+//  Zapise status tohoto DAU do systemoveho tokenu a inc TxCOUNTER
 //------------------------------------------------------------------------------
 void make_system_status(POCSAG_token *token) {
     if (token == NULL) return;
 
-    unsigned char cdw,pos,stat;
+    unsigned char cdw,pos,stat,counter;
 
     cdw = ((token->dau-1)/4)+3;				//-- v kterem CDW je status
     pos = ((3-((token->dau-1)%4)) * 5)+11;  //-- na jake pozici
@@ -687,13 +628,20 @@ void make_system_status(POCSAG_token *token) {
     if (Input_GetOnBattery()==1) {stat += 16; }
     if (Input_GetTamper()==1) {stat += 8; }
 
+    //-- zapise status DAU
     token->data[cdw] &= ~(0x1FUL << pos);   // vymazat 5 bitu status dau
     token->data[cdw] |= ((uint32_t)(stat & 0x1F) << pos);
 
-//    make_bch(token);
+    //-- inkrementuje TxCounter
+    counter =(token->data[11]>>23)&0xFF;
+    counter++;
+    token->data[11] &= ~(0xFFUL << 23);   // vymazat 8 bitu
+    token->data[11] |= ((uint32_t)counter << 23);
+
+//    make_bch(token);  //udela tesne pred vysilanim
 
     char buf[160];
-    sprintf(buf, "\r\nSTATUS DAU:%X on CDW=%u POS=%u\r\n ",stat,cdw,pos);
+    sprintf(buf, "\r\nSTATUS DAU:0x%X on CDW=%u POS=%u\r\n ",stat,cdw,pos);
 	sendStringUART1(buf);
 }
 
@@ -715,6 +663,70 @@ void POCSAG_Tx_datagram(void) {
 
 }
 */
+
+//------------------------------------------------------------------------------
+//  Spusteni vysilani datagramu
+//------------------------------------------------------------------------------
+void tx_start(void) {
+    char buf[160];
+
+	LED2_On();
+
+	//-- Zastavit a zablokovat Rx
+	TIMER1_Stop();
+	rx_edge_irq_disabled(); // Vypneme detekci hran - nevyhodnocuje prijem
+//    GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - nevyhodnocuje prijem
+	rx_state = STATE_TRANSMITING;
+
+	make_header(&tx_token); // Vygeneruje binární podobu hlavičky
+							// Do systemoveho tokenu zapise svuj STATUS DAU
+	if (tx_token.token_type == SYSTEM_TOKEN) {
+		make_system_status(&tx_token);
+	}
+    make_bch(&tx_token); 	// Opravi BCH+PARITU celeho tokenu
+
+	sendStringUART1("\r\n-------------- TX --------------\r\n");
+	sendStringUART1("TX: ");
+    //--- Vypise TX hlavicku
+    switch (tx_token.token_type) {
+		case SYSTEM_TOKEN:
+			sendStringUART1("SYSTEM ");
+			break;
+		case NORMAL_TOKEN:
+			sendStringUART1("NORMAL ");
+			break;
+		case TEST_TOKEN:
+			sendStringUART1("PP-TEST ");
+			break;
+	}
+	sprintf(buf,"NET=%02u DAU=%02u ADR=%02u PATH=%u ",tx_token.net,tx_token.dau,tx_token.adr,tx_token.path);
+    sendStringUART1(buf);
+	sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u\r\n",tx_token.token_id,tx_token.batch,tx_token.master);
+    sendStringUART1(buf);
+	sprintf(buf,"ROUTE: FOLLOW=%02u ERROR=%02u REVERSAL=%02u",tx_route.follow, tx_route.error, tx_route.revers);
+    sendStringUART1(buf);
+
+    sendStringUART1("  DISTRIBUTION: ");
+    switch (rx_token.distribution) {
+		case DIRECT_TOKEN:
+			sendStringUART1("DIRECT\r\n");
+			break;
+		case REPAIR_TOKEN:
+			sendStringUART1("REPAIR\r\n");
+			break;
+		case REVERSE_TOKEN:
+			sendStringUART1("REVERSE\r\n");
+			break;
+	}
+
+	//-- Spusti vysilani
+	tx_state = TX_PREAMBLE;
+	number_of_tx = 0;
+	GPIO_PinOutClear(TX_PORT, TX_PIN);    	// nula aby preamble zacal 1
+	GPIO_PinOutClear(PTT_PORT, PTT_PIN);  	// zaklicuje
+	TIMER1_ResetSpeed();
+	TIMER1_Start();
+}
 
 //------------------------------------------------------------------------------
 //  Zpracovani prijateho datagramu
@@ -912,12 +924,6 @@ void POCSAG_process(void) {
 					tx_token = rx_token;
 					tx_token.adr = tx_route.follow;
 					tx_token.dau = param.netdau[rx_token.net-1];
-					make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
-
-					//-- Do systemoveho tokenu zapise svuj STATUS DAU
-					if (rx_token.token_type == SYSTEM_TOKEN) {
-						make_system_status(&tx_token);
-					}
 
 					//-- Nastavi cekani na potvrzeni tokenu (jen pro REPAIR tokeny)
 					if (rx_token.distribution == REPAIR_TOKEN) {
@@ -975,7 +981,6 @@ void POCSAG_routing_handler(void) {
 						tx_token.adr = tx_route.error;
 						route_repeat_counter = param.error_rpt+1;
 						route_timer = param.next_time+1;
-						make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
 						sendStringUART1("ERROR-PATH\r\n");
 						tx_start();
 					}
@@ -999,7 +1004,6 @@ void POCSAG_routing_handler(void) {
 						tx_token.distribution = REVERSE_TOKEN;
 						route_repeat_counter = 0;
 						route_timer = 0;
-						make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
 						sendStringUART1("REVERSE TOKEN\r\n");
 						tx_start();
 					}

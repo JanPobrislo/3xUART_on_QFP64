@@ -2820,7 +2820,7 @@ END GROUP
 LOAD d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtend.o
 LOAD d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtn.o
 
-.text           0x00000000     0x70a4
+.text           0x00000000     0x70c8
  *(.vectors)
  .vectors       0x00000000      0x150 ./CMSIS/EFM32GG11B/startup_efm32gg11b.o
                 0x00000000                __Vectors
@@ -3215,217 +3215,217 @@ LOAD d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/
  .text.POCSAG_edge_detected
                 0x00003d74       0x1c ./src/pocsag.o
                 0x00003d74                POCSAG_edge_detected
+ .text.tx_stop  0x00003d90       0x30 ./src/pocsag.o
+                0x00003d90                tx_stop
  .text.set_tx_bit
-                0x00003d90       0x40 ./src/pocsag.o
-                0x00003d90                set_tx_bit
- .text.tx_start
-                0x00003dd0      0x180 ./src/pocsag.o
-                0x00003dd0                tx_start
- .text.tx_stop  0x00003f50       0x30 ./src/pocsag.o
-                0x00003f50                tx_stop
- .text.tx_bit   0x00003f80      0x184 ./src/pocsag.o
-                0x00003f80                tx_bit
+                0x00003dc0       0x40 ./src/pocsag.o
+                0x00003dc0                set_tx_bit
+ .text.tx_bit   0x00003e00      0x184 ./src/pocsag.o
+                0x00003e00                tx_bit
  .text.POCSAG_sample_bit
-                0x00004104      0x260 ./src/pocsag.o
-                0x00004104                POCSAG_sample_bit
+                0x00003f84      0x260 ./src/pocsag.o
+                0x00003f84                POCSAG_sample_bit
  .text.POCSAG_show_rx_state
-                0x00004364       0x90 ./src/pocsag.o
-                0x00004364                POCSAG_show_rx_state
+                0x000041e4       0x90 ./src/pocsag.o
+                0x000041e4                POCSAG_show_rx_state
  .text.decode_ascii_part
-                0x000043f4       0xf4 ./src/pocsag.o
-                0x000043f4                decode_ascii_part
+                0x00004274       0xf4 ./src/pocsag.o
+                0x00004274                decode_ascii_part
  .text.read_header
-                0x000044e8      0x10c ./src/pocsag.o
-                0x000044e8                read_header
+                0x00004368      0x10c ./src/pocsag.o
+                0x00004368                read_header
  .text.make_header
-                0x000045f4      0x176 ./src/pocsag.o
-                0x000045f4                make_header
- *fill*         0x0000476a        0x2 
+                0x00004474      0x176 ./src/pocsag.o
+                0x00004474                make_header
+ *fill*         0x000045ea        0x2 
  .text.make_system_status
-                0x0000476c       0xf8 ./src/pocsag.o
-                0x0000476c                make_system_status
- *fill*         0x00004864        0x4 
+                0x000045ec      0x12c ./src/pocsag.o
+                0x000045ec                make_system_status
+ .text.tx_start
+                0x00004718      0x194 ./src/pocsag.o
+                0x00004718                tx_start
+ *fill*         0x000048ac        0x4 
  .text.POCSAG_process
-                0x00004868      0x6bc ./src/pocsag.o
-                0x00004868                POCSAG_process
+                0x000048b0      0x6a4 ./src/pocsag.o
+                0x000048b0                POCSAG_process
  .text.POCSAG_routing_handler
-                0x00004f24      0x13c ./src/pocsag.o
-                0x00004f24                POCSAG_routing_handler
+                0x00004f54      0x130 ./src/pocsag.o
+                0x00004f54                POCSAG_routing_handler
  .text.__NVIC_EnableIRQ
-                0x00005060       0x3c ./src/timer0.o
+                0x00005084       0x3c ./src/timer0.o
  .text.__NVIC_ClearPendingIRQ
-                0x0000509c       0x3c ./src/timer0.o
+                0x000050c0       0x3c ./src/timer0.o
  .text.initTIMER0
-                0x000050d8       0x68 ./src/timer0.o
-                0x000050d8                initTIMER0
+                0x000050fc       0x68 ./src/timer0.o
+                0x000050fc                initTIMER0
  .text.TIMER0_IRQHandler
-                0x00005140       0x50 ./src/timer0.o
-                0x00005140                TIMER0_IRQHandler
+                0x00005164       0x50 ./src/timer0.o
+                0x00005164                TIMER0_IRQHandler
  .text.__NVIC_EnableIRQ
-                0x00005190       0x3c ./src/timer1.o
+                0x000051b4       0x3c ./src/timer1.o
  .text.__NVIC_DisableIRQ
-                0x000051cc       0x44 ./src/timer1.o
+                0x000051f0       0x44 ./src/timer1.o
  .text.__NVIC_ClearPendingIRQ
-                0x00005210       0x3c ./src/timer1.o
+                0x00005234       0x3c ./src/timer1.o
  .text.initTIMER1
-                0x0000524c       0x54 ./src/timer1.o
-                0x0000524c                initTIMER1
+                0x00005270       0x54 ./src/timer1.o
+                0x00005270                initTIMER1
  .text.TIMER1_Start
-                0x000052a0       0x2c ./src/timer1.o
-                0x000052a0                TIMER1_Start
+                0x000052c4       0x2c ./src/timer1.o
+                0x000052c4                TIMER1_Start
  .text.TIMER1_Stop
-                0x000052cc       0x18 ./src/timer1.o
-                0x000052cc                TIMER1_Stop
+                0x000052f0       0x18 ./src/timer1.o
+                0x000052f0                TIMER1_Stop
  .text.TIMER1_IRQHandler
-                0x000052e4       0x18 ./src/timer1.o
-                0x000052e4                TIMER1_IRQHandler
+                0x00005308       0x18 ./src/timer1.o
+                0x00005308                TIMER1_IRQHandler
  .text.TIMER1_Calibrate
-                0x000052fc       0x34 ./src/timer1.o
-                0x000052fc                TIMER1_Calibrate
+                0x00005320       0x34 ./src/timer1.o
+                0x00005320                TIMER1_Calibrate
  .text.TIMER1_ResetSpeed
-                0x00005330       0x1c ./src/timer1.o
-                0x00005330                TIMER1_ResetSpeed
+                0x00005354       0x1c ./src/timer1.o
+                0x00005354                TIMER1_ResetSpeed
  .text.__NVIC_EnableIRQ
-                0x0000534c       0x3c ./src/uart0.o
+                0x00005370       0x3c ./src/uart0.o
  .text.__NVIC_ClearPendingIRQ
-                0x00005388       0x3c ./src/uart0.o
+                0x000053ac       0x3c ./src/uart0.o
  .text.USART_IntClear
-                0x000053c4       0x1c ./src/uart0.o
+                0x000053e8       0x1c ./src/uart0.o
  .text.USART_IntEnable
-                0x000053e0       0x22 ./src/uart0.o
- *fill*         0x00005402        0x2 
+                0x00005404       0x22 ./src/uart0.o
+ *fill*         0x00005426        0x2 
  .text.initUART0
-                0x00005404       0x98 ./src/uart0.o
-                0x00005404                initUART0
+                0x00005428       0x98 ./src/uart0.o
+                0x00005428                initUART0
  .text.sendStringUART0
-                0x0000549c       0x30 ./src/uart0.o
-                0x0000549c                sendStringUART0
+                0x000054c0       0x30 ./src/uart0.o
+                0x000054c0                sendStringUART0
  .text.UART0_RX_IRQHandler
-                0x000054cc       0x70 ./src/uart0.o
-                0x000054cc                UART0_RX_IRQHandler
+                0x000054f0       0x70 ./src/uart0.o
+                0x000054f0                UART0_RX_IRQHandler
  .text.__NVIC_EnableIRQ
-                0x0000553c       0x3c ./src/uart1.o
+                0x00005560       0x3c ./src/uart1.o
  .text.__NVIC_ClearPendingIRQ
-                0x00005578       0x3c ./src/uart1.o
+                0x0000559c       0x3c ./src/uart1.o
  .text.USART_IntClear
-                0x000055b4       0x1c ./src/uart1.o
+                0x000055d8       0x1c ./src/uart1.o
  .text.USART_IntEnable
-                0x000055d0       0x22 ./src/uart1.o
- *fill*         0x000055f2        0x2 
+                0x000055f4       0x22 ./src/uart1.o
+ *fill*         0x00005616        0x2 
  .text.initUART1
-                0x000055f4       0xa0 ./src/uart1.o
-                0x000055f4                initUART1
+                0x00005618       0xa0 ./src/uart1.o
+                0x00005618                initUART1
  .text.sendCharUART1
-                0x00005694       0x20 ./src/uart1.o
-                0x00005694                sendCharUART1
+                0x000056b8       0x20 ./src/uart1.o
+                0x000056b8                sendCharUART1
  .text.sendStringUART1
-                0x000056b4       0x30 ./src/uart1.o
-                0x000056b4                sendStringUART1
+                0x000056d8       0x30 ./src/uart1.o
+                0x000056d8                sendStringUART1
  .text.UART1_RX_IRQHandler
-                0x000056e4       0x90 ./src/uart1.o
-                0x000056e4                UART1_RX_IRQHandler
+                0x00005708       0x90 ./src/uart1.o
+                0x00005708                UART1_RX_IRQHandler
  .text.__NVIC_EnableIRQ
-                0x00005774       0x3c ./src/usart0.o
+                0x00005798       0x3c ./src/usart0.o
  .text.__NVIC_ClearPendingIRQ
-                0x000057b0       0x3c ./src/usart0.o
+                0x000057d4       0x3c ./src/usart0.o
  .text.USART_IntClear
-                0x000057ec       0x1c ./src/usart0.o
+                0x00005810       0x1c ./src/usart0.o
  .text.USART_IntEnable
-                0x00005808       0x22 ./src/usart0.o
+                0x0000582c       0x22 ./src/usart0.o
  .text.USART_BaudrateSet_Manual
-                0x0000582a       0x38 ./src/usart0.o
-                0x0000582a                USART_BaudrateSet_Manual
- *fill*         0x00005862        0x2 
+                0x0000584e       0x38 ./src/usart0.o
+                0x0000584e                USART_BaudrateSet_Manual
+ *fill*         0x00005886        0x2 
  .text.initUSART0
-                0x00005864       0x94 ./src/usart0.o
-                0x00005864                initUSART0
+                0x00005888       0x94 ./src/usart0.o
+                0x00005888                initUSART0
  .text.sendStringUSART0
-                0x000058f8       0x30 ./src/usart0.o
-                0x000058f8                sendStringUSART0
+                0x0000591c       0x30 ./src/usart0.o
+                0x0000591c                sendStringUSART0
  .text.USART0_RX_IRQHandler
-                0x00005928       0x70 ./src/usart0.o
-                0x00005928                USART0_RX_IRQHandler
+                0x0000594c       0x70 ./src/usart0.o
+                0x0000594c                USART0_RX_IRQHandler
  .text.TIMER_MaxCount
-                0x00005998       0x50 ./src/wtimer0.o
+                0x000059bc       0x50 ./src/wtimer0.o
  .text.TIMER_TopSet
-                0x000059e8       0x1e ./src/wtimer0.o
- *fill*         0x00005a06        0x2 
+                0x00005a0c       0x1e ./src/wtimer0.o
+ *fill*         0x00005a2a        0x2 
  .text.initWTIMER0
-                0x00005a08       0x64 ./src/wtimer0.o
-                0x00005a08                initWTIMER0
- .text          0x00005a6c       0x30 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp\libgcc.a(_aeabi_uldivmod.o)
-                0x00005a6c                __aeabi_uldivmod
- .text          0x00005a9c      0x2cc d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp\libgcc.a(_udivmoddi4.o)
-                0x00005a9c                __udivmoddi4
- .text          0x00005d68        0x4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp\libgcc.a(_dvmd_tls.o)
-                0x00005d68                __aeabi_idiv0
-                0x00005d68                __aeabi_ldiv0
- .text.exit     0x00005d6c       0x28 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-exit.o)
-                0x00005d6c                exit
+                0x00005a2c       0x64 ./src/wtimer0.o
+                0x00005a2c                initWTIMER0
+ .text          0x00005a90       0x30 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp\libgcc.a(_aeabi_uldivmod.o)
+                0x00005a90                __aeabi_uldivmod
+ .text          0x00005ac0      0x2cc d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp\libgcc.a(_udivmoddi4.o)
+                0x00005ac0                __udivmoddi4
+ .text          0x00005d8c        0x4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp\libgcc.a(_dvmd_tls.o)
+                0x00005d8c                __aeabi_idiv0
+                0x00005d8c                __aeabi_ldiv0
+ .text.exit     0x00005d90       0x28 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-exit.o)
+                0x00005d90                exit
  .text.__libc_init_array
-                0x00005d94       0x48 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-init.o)
-                0x00005d94                __libc_init_array
- .text.memcpy   0x00005ddc       0x16 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-memcpy-stub.o)
-                0x00005ddc                memcpy
- .text.memset   0x00005df2       0x10 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-memset.o)
-                0x00005df2                memset
- *fill*         0x00005e02        0x2 
- .text.sprintf  0x00005e04       0x40 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-sprintf.o)
-                0x00005e04                siprintf
-                0x00005e04                sprintf
- .text          0x00005e44       0x10 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-strlen.o)
-                0x00005e44                strlen
+                0x00005db8       0x48 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-init.o)
+                0x00005db8                __libc_init_array
+ .text.memcpy   0x00005e00       0x16 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-memcpy-stub.o)
+                0x00005e00                memcpy
+ .text.memset   0x00005e16       0x10 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-memset.o)
+                0x00005e16                memset
+ *fill*         0x00005e26        0x2 
+ .text.sprintf  0x00005e28       0x40 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-sprintf.o)
+                0x00005e28                siprintf
+                0x00005e28                sprintf
+ .text          0x00005e68       0x10 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-strlen.o)
+                0x00005e68                strlen
  .text.__ssputs_r
-                0x00005e54       0xb4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-svfprintf.o)
-                0x00005e54                __ssputs_r
+                0x00005e78       0xb4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-svfprintf.o)
+                0x00005e78                __ssputs_r
  .text._svfprintf_r
-                0x00005f08      0x1ec d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-svfprintf.o)
-                0x00005f08                _svfiprintf_r
-                0x00005f08                _svfprintf_r
+                0x00005f2c      0x1ec d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-svfprintf.o)
+                0x00005f2c                _svfiprintf_r
+                0x00005f2c                _svfprintf_r
  .text._printf_common
-                0x000060f4       0xea d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-vfprintf_i.o)
-                0x000060f4                _printf_common
- *fill*         0x000061de        0x2 
+                0x00006118       0xea d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-vfprintf_i.o)
+                0x00006118                _printf_common
+ *fill*         0x00006202        0x2 
  .text._printf_i
-                0x000061e0      0x224 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-vfprintf_i.o)
-                0x000061e0                _printf_i
- *fill*         0x00006404        0xc 
- .text          0x00006410       0xa0 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-memchr.o)
-                0x00006410                memchr
- .text.memmove  0x000064b0       0x32 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-memmove.o)
-                0x000064b0                memmove
- *fill*         0x000064e2        0x2 
- .text._free_r  0x000064e4       0x9c d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-freer.o)
-                0x000064e4                _free_r
+                0x00006204      0x224 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-vfprintf_i.o)
+                0x00006204                _printf_i
+ *fill*         0x00006428        0x8 
+ .text          0x00006430       0xa0 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-memchr.o)
+                0x00006430                memchr
+ .text.memmove  0x000064d0       0x32 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-memmove.o)
+                0x000064d0                memmove
+ *fill*         0x00006502        0x2 
+ .text._free_r  0x00006504       0x9c d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-freer.o)
+                0x00006504                _free_r
  .text._malloc_r
-                0x00006580       0xb4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-mallocr.o)
-                0x00006580                _malloc_r
+                0x000065a0       0xb4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-mallocr.o)
+                0x000065a0                _malloc_r
  .text._realloc_r
-                0x00006634       0x4c d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-reallocr.o)
-                0x00006634                _realloc_r
- .text._sbrk_r  0x00006680       0x20 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-sbrkr.o)
-                0x00006680                _sbrk_r
+                0x00006654       0x4c d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-reallocr.o)
+                0x00006654                _realloc_r
+ .text._sbrk_r  0x000066a0       0x20 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-sbrkr.o)
+                0x000066a0                _sbrk_r
  .text.__malloc_lock
-                0x000066a0        0x2 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-mlock.o)
-                0x000066a0                __malloc_lock
+                0x000066c0        0x2 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-mlock.o)
+                0x000066c0                __malloc_lock
  .text.__malloc_unlock
-                0x000066a2        0x2 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-mlock.o)
-                0x000066a2                __malloc_unlock
+                0x000066c2        0x2 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-mlock.o)
+                0x000066c2                __malloc_unlock
  .text._malloc_usable_size_r
-                0x000066a4       0x10 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-msizer.o)
-                0x000066a4                _malloc_usable_size_r
- .text._sbrk    0x000066b4       0x1c d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libnosys.a(sbrk.o)
-                0x000066b4                _sbrk
- .text._exit    0x000066d0        0x4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libnosys.a(_exit.o)
-                0x000066d0                _exit
+                0x000066c4       0x10 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-msizer.o)
+                0x000066c4                _malloc_usable_size_r
+ .text._sbrk    0x000066d4       0x1c d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libnosys.a(sbrk.o)
+                0x000066d4                _sbrk
+ .text._exit    0x000066f0        0x4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libnosys.a(_exit.o)
+                0x000066f0                _exit
  *(.init)
- .init          0x000066d4        0x4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crti.o
-                0x000066d4                _init
- .init          0x000066d8        0x8 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtn.o
+ .init          0x000066f4        0x4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crti.o
+                0x000066f4                _init
+ .init          0x000066f8        0x8 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtn.o
  *(.fini)
- .fini          0x000066e0        0x4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crti.o
-                0x000066e0                _fini
- .fini          0x000066e4        0x8 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtn.o
+ .fini          0x00006700        0x4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crti.o
+                0x00006700                _fini
+ .fini          0x00006704        0x8 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtn.o
  *crtbegin.o(.ctors)
  *crtbegin?.o(.ctors)
  *(EXCLUDE_FILE(*crtend.o *crtend?.o) .ctors)
@@ -3438,62 +3438,62 @@ LOAD d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/
  *(.dtors)
  *(.rodata*)
  .rodata.hfrcoCtrlTable
-                0x000066ec      0x180 ./src/em_cmu.o
+                0x0000670c      0x180 ./src/em_cmu.o
  .rodata.flashWsTable
-                0x0000686c       0x38 ./src/em_cmu.o
- .rodata        0x000068a4      0x24f ./src/main.o
- *fill*         0x00006af3        0x1 
- .rodata        0x00006af4      0x1a4 ./src/parameters.o
- .rodata        0x00006c98      0x3bf ./src/pocsag.o
- *fill*         0x00007057        0x1 
- .rodata        0x00007058        0x3 ./src/uart0.o
- *fill*         0x0000705b        0x1 
- .rodata        0x0000705c        0x8 ./src/uart1.o
- .rodata        0x00007064        0x3 ./src/usart0.o
- *fill*         0x00007067        0x1 
+                0x0000688c       0x38 ./src/em_cmu.o
+ .rodata        0x000068c4      0x24f ./src/main.o
+ *fill*         0x00006b13        0x1 
+ .rodata        0x00006b14      0x1a4 ./src/parameters.o
+ .rodata        0x00006cb8      0x3c3 ./src/pocsag.o
+ *fill*         0x0000707b        0x1 
+ .rodata        0x0000707c        0x3 ./src/uart0.o
+ *fill*         0x0000707f        0x1 
+ .rodata        0x00007080        0x8 ./src/uart1.o
+ .rodata        0x00007088        0x3 ./src/usart0.o
+ *fill*         0x0000708b        0x1 
  .rodata._global_impure_ptr
-                0x00007068        0x4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-impure.o)
-                0x00007068                _global_impure_ptr
+                0x0000708c        0x4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-impure.o)
+                0x0000708c                _global_impure_ptr
  .rodata._svfprintf_r.str1.1
-                0x0000706c       0x11 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-svfprintf.o)
+                0x00007090       0x11 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-svfprintf.o)
  .rodata._printf_i.str1.1
-                0x0000707d       0x22 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-vfprintf_i.o)
+                0x000070a1       0x22 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp\libc_nano.a(lib_a-nano-vfprintf_i.o)
  *(.eh_frame*)
- *fill*         0x0000709f        0x1 
- .eh_frame      0x000070a0        0x0 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtbegin.o
- .eh_frame      0x000070a0        0x4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtend.o
+ *fill*         0x000070c3        0x1 
+ .eh_frame      0x000070c4        0x0 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtbegin.o
+ .eh_frame      0x000070c4        0x4 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtend.o
 
-.glue_7         0x000070a4        0x0
- .glue_7        0x000070a4        0x0 linker stubs
+.glue_7         0x000070c8        0x0
+ .glue_7        0x000070c8        0x0 linker stubs
 
-.glue_7t        0x000070a4        0x0
- .glue_7t       0x000070a4        0x0 linker stubs
+.glue_7t        0x000070c8        0x0
+ .glue_7t       0x000070c8        0x0 linker stubs
 
-.vfp11_veneer   0x000070a4        0x0
- .vfp11_veneer  0x000070a4        0x0 linker stubs
+.vfp11_veneer   0x000070c8        0x0
+ .vfp11_veneer  0x000070c8        0x0 linker stubs
 
-.v4_bx          0x000070a4        0x0
- .v4_bx         0x000070a4        0x0 linker stubs
+.v4_bx          0x000070c8        0x0
+ .v4_bx         0x000070c8        0x0 linker stubs
 
-.iplt           0x000070a4        0x0
- .iplt          0x000070a4        0x0 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtbegin.o
+.iplt           0x000070c8        0x0
+ .iplt          0x000070c8        0x0 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtbegin.o
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
-                0x000070a4                __exidx_start = .
+                0x000070c8                __exidx_start = .
 
-.ARM.exidx      0x000070a4        0x8
+.ARM.exidx      0x000070c8        0x8
  *(.ARM.exidx* .gnu.linkonce.armexidx.*)
- .ARM.exidx     0x000070a4        0x8 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp/crt0.o
- .ARM.exidx     0x000070ac        0x0 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp\libgcc.a(_udivmoddi4.o)
+ .ARM.exidx     0x000070c8        0x8 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/softfp/crt0.o
+ .ARM.exidx     0x000070d0        0x0 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp\libgcc.a(_udivmoddi4.o)
                                   0x8 (size before relaxing)
-                0x000070ac                __exidx_end = .
-                0x000070ac                __etext = .
+                0x000070d0                __exidx_end = .
+                0x000070d0                __etext = .
 
-.rel.dyn        0x000070ac        0x0
- .rel.iplt      0x000070ac        0x0 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtbegin.o
+.rel.dyn        0x000070d0        0x0
+ .rel.iplt      0x000070d0        0x0 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtbegin.o
 
-.data           0x20000000       0x7c load address 0x000070ac
+.data           0x20000000       0x7c load address 0x000070d0
                 0x20000000                __data_start__ = .
  *(vtable)
  *(.data*)
@@ -3536,10 +3536,10 @@ LOAD d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/
                 0x2000007c                . = ALIGN (0x4)
                 0x2000007c                __data_end__ = .
 
-.igot.plt       0x2000007c        0x0 load address 0x00007128
+.igot.plt       0x2000007c        0x0 load address 0x0000714c
  .igot.plt      0x2000007c        0x0 d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7e-m/fpv4-sp/softfp/crtbegin.o
 
-.bss            0x2000007c      0x8f4 load address 0x00007128
+.bss            0x2000007c      0x8f4 load address 0x0000714c
                 0x2000007c                . = ALIGN (0x4)
                 0x2000007c                __bss_start__ = .
  *(.bss*)
@@ -3594,7 +3594,7 @@ LOAD d:/siliconlabs/simplicitystudio/v4/developer/toolchains/gnu_arm/7.2_2017q4/
                 0x200000c4        0x4 ./src/pocsag.o
  .bss.route_timer
                 0x200000c8        0x4 ./src/pocsag.o
- .bss.wordsInBatch.9013
+ .bss.wordsInBatch.9001
                 0x200000cc        0x1 ./src/pocsag.o
  .bss.timer0_count
                 0x200000cd        0x1 ./src/timer0.o
@@ -3771,7 +3771,7 @@ OUTPUT(3xUART_on_QFP64.axf elf32-littlearm)
  .comment       0x0000007e       0x7f ./src/usart0.o
  .comment       0x0000007e       0x7f ./src/wtimer0.o
 
-.debug_info     0x00000000    0x12d94
+.debug_info     0x00000000    0x12da4
  .debug_info    0x00000000     0x2b25 ./src/em_cmu.o
  .debug_info    0x00002b25      0xb7b ./src/em_gpio.o
  .debug_info    0x000036a0     0x11ab ./src/em_usart.o
@@ -3783,15 +3783,15 @@ OUTPUT(3xUART_on_QFP64.axf elf32-littlearm)
  .debug_info    0x0000ab04      0xf0e ./src/inputs.o
  .debug_info    0x0000ba12      0x9d9 ./src/led.o
  .debug_info    0x0000c3eb      0xcab ./src/parameters.o
- .debug_info    0x0000d096     0x1c00 ./src/pocsag.o
- .debug_info    0x0000ec96      0xa8a ./src/timer0.o
- .debug_info    0x0000f720      0xa84 ./src/timer1.o
- .debug_info    0x000101a4      0xb95 ./src/uart0.o
- .debug_info    0x00010d39      0xbd7 ./src/uart1.o
- .debug_info    0x00011910      0xbdc ./src/usart0.o
- .debug_info    0x000124ec      0x8a8 ./src/wtimer0.o
+ .debug_info    0x0000d096     0x1c10 ./src/pocsag.o
+ .debug_info    0x0000eca6      0xa8a ./src/timer0.o
+ .debug_info    0x0000f730      0xa84 ./src/timer1.o
+ .debug_info    0x000101b4      0xb95 ./src/uart0.o
+ .debug_info    0x00010d49      0xbd7 ./src/uart1.o
+ .debug_info    0x00011920      0xbdc ./src/usart0.o
+ .debug_info    0x000124fc      0x8a8 ./src/wtimer0.o
 
-.debug_abbrev   0x00000000     0x28cd
+.debug_abbrev   0x00000000     0x28b3
  .debug_abbrev  0x00000000      0x356 ./src/em_cmu.o
  .debug_abbrev  0x00000356      0x24d ./src/em_gpio.o
  .debug_abbrev  0x000005a3      0x239 ./src/em_usart.o
@@ -3803,13 +3803,13 @@ OUTPUT(3xUART_on_QFP64.axf elf32-littlearm)
  .debug_abbrev  0x00001266      0x2ad ./src/inputs.o
  .debug_abbrev  0x00001513      0x1ce ./src/led.o
  .debug_abbrev  0x000016e1      0x22d ./src/parameters.o
- .debug_abbrev  0x0000190e      0x3b9 ./src/pocsag.o
- .debug_abbrev  0x00001cc7      0x1f9 ./src/timer0.o
- .debug_abbrev  0x00001ec0      0x206 ./src/timer1.o
- .debug_abbrev  0x000020c6      0x202 ./src/uart0.o
- .debug_abbrev  0x000022c8      0x202 ./src/uart1.o
- .debug_abbrev  0x000024ca      0x22b ./src/usart0.o
- .debug_abbrev  0x000026f5      0x1d8 ./src/wtimer0.o
+ .debug_abbrev  0x0000190e      0x39f ./src/pocsag.o
+ .debug_abbrev  0x00001cad      0x1f9 ./src/timer0.o
+ .debug_abbrev  0x00001ea6      0x206 ./src/timer1.o
+ .debug_abbrev  0x000020ac      0x202 ./src/uart0.o
+ .debug_abbrev  0x000022ae      0x202 ./src/uart1.o
+ .debug_abbrev  0x000024b0      0x22b ./src/usart0.o
+ .debug_abbrev  0x000026db      0x1d8 ./src/wtimer0.o
 
 .debug_loc      0x00000000     0x5d70
  .debug_loc     0x00000000     0x1400 ./src/em_cmu.o
@@ -4014,7 +4014,7 @@ OUTPUT(3xUART_on_QFP64.axf elf32-littlearm)
  .debug_macro   0x0004c7b3      0x34a ./src/usart0.o
  .debug_macro   0x0004cafd      0x335 ./src/wtimer0.o
 
-.debug_line     0x00000000     0xd699
+.debug_line     0x00000000     0xd69b
  .debug_line    0x00000000     0x16c8 ./src/em_cmu.o
  .debug_line    0x000016c8      0xc0b ./src/em_gpio.o
  .debug_line    0x000022d3      0xd9c ./src/em_usart.o
@@ -4026,13 +4026,13 @@ OUTPUT(3xUART_on_QFP64.axf elf32-littlearm)
  .debug_line    0x00006b5b      0xb40 ./src/inputs.o
  .debug_line    0x0000769b      0xc02 ./src/led.o
  .debug_line    0x0000829d      0x47e ./src/parameters.o
- .debug_line    0x0000871b     0x10f5 ./src/pocsag.o
- .debug_line    0x00009810      0xa64 ./src/timer0.o
- .debug_line    0x0000a274      0xaa4 ./src/timer1.o
- .debug_line    0x0000ad18      0xa77 ./src/uart0.o
- .debug_line    0x0000b78f      0xa8d ./src/uart1.o
- .debug_line    0x0000c21c      0xa82 ./src/usart0.o
- .debug_line    0x0000cc9e      0x9fb ./src/wtimer0.o
+ .debug_line    0x0000871b     0x10f7 ./src/pocsag.o
+ .debug_line    0x00009812      0xa64 ./src/timer0.o
+ .debug_line    0x0000a276      0xaa4 ./src/timer1.o
+ .debug_line    0x0000ad1a      0xa77 ./src/uart0.o
+ .debug_line    0x0000b791      0xa8d ./src/uart1.o
+ .debug_line    0x0000c21e      0xa82 ./src/usart0.o
+ .debug_line    0x0000cca0      0x9fb ./src/wtimer0.o
 
 .debug_str      0x00000000   0x1e89fd
  .debug_str     0x00000000   0x1e1b0f ./src/em_cmu.o
@@ -4058,7 +4058,7 @@ OUTPUT(3xUART_on_QFP64.axf elf32-littlearm)
  .debug_str     0x001e83f9       0x4d ./src/parameters.o
                                0x742e (size before relaxing)
  .debug_str     0x001e8446      0x3b9 ./src/pocsag.o
-                             0x1e2230 (size before relaxing)
+                             0x1e2238 (size before relaxing)
  .debug_str     0x001e87ff       0x52 ./src/timer0.o
                              0x1dfc1a (size before relaxing)
  .debug_str     0x001e8851       0x77 ./src/timer1.o
