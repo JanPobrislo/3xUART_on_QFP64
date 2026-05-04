@@ -133,6 +133,78 @@ static uint32_t try_fix_word(uint32_t word, bool *fixed) {
 }
 
 //------------------------------------------------------------------------------
+//  Vypocet BCH a PARITY
+//------------------------------------------------------------------------------
+/**
+ * @brief Vypočítá BCH(31,21) a paritu pro všechna slova v tx_token.
+ * Předpokládá, že v tx_token.data[i] je uloženo 21 informačních bitů
+ * zarovnaných doleva (bity 31 až 11).
+ * @brief Vypočítá BCH a paritu dle POCSAG standardu (včetně inverze kontrolních bitů).
+ * Generuje správné IDLE slovo 0x7A89C197 z dat 0x7A89C...
+ */
+void make_bch(POCSAG_token *token) {
+    if (token == NULL) return;
+
+    /*
+     * POCSAG BCH(31,21) + sudá parita
+     * ---------------------------------
+     * Každé 32-bitové slovo má strukturu:
+     *   bit 31..11 = 21 datových bitů (MSB první)
+     *   bit 10..1  = 10 BCH kontrolních bitů
+     *   bit 0      = paritní bit (sudá parita celého slova)
+     *
+     * Generátor: g(x) = x^10 + x^9 + x^8 + x^6 + x^5 + x^3 + 1 = 0x769
+     *
+     * Algoritmus:
+     *   1. Vezmi 21 datových bitů (bity 31..11 vstupního slova).
+     *   2. Sestav 31-bit codeword základ: data21 << 10  (bity 30..10).
+     *   3. Polynomiální dělení GF(2): odečítej generátor od MSB dolů.
+     *      Zbytek (bity 9..0) jsou BCH kontrolní bity.
+     *   4. Sestav výsledné 32-bit slovo: (data21 << 11) | (bch << 1).
+     *   5. Nastav bit 0 (paritu) tak aby byl celkový počet jedniček sudý.
+     *
+     * Chyby původní verze:
+     *   - Použití poly=0x1B5 (chybný generátor; správný je 0x769).
+     *   - Inverze reg ^= 0x3FF (POCSAG BCH inverzi NEPOŽADUJE).
+     *   - Počítání parity jen přes 31 bitů místo 32.
+     */
+
+    const uint32_t GEN = 0x769u;  /* generátor BCH(31,21) */
+
+    for (int i = 0; i < token->total_words; i++) {
+        uint32_t in = token->data[i];
+
+        /* IDLE slovo necháme beze změny */
+        if (in == POCSAG_IDLE_WORD) continue;
+
+        /* 1. Extrahuj 21 datových bitů */
+        uint32_t data21 = (in >> 11) & 0x1FFFFFu;
+
+        /* 2. Základ 31-bit codeword: data na pozicích 30..10 */
+        uint32_t cw = data21 << 10;
+
+        /* 3. Polynomiální dělení – odečítáme generátor od MSB dolů */
+        for (int b = 20; b >= 0; b--) {
+            if (cw & (1u << (b + 10))) {
+                cw ^= (GEN << b);
+            }
+        }
+        /* cw[9..0] = BCH zbytek (kontrolní bity) */
+
+        /* 4. Sestav 32-bit slovo: data[31..11] | bch[10..1] | parita[0] */
+        uint32_t word = (data21 << 11) | ((cw & 0x3FFu) << 1);
+
+        /* 5. Sudá parita přes všech 32 bitů */
+        uint32_t tmp = word;
+        uint8_t  par = 0;
+        while (tmp) { par ^= (uint8_t)(tmp & 1u); tmp >>= 1; }
+        if (par) word |= 1u;  /* nastav bit 0 aby byl počet jedniček sudý */
+
+        token->data[i] = word;
+    }
+}
+
+//------------------------------------------------------------------------------
 // Init prijmu
 //------------------------------------------------------------------------------
 void POCSAG_rx_init(void) {
@@ -197,6 +269,8 @@ void tx_start(void) {
 	rx_edge_irq_disabled(); // Vypneme detekci hran - nevyhodnocuje prijem
 //    GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - nevyhodnocuje prijem
 	rx_state = STATE_TRANSMITING;
+
+    make_bch(&tx_token); // Opravi BCH+PARITU celeho tokenu
 
 	sendStringUART1("\r\n-------------- TX --------------\r\n");
 	sendStringUART1("TX: ");
@@ -500,78 +574,6 @@ void decode_ascii_part(uint32_t word, char *outStr) {
 }
 
 //------------------------------------------------------------------------------
-//  Vypocet BCH a PARITY
-//------------------------------------------------------------------------------
-/**
- * @brief Vypočítá BCH(31,21) a paritu pro všechna slova v tx_token.
- * Předpokládá, že v tx_token.data[i] je uloženo 21 informačních bitů
- * zarovnaných doleva (bity 31 až 11).
- * @brief Vypočítá BCH a paritu dle POCSAG standardu (včetně inverze kontrolních bitů).
- * Generuje správné IDLE slovo 0x7A89C197 z dat 0x7A89C...
- */
-void make_bch(POCSAG_token *token) {
-    if (token == NULL) return;
-
-    /*
-     * POCSAG BCH(31,21) + sudá parita
-     * ---------------------------------
-     * Každé 32-bitové slovo má strukturu:
-     *   bit 31..11 = 21 datových bitů (MSB první)
-     *   bit 10..1  = 10 BCH kontrolních bitů
-     *   bit 0      = paritní bit (sudá parita celého slova)
-     *
-     * Generátor: g(x) = x^10 + x^9 + x^8 + x^6 + x^5 + x^3 + 1 = 0x769
-     *
-     * Algoritmus:
-     *   1. Vezmi 21 datových bitů (bity 31..11 vstupního slova).
-     *   2. Sestav 31-bit codeword základ: data21 << 10  (bity 30..10).
-     *   3. Polynomiální dělení GF(2): odečítej generátor od MSB dolů.
-     *      Zbytek (bity 9..0) jsou BCH kontrolní bity.
-     *   4. Sestav výsledné 32-bit slovo: (data21 << 11) | (bch << 1).
-     *   5. Nastav bit 0 (paritu) tak aby byl celkový počet jedniček sudý.
-     *
-     * Chyby původní verze:
-     *   - Použití poly=0x1B5 (chybný generátor; správný je 0x769).
-     *   - Inverze reg ^= 0x3FF (POCSAG BCH inverzi NEPOŽADUJE).
-     *   - Počítání parity jen přes 31 bitů místo 32.
-     */
-
-    const uint32_t GEN = 0x769u;  /* generátor BCH(31,21) */
-
-    for (int i = 0; i < token->total_words; i++) {
-        uint32_t in = token->data[i];
-
-        /* IDLE slovo necháme beze změny */
-        if (in == POCSAG_IDLE_WORD) continue;
-
-        /* 1. Extrahuj 21 datových bitů */
-        uint32_t data21 = (in >> 11) & 0x1FFFFFu;
-
-        /* 2. Základ 31-bit codeword: data na pozicích 30..10 */
-        uint32_t cw = data21 << 10;
-
-        /* 3. Polynomiální dělení – odečítáme generátor od MSB dolů */
-        for (int b = 20; b >= 0; b--) {
-            if (cw & (1u << (b + 10))) {
-                cw ^= (GEN << b);
-            }
-        }
-        /* cw[9..0] = BCH zbytek (kontrolní bity) */
-
-        /* 4. Sestav 32-bit slovo: data[31..11] | bch[10..1] | parita[0] */
-        uint32_t word = (data21 << 11) | ((cw & 0x3FFu) << 1);
-
-        /* 5. Sudá parita přes všech 32 bitů */
-        uint32_t tmp = word;
-        uint8_t  par = 0;
-        while (tmp) { par ^= (uint8_t)(tmp & 1u); tmp >>= 1; }
-        if (par) word |= 1u;  /* nastav bit 0 aby byl počet jedniček sudý */
-
-        token->data[i] = word;
-    }
-}
-
-//------------------------------------------------------------------------------
 //  Z binární hlavičky v poli data[] nastavi všechny promnene ve struktuře
 //------------------------------------------------------------------------------
 void read_header(POCSAG_token *token) {
@@ -627,6 +629,7 @@ void make_header(POCSAG_token *token) {
 	make_bch(&tx_token);     //-- Opravi BCH a Paritu
 }
 */
+
 void make_header(POCSAG_token *token) {
     if (token == NULL) return;
 
@@ -666,8 +669,34 @@ void make_header(POCSAG_token *token) {
     d2 |= ((uint32_t)(token->token_id     & 0x1F) << 16);
     token->data[2] = d2;
 
-    make_bch(token);
+//    make_bch(token);
 }
+
+//------------------------------------------------------------------------------
+//  Zapise status tohoto DAU do systemoveho tokenu
+//------------------------------------------------------------------------------
+void make_system_status(POCSAG_token *token) {
+    if (token == NULL) return;
+
+    unsigned char cdw,pos,stat;
+
+    cdw = ((token->dau-1)/4)+3;				//-- v kterem CDW je status
+    pos = ((3-((token->dau-1)%4)) * 5)+11;  //-- na jake pozici
+
+    stat = 1;
+    if (Input_GetOnBattery()==1) {stat += 16; }
+    if (Input_GetTamper()==1) {stat += 8; }
+
+    token->data[cdw] &= ~(0x1FUL << pos);   // vymazat 5 bitu status dau
+    token->data[cdw] |= ((uint32_t)(stat & 0x1F) << pos);
+
+//    make_bch(token);
+
+    char buf[160];
+    sprintf(buf, "\r\nSTATUS DAU:%X on CDW=%u POS=%u\r\n ",stat,cdw,pos);
+	sendStringUART1(buf);
+}
+
 //------------------------------------------------------------------------------
 //  Vysilani datagramu
 //------------------------------------------------------------------------------
@@ -884,6 +913,11 @@ void POCSAG_process(void) {
 					tx_token.adr = tx_route.follow;
 					tx_token.dau = param.netdau[rx_token.net-1];
 					make_header(&tx_token);  //-- Vygeneruje binární podobu hlavičky
+
+					//-- Do systemoveho tokenu zapise svuj STATUS DAU
+					if (rx_token.token_type == SYSTEM_TOKEN) {
+						make_system_status(&tx_token);
+					}
 
 					//-- Nastavi cekani na potvrzeni tokenu (jen pro REPAIR tokeny)
 					if (rx_token.distribution == REPAIR_TOKEN) {
