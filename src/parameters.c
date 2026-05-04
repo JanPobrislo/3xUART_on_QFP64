@@ -62,7 +62,7 @@ void Parameters_Init(void) {
 	param.route[3].net = 15;
 	param.route[3].path = 0;
 	param.route[3].dau = 2;
-	param.route[3].follow = 5;
+	param.route[3].follow = 4;
 	param.route[3].error = 4;
 	param.route[3].revers = 2;
 }

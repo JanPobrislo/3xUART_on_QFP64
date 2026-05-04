@@ -922,11 +922,16 @@ void POCSAG_process(void) {
 					//-- Vysilam
 					LED4_On();
 					tx_token = rx_token;
-					tx_token.adr = tx_route.follow;
+					if (tx_token.distribution == REVERSE_TOKEN) {
+						tx_token.adr = tx_route.revers;  //-- Posle reverzni cestou
+					}
+					else {
+						tx_token.adr = tx_route.follow;  //-- Posle primou cestou
+					}
 					tx_token.dau = param.netdau[rx_token.net-1];
 
 					//-- Nastavi cekani na potvrzeni tokenu (jen pro REPAIR tokeny)
-					if (rx_token.distribution == REPAIR_TOKEN) {
+					if (tx_token.distribution == REPAIR_TOKEN) {
 						route_state = WAIT_FOLLOW;
 						route_repeat_counter = param.next_rpt+1;
 						route_timer = param.next_time+1;
