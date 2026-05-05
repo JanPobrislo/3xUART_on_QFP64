@@ -4076,42 +4076,42 @@ OUTPUT(3xUART_on_QFP64.axf elf32-littlearm)
  .debug_line    0x0000c377      0xa82 ./src/usart0.o
  .debug_line    0x0000cdf9      0x9fb ./src/wtimer0.o
 
-.debug_str      0x00000000   0x1e8bc8
+.debug_str      0x00000000   0x1e8bc9
  .debug_str     0x00000000   0x1e1b07 ./src/em_cmu.o
                              0x1e2ec8 (size before relaxing)
  .debug_str     0x001e1b07      0x4c0 ./src/em_gpio.o
                              0x1de47b (size before relaxing)
  .debug_str     0x001e1fc7      0xf18 ./src/em_usart.o
                              0x1e0269 (size before relaxing)
- .debug_str     0x001e2edf     0x24db ./src/main.o
-                             0x1e402c (size before relaxing)
- .debug_str     0x001e53ba       0x9d ./CMSIS/EFM32GG11B/startup_efm32gg11b.o
+ .debug_str     0x001e2edf     0x24dc ./src/main.o
+                             0x1e402d (size before relaxing)
+ .debug_str     0x001e53bb       0x9d ./CMSIS/EFM32GG11B/startup_efm32gg11b.o
                                  0xef (size before relaxing)
- .debug_str     0x001e5457      0x275 ./CMSIS/EFM32GG11B/system_efm32gg11b.o
+ .debug_str     0x001e5458      0x275 ./CMSIS/EFM32GG11B/system_efm32gg11b.o
                              0x1dda70 (size before relaxing)
- .debug_str     0x001e56cc     0x1dd8 ./src/em_emu.o
+ .debug_str     0x001e56cd     0x1dd8 ./src/em_emu.o
                              0x1e3da9 (size before relaxing)
- .debug_str     0x001e74a4      0xa9f ./src/em_timer.o
+ .debug_str     0x001e74a5      0xa9f ./src/em_timer.o
                              0x1de03d (size before relaxing)
- .debug_str     0x001e7f43      0x59b ./src/inputs.o
-                             0x1e041f (size before relaxing)
- .debug_str     0x001e84de       0xe1 ./src/led.o
+ .debug_str     0x001e7f44      0x59b ./src/inputs.o
+                             0x1e0420 (size before relaxing)
+ .debug_str     0x001e84df       0xe1 ./src/led.o
                              0x1df8b8 (size before relaxing)
- .debug_str     0x001e85bf       0x4d ./src/parameters.o
+ .debug_str     0x001e85c0       0x4d ./src/parameters.o
                                0x742e (size before relaxing)
- .debug_str     0x001e860c      0x3be ./src/pocsag.o
-                             0x1e2347 (size before relaxing)
- .debug_str     0x001e89ca       0x52 ./src/timer0.o
+ .debug_str     0x001e860d      0x3be ./src/pocsag.o
+                             0x1e2348 (size before relaxing)
+ .debug_str     0x001e89cb       0x52 ./src/timer0.o
                              0x1dfc1a (size before relaxing)
- .debug_str     0x001e8a1c       0x77 ./src/timer1.o
+ .debug_str     0x001e8a1d       0x77 ./src/timer1.o
                              0x1dff6d (size before relaxing)
- .debug_str     0x001e8a93       0x5c ./src/uart0.o
+ .debug_str     0x001e8a94       0x5c ./src/uart0.o
                              0x1e01b3 (size before relaxing)
- .debug_str     0x001e8aef       0x4b ./src/uart1.o
+ .debug_str     0x001e8af0       0x4b ./src/uart1.o
                              0x1e01c9 (size before relaxing)
- .debug_str     0x001e8b3a       0x5a ./src/usart0.o
+ .debug_str     0x001e8b3b       0x5a ./src/usart0.o
                              0x1e01d4 (size before relaxing)
- .debug_str     0x001e8b94       0x34 ./src/wtimer0.o
+ .debug_str     0x001e8b95       0x34 ./src/wtimer0.o
                              0x1df9b7 (size before relaxing)
 
 .debug_frame    0x00000000     0x31f8

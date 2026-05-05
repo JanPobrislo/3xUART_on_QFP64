@@ -32,7 +32,7 @@ typedef enum {
 	ALARM_END
 } type_alarm_status;
 
-#define BATERY_ALARM_TIMEOUT 20  //240
+#define BATERY_ALARM_TIMEOUT 240
 
 void init_tamper_alarm(void);
 type_alarm_status tamper_alarm_status (void);
