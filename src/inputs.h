@@ -24,4 +24,26 @@ unsigned char Input_GetTamper(void);
 void rx_edge_irq_enabled(void);
 void rx_edge_irq_disabled(void);
 
+
+typedef enum {
+	NORMAL_CONDITION,
+	ALARM_START,
+	ALARM_SENT,
+	ALARM_END
+} type_alarm_status;
+
+#define BATERY_ALARM_TIMEOUT 20  //240
+
+void init_tamper_alarm(void);
+type_alarm_status tamper_alarm_status (void);
+void set_tamper_alarm (type_alarm_status status);
+void tamper_alarm_pending(void);
+
+void init_batery_alarm(void);
+type_alarm_status batery_alarm_status (void);
+void set_batery_alarm (type_alarm_status status);
+void batery_alarm_pending(void);
+
+void show_alarm_status(type_alarm_status status);
+
 #endif /* INPUTS_H */

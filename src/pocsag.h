@@ -49,6 +49,13 @@ typedef struct {
 #define TX_ERROR_WAY  	 3  // 011
 #define TX_REVERSAL_WAY  4  // 1xx - nemeni bity 1. a 2.
 
+//-- cislo poruchy DAU v hlavicce tokenu (alarm_no)
+//   sdruzuje VZNIK=prvni bit + cislo poruchy
+#define ERROR_NO_TAMPER_START  0xC  // 1100
+#define ERROR_NO_TAMPER_END    0x4  // 0100
+#define ERROR_NO_BATERY_START  0xB  // 1011
+#define ERROR_NO_BATERY_END    0x3  // 0011
+
 //extern POCSAG_token rx_token;
 
 void POCSAG_rx_init(void);

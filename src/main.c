@@ -101,6 +101,8 @@ int main(void)
     initTIMER0();
     initTIMER1();
     initWTIMER0();
+    init_tamper_alarm();
+    init_batery_alarm();
 
     //----------------- Blikačka
     LED1_On(); delay_ms(300); LED1_Off();
@@ -150,6 +152,7 @@ int main(void)
     					sendStringUART1(" p : show parameters\r\n");
     					sendStringUART1(" s : toggle second time-tick\r\n");
     					sendStringUART1(" i : toggle the display of inputs\r\n");
+    					sendStringUART1(" a : show alarms status\r\n");
     					sendStringUART1(" h : display this help\r\n");
     					sendStringUART1(" --------------------------------\r\n");
     					POCSAG_show_rx_state();
@@ -197,6 +200,13 @@ int main(void)
     		case 'i' : 	show_inputs = !show_inputs;
     					break;
 
+    		case 'a' : 	sendStringUART1("ALARMS STATUS:  TAMPER=");
+    					show_alarm_status(tamper_alarm_status());
+    					sendStringUART1("  BATERY=");
+    					show_alarm_status(batery_alarm_status());
+    					sendStringUART1("\r\n");
+    					break;
+
     		default:	break;
     		}
 
@@ -217,11 +227,14 @@ int main(void)
     		}
 
 			if(show_inputs==1) {
-				sprintf(buf,"INPUT POWER: %u   ",Input_GetOnBattery());
+				sprintf(buf,"INPUT ON-BATERY: %u   ",Input_GetOnBattery());
 				sendStringUART1(buf);
 				sprintf(buf,"INPUT TAMPER: %u\r\n",Input_GetTamper());
 				sendStringUART1(buf);
 			}
+
+			tamper_alarm_pending();
+			batery_alarm_pending();
 
     		/*
     		if (Input_GetOnBattery()) {

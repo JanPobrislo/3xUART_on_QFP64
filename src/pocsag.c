@@ -678,12 +678,53 @@ void tx_start(void) {
 //    GPIO_IntDisable(1 << RX_PIN); // VYPNEME HRANY - nevyhodnocuje prijem
 	rx_state = STATE_TRANSMITING;
 
-	make_header(&tx_token); // Vygeneruje binární podobu hlavičky
-							// Do systemoveho tokenu zapise svuj STATUS DAU
+	//-- Zkontroluje zda muze a ma vysilat alarm
+	if (tx_token.alarm_dau == 0) {
+		//-- je misto muze zapsat alarm
+
+		if (tamper_alarm_status() == ALARM_START) {
+			//-- vyhlasi tamper alarm  - start
+			tx_token.alarm_dau = tx_token.dau;
+			tx_token.alarm_no = ERROR_NO_TAMPER_START;
+			set_tamper_alarm(ALARM_SENT);
+			sendStringUART1("TX ALARM: ERROR_NO_TAMPER_START\r\n");
+		}
+
+		if (tamper_alarm_status() == ALARM_END) {
+			//-- vyhlasi tamper alarm  - konec
+			tx_token.alarm_dau = tx_token.dau;
+			tx_token.alarm_no = ERROR_NO_TAMPER_END;
+			set_tamper_alarm(NORMAL_CONDITION);
+			sendStringUART1("TX ALARM: ERROR_NO_TAMPER_END\r\n");
+		}
+
+		if (batery_alarm_status() == ALARM_START) {
+			//-- vyhlasi batery alarm  - start
+			tx_token.alarm_dau = tx_token.dau;
+			tx_token.alarm_no = ERROR_NO_BATERY_START;
+			set_batery_alarm(ALARM_SENT);
+			sendStringUART1("TX ALARM: ERROR_NO_BATERY_START\r\n");
+		}
+
+		if (batery_alarm_status() == ALARM_END) {
+			//-- vyhlasi batery alarm  - konec
+			tx_token.alarm_dau = tx_token.dau;
+			tx_token.alarm_no = ERROR_NO_BATERY_END;
+			set_batery_alarm(NORMAL_CONDITION);
+			sendStringUART1("TX ALARM: ERROR_NO_BATERY_END\r\n");
+		}
+	}
+
+	//-- Vygeneruje binární podobu hlavičky
+	make_header(&tx_token);
+
+	//-- Do systemoveho tokenu zapise svuj STATUS DAU
 	if (tx_token.token_type == SYSTEM_TOKEN) {
 		make_system_status(&tx_token);
 	}
-    make_bch(&tx_token); 	// Opravi BCH+PARITU celeho tokenu
+
+	//-- Opravi BCH+PARITU celeho tokenu
+	make_bch(&tx_token);
 
 	sendStringUART1("\r\n-------------- TX --------------\r\n");
 	sendStringUART1("TX: ");

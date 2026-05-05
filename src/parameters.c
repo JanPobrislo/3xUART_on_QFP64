@@ -36,7 +36,7 @@ void Parameters_Init(void) {
 	}
 
 	//---- Default pro ladeni
-	param.netdau[14] = 3;
+	param.netdau[14] = 29;
 
 	param.route[0].net = 15;
 	param.route[0].path = 255;
