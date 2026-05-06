@@ -1,3 +1,10 @@
+Projekt je v: C:\Users\Jan\SimplicityStudio\v4_workspace\3xUART_on_QFP64
+Knihovny: 
+D:\SiliconLabs\SimplicityStudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\src
+D:\SiliconLabs\SimplicityStudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc
+
+-------------------------------------------------------------------------------------------------------------------
+
 Pøiložený soubor je program pro procesor EFM32GG11B820F2048GQ64, který má pøipojený externí krystal 25MHz.
 Uprav jej pro pøipojení krystalu 50MHz tak aby byly zachovány konfigurace portù a UART:
 UART0  na LOC4: PC4 (TX), PC5 (RX) - 9600 baud
@@ -75,4 +82,14 @@ To znamená, že pokud se najde záznam kde se schoduje net, path i dau, tak je nas
 podle tohoto záznamu s nejvyžší prioritou. Pokud ne hledá se shoda se záznamy s nižší prioritou. 
 Nejnižší prioritu má záznam kde se shoduje pouze net a path i dau mùže být libovolné (255).
 Funkce by mìla vracet, zda se povedlo nastavit tx_route. V tom pøípadì funkce nabývá hodnoty 0, jinak èíslo chyby.
-
+----------------------------------------------------------------------------------------------------------------
+Soubory jsou èástí programu pro procesor EFM32GG11B820F2048GQ64.
+Na USART0 (PE12,PE13) je pøipojen GPS obvod NEO-M9N-00B, který má pin D_SEL pøipojen na VCC, takže komunikuje po RS232.
+Uprav nastavení USART0 a pøípadnì nakonfiguruj NEO-M9N-00B.
+Napiš program, který bude pøijímat zprávy z USART0 od NEO-M9N-00B a bude je kopírovat na UART1,
+k tomu využij funkci sendStringUART1(). Zvláštì mne zajímají zprávy, které obsahují UTC.
+-----------------
+Pøidej modul rtc.c (rtc.h) který bude obsluhovat RTC procesoru.
+Pøidej funkci set_rtc(), která nastaví RTC procesoru podle údajù pøijatých z GPS na USART0. Tato funkce bude volána z USART0_RX_IRQHandler()
+Pøidej funkci show_rtc(), která vypíše datum a èas pomocí sendStringUART1().
+Do usart0.c pøidej funkce pro zakázání a povolení pøerušení od USART0, tak aby se dalo ovládat z main.c

@@ -30,7 +30,7 @@
 #include "uart1.h"
 #include "pocsag.h"
 #include "wtimer0.h"
-
+#include "rtc.h"
 
 //------------------------------------------------------------------------------
 //  Globalni promenne
@@ -103,6 +103,7 @@ int main(void)
     initWTIMER0();
     init_tamper_alarm();
     init_batery_alarm();
+    initRTC();
 
     //----------------- Blikačka
     LED1_On(); delay_ms(300); LED1_Off();
@@ -150,6 +151,8 @@ int main(void)
     					sendStringUART1(" T : stop timer1 1200Hz\r\n");
     					sendStringUART1(" x : GPIO_IntEnable(RX_PIN)\r\n");
     					sendStringUART1(" p : show parameters\r\n");
+    					sendStringUART1(" r : show RTC\r\n");
+    					sendStringUART1(" n : toggle show GPS protocol NMEA\r\n");
     					sendStringUART1(" s : toggle second time-tick\r\n");
     					sendStringUART1(" i : toggle the display of inputs\r\n");
     					sendStringUART1(" a : show alarms status\r\n");
@@ -200,11 +203,17 @@ int main(void)
     		case 'i' : 	show_inputs = !show_inputs;
     					break;
 
+    		case 'n' : 	show_gps_nmea = !show_gps_nmea;
+    					break;
+
     		case 'a' : 	sendStringUART1("ALARMS STATUS:  TAMPER=");
     					show_alarm_status(tamper_alarm_status());
     					sendStringUART1("  BATERY=");
     					show_alarm_status(batery_alarm_status());
     					sendStringUART1("\r\n");
+    					break;
+
+    		case 'r' : 	show_rtc();
     					break;
 
     		default:	break;

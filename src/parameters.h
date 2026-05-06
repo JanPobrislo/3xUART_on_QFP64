@@ -40,6 +40,7 @@ extern routes_for_tx tx_route;  // definuje routu pro vysilani
 
 extern unsigned char show_timetick;
 extern unsigned char show_inputs;
+extern unsigned char show_gps_nmea;
 
 void Parameters_Init(void);
 void Parameters_Show(void);

@@ -11,6 +11,7 @@
 #include "ports.h"
 #include "led.h"
 #include "timer1.h"
+#include "rtc.h"
 
 typedef enum {
     STATE_RX_IDLE,      // Čekání na preamble v šumu
@@ -885,6 +886,9 @@ void POCSAG_process(void) {
 	}
 	sprintf(buf,"PASS-DAU=%02u ALARM-DAU=%02u ALARM-NO=%u\r\n",rx_token.pass_dau,rx_token.alarm_dau,rx_token.alarm_no);
     sendStringUART1(buf);
+
+    sendStringUART1("    ");
+    show_rtc();
 
     //--- Dekódování adresy a textu --- az od ctvrteho codewordu, za hlavickou
 	if (rx_token.rx_ok) {

@@ -10,6 +10,7 @@ routes_for_tx tx_route;  // definuje routu pro vysilani
 
 unsigned char show_timetick = 0;  // povoluje zobrazovani . kazdou sec
 unsigned char show_inputs = 0;    // povoluje zobrazovani vstupu kazdou sec
+unsigned char show_gps_nmea = 0;  // povoluje zobrazovani . kazdou sec
 
 void Parameters_Init(void) {
 	unsigned char n;
