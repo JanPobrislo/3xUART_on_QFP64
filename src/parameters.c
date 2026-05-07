@@ -76,7 +76,9 @@ void Parameters_Show(void) {
 	char txt[250] = "";
 
 	sendStringUART1("\r\n-------------------------------------------------\r\n");
-	sendStringUART1("           T C I   P A R A M E T E R S\r\n");
+	sendStringUART1("   TCI-S ");
+	sendStringUART1(PROGRAM_VERSION);
+	sendStringUART1("   P A R A M E T E R S\r\n");
 	sendStringUART1("-------------------------------------------------\r\n");
 	sprintf(txt,"PRIMARY NET: %u\r\n",param.primary_net);
 	sendStringUART1(txt);

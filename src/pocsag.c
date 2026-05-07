@@ -324,7 +324,7 @@ void tx_bit(void) {
 // Odecte nebo vysila BIT - Voláno z TIMER1_IRQHandler (1200 Hz)
 //------------------------------------------------------------------------------
 void POCSAG_sample_bit(void) {
-    char buf[160];
+//    char buf[160];
     static uint8_t wordsInBatch = 0; // Sleduje pozici v rámci aktuálního batche (0-15)
 
 	uint8_t bit = (Input_GetRX() > 0) ? 1 : 0;
@@ -410,8 +410,8 @@ void POCSAG_sample_bit(void) {
 						rx_state = STATE_RX_IDLE;
 //						TIMER1->CMD = TIMER_CMD_STOP;
 
-						sprintf(buf,"\r\nTIMER1.TOP=%lu",TIMER1->TOP);
-					    sendStringUART1(buf);
+//						sprintf(buf,"\r\nTIMER1.TOP=%lu",TIMER1->TOP);
+//					    sendStringUART1(buf);
 
 						TIMER1_ResetSpeed();
     					rx_edge_irq_enabled();
