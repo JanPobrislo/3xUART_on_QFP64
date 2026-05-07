@@ -2,12 +2,14 @@
  * @file uart0.c  COM-A
  * @brief Obsluha UART0 - 9600 8N1, LOCATION 4 (PC4/PC5)
  *****************************************************************************/
-#include "uart0.h"
-#include "usart0.h"   /* USART_BaudrateSet_Manual */
-#include "ports.h"
 #include "em_usart.h"
 #include "em_cmu.h"
 #include "em_gpio.h"
+
+#include "uart0.h"
+#include "usart0.h"
+#include "ports.h"
+#include "pc_command.h"
 
 char     rxBuffer2[BUFFER_SIZE];
 volatile uint16_t rxIndex2 = 0;
@@ -51,6 +53,8 @@ void sendStringUART0(const char *str)
 void UART0_RX_IRQHandler(void)
 {
     uint8_t data = USART_Rx(UART0);
+    read_pc_byte(data);
+/*
     if (data == 13) {
         rxBuffer2[rxIndex2] = '\0';
         sendStringUART0(rxBuffer2);
@@ -59,4 +63,5 @@ void UART0_RX_IRQHandler(void)
     } else {
         if (rxIndex2 < BUFFER_SIZE - 1) rxBuffer2[rxIndex2++] = data;
     }
+*/
 }

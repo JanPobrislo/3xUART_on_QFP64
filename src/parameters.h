@@ -1,9 +1,6 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
-#include <stdint.h>
-//#include <stdbool.h>
-
 #define PROGRAM_VERSION "0.1"
 
 #define MAX_NETS      15
