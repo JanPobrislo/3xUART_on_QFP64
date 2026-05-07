@@ -3,10 +3,13 @@
 //#include <stdbool.h>
 #include "parameters.h"
 #include "uart1.h"
+#include "rtc.h"
 
 tci_parameters param;
 
 routes_for_tx tx_route;  // definuje routu pro vysilani
+
+unsigned long uptime;    // cas od resetu v sec
 
 unsigned char show_timetick = 0;  // povoluje zobrazovani . kazdou sec
 unsigned char show_inputs = 0;    // povoluje zobrazovani vstupu kazdou sec
@@ -37,7 +40,7 @@ void Parameters_Init(void) {
 	}
 
 	//---- Default pro ladeni
-	param.netdau[14] = 29;
+	param.netdau[14] = 3;
 
 	param.route[0].net = 15;
 	param.route[0].path = 255;
@@ -54,10 +57,10 @@ void Parameters_Init(void) {
 	param.route[1].revers = 2;
 
 	param.route[2].net = 15;
-	param.route[2].path = 0;
+	param.route[2].path = 15;
 	param.route[2].dau = 255;
-	param.route[2].follow = 9;
-	param.route[2].error = 2;
+	param.route[2].follow = 2;
+	param.route[2].error = 9;
 	param.route[2].revers = 2;
 
 	param.route[3].net = 15;
@@ -72,7 +75,9 @@ void Parameters_Show(void) {
 	unsigned char n;
 	char txt[250] = "";
 
-	sendStringUART1("\r\nParameters:\r\n");
+	sendStringUART1("\r\n-------------------------------------------------\r\n");
+	sendStringUART1("           T C I   P A R A M E T E R S\r\n");
+	sendStringUART1("-------------------------------------------------\r\n");
 	sprintf(txt,"PRIMARY NET: %u\r\n",param.primary_net);
 	sendStringUART1(txt);
 	sprintf(txt,"NEXT TIME: %u\r\n",param.next_time);
@@ -136,6 +141,10 @@ void Parameters_Show(void) {
 		}
 	}
 //	sendStringUART1("       -------------------------\r\n");
+	sendStringUART1("-------------------------------------------------\r\n");
+	sprintf(txt,"UPTIME: %lu sec    ",uptime);
+	sendStringUART1(txt);
+	show_rtc();
 	sendStringUART1("-------------------------------------------------\r\n");
 }
 

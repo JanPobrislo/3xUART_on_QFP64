@@ -38,6 +38,11 @@ typedef struct {
 
 extern routes_for_tx tx_route;  // definuje routu pro vysilani
 
+extern unsigned long uptime;    // cas od resetu v sec
+
+#define TIME_TO_SET_RTC 7200    // po kolika sec nastavi RTC z GPS
+
+//-- Prepinace pro zobrazovani na consoli COM-B UART1
 extern unsigned char show_timetick;
 extern unsigned char show_inputs;
 extern unsigned char show_gps_nmea;

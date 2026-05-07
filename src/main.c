@@ -204,6 +204,9 @@ int main(void)
     					break;
 
     		case 'n' : 	show_gps_nmea = !show_gps_nmea;
+    					if (show_gps_nmea){
+							USART0_irq_enabled();  //-- Povoli prijem znaku od GPS
+						}
     					break;
 
     		case 'a' : 	sendStringUART1("ALARMS STATUS:  TAMPER=");
@@ -229,6 +232,12 @@ int main(void)
     	if (IsSecond==1)
     	{
     		IsSecond=0;
+    		uptime++;
+
+    		if (uptime % (unsigned long)TIME_TO_SET_RTC == 0) {
+    			USART0_irq_enabled();  //-- Povoli prijem znaku od GPS
+    		}
+
     		POCSAG_routing_handler();
 
     		if(show_timetick==1) {

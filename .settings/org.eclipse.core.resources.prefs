@@ -1,6 +1,7 @@
 eclipse.preferences.version=1
 encoding//src/main.c=UTF-8
 encoding//src/pocsag.h=UTF-8
+encoding//src/prompt.txt=UTF-8
 encoding//src/rtc.c=UTF-8
 encoding//src/usart0.c=UTF-8
 encoding//src/wtimer0.c=UTF-8

@@ -12,6 +12,10 @@ void initUSART0(void);
 void sendStringUSART0(const char *str);
 void USART_BaudrateSet_Manual(USART_TypeDef *usart, uint32_t baudrate, uint32_t freq);
 
+void USART0_irq_enabled(void);
+void USART0_irq_disabled(void);
+
+
 extern char              rxBuffer1[];
 extern volatile uint16_t rxIndex1;
 

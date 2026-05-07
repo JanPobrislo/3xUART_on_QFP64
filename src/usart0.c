@@ -177,7 +177,7 @@ void USART0_RX_IRQHandler(void)
                     rtc_datetime_t dt = {0};
                     if (parse_nmea_utc(rxBuffer1, &dt)) {
                         set_rtc(&dt);
-//                    sendStringUART1("RTC SETTINGS\r\n");
+                        show_gps_nmea=0; //protoze set_rtc() zakaze IRQ
                     }
                 }
             }

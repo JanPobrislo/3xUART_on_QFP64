@@ -4,92 +4,119 @@ D:\SiliconLabs\SimplicityStudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\
 D:\SiliconLabs\SimplicityStudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc
 
 -------------------------------------------------------------------------------------------------------------------
+Komunikace ss SW TCImulti
+-------------------------
+MULTI TCI Board Setting Mode
+PASSWORD: W*
+CMD> ee
+051,204,000,011,015,000,000,000,000,000,003,008,001,001,000,000,001,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,002,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,
+CMD> pp
+015,255,255,003,004,004,
+-------------------------
+ ZAPIS
+-------------------------
+CMD> zz:3â–’
+CMD> yy
+WRITE ROUTE TABLE:  (128=END)
+â–’â–’â–’
+ROUTE TABLE WRITED
+-------------------------
+ KONEC PROGRAMU
+-------------------------
+CMD> !! MultiTCI BOARD !
+-------------------------------------------------------------------------------------------------------------------
+3F 30 59 65 73 3F 50 43 40 0A 0D 4D 55 4C 54 49 20 54 43 49 20 42 6F 61 72 64 20 53 65 74 74 69 6E 67 20 4D 6F 64 65 0A 0D 50 41 53 53 57 4F 52 44 3A 20 57 00 02 00 02 2A 0A 0D 43 4D 44 3E 20 65 65 0A 0D 45 45 50 52 4F 4D 3A 0D 30 35 31 2C 32 30 34 2C 30 30 30 2C 30 31 32 2C 30 31 35 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 33 2C 30 30 38 2C 30 30 31 2C 30 30 31 2C 30 30 30 2C 30 30 30 2C 30 30 31 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 32 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 30 30 30 2C 0A 0D 43 4D 44 3E 20 70 70 0A 0D 30 31 35 2C 32 35 35 2C 32 35 35 2C 30 30 33 2C 30 30 34 2C 30 30 34 2C 0A 0D 43 4D 44 3E 20
+------------------------------
+?0Yes?PC@<\n><\r>MULTI TCI Board Setting Mode<\n><\r>PASSWORD: W<\0><2><\0><2>*<\n><\r>CMD> ee<\n><\r>EEPROM:<\r>051,204,000,012,015,000,000,000,000,000,003,008,001,001,000,000,001,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,002,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,<\n><\r>CMD> pp<\n><\r>015,255,255,003,004,004,<\n><\r>CMD> 
 
-Pøiloenı soubor je program pro procesor EFM32GG11B820F2048GQ64, kterı má pøipojenı externí krystal 25MHz.
-Uprav jej pro pøipojení krystalu 50MHz tak aby byly zachovány konfigurace portù a UART:
+
+-------------------------------------------------------------------------------------------------------------------
+
+PÅ™iloÅ¾enÃ½ soubor je program pro procesor EFM32GG11B820F2048GQ64, kterÃ½ mÃ¡ pÅ™ipojenÃ½ externÃ­ krystal 25MHz.
+Uprav jej pro pÅ™ipojenÃ­ krystalu 50MHz tak aby byly zachovÃ¡ny konfigurace portÅ¯ a UART:
 UART0  na LOC4: PC4 (TX), PC5 (RX) - 9600 baud
 UART1  na LOC4: PE12(TX), PE13(RX) - 115200 baud
 USART0 na LOC0: PE10(TX), PE11(RX) - 115200 baud
 
 -------------------------------------------------------------------------------------------------------------------
 
-Pøiloenı soubor je program pro procesor EFM32GG11B820F2048GL192. Uprav jej tak aby fungoval pro procesor EFM32GG11B820F2048GQ64.
-Dále pøidej funkce pro inicializaci a obsluhu portu PA8 na kterém je pøipojena LED dioda. 
-Pøidej funkce pro ovládání LED diody a v hlavní smyèce zajisti aby trvale blikala pøiblinì v intervalu 150msec.
-Pro komunikaci pouívej èeštinu.
+PÅ™iloÅ¾enÃ½ soubor je program pro procesor EFM32GG11B820F2048GL192. Uprav jej tak aby fungoval pro procesor EFM32GG11B820F2048GQ64.
+DÃ¡le pÅ™idej funkce pro inicializaci a obsluhu portu PA8 na kterÃ©m je pÅ™ipojena LED dioda. 
+PÅ™idej funkce pro ovlÃ¡dÃ¡nÃ­ LED diody a v hlavnÃ­ smyÄce zajisti aby trvale blikala pÅ™ibliÅ¾nÄ› v intervalu 150msec.
+Pro komunikaci pouÅ¾Ã­vej ÄeÅ¡tinu.
 
-Aktuální konfigurace portù:
+AktuÃ¡lnÃ­ konfigurace portÅ¯:
 UART0  na LOC4: PC4 (TX), PC5 (RX) - 9600 baud
 UART1  na LOC4: PE12(TX), PE13(RX) - 115200 baud
 USART0 na LOC0: PE10(TX), PE11(RX) - 115200 baud
 
 -------------------------------------------------------------------------------------------------------------------
 27.2.2026
-Pøiloenı soubor je program pro procesor EFM32GG11B820F2048GQ64. 
-Soubor main.c rozdìl do nìkolika souborù tak, aby
-definice všech vstupù a vıstupù byla v samostatném souboru ports.h, 
-obsluha UART0 byla v samostatném souboru uart0.c a potøebné rozhraní v uart0.h,
-obsluha UART1 byla v samostatném souboru uart1.c a potøebné rozhraní v uart1.h,
-obsluha USART0 byla v samostatném souboru usart0.c a potøebné rozhraní v usart0.h,
-obsluha LED byla v souboru led.c a led.h. Pro kadou LED vytvoø sadu funkci ON, OFF a TOGGLE,
-obsluha vstupù byla v souboru inputs.c.
-Ke všem souborùm vytvoø odpovídající hlavièkové soubory .h
-K diodám pøidej LED_RX na portu PD2 a LED_TX na portu PD3.
-Ke vstupùm pøidej RX na portu PA0.
+PÅ™iloÅ¾enÃ½ soubor je program pro procesor EFM32GG11B820F2048GQ64. 
+Soubor main.c rozdÄ›l do nÄ›kolika souborÅ¯ tak, aby
+definice vÅ¡ech vstupÅ¯ a vÃ½stupÅ¯ byla v samostatnÃ©m souboru ports.h, 
+obsluha UART0 byla v samostatnÃ©m souboru uart0.c a potÅ™ebnÃ© rozhranÃ­ v uart0.h,
+obsluha UART1 byla v samostatnÃ©m souboru uart1.c a potÅ™ebnÃ© rozhranÃ­ v uart1.h,
+obsluha USART0 byla v samostatnÃ©m souboru usart0.c a potÅ™ebnÃ© rozhranÃ­ v usart0.h,
+obsluha LED byla v souboru led.c a led.h. Pro kaÅ¾dou LED vytvoÅ™ sadu funkci ON, OFF a TOGGLE,
+obsluha vstupÅ¯ byla v souboru inputs.c.
+Ke vÅ¡em souborÅ¯m vytvoÅ™ odpovÃ­dajÃ­cÃ­ hlaviÄkovÃ© soubory .h
+K diodÃ¡m pÅ™idej LED_RX na portu PD2 a LED_TX na portu PD3.
+Ke vstupÅ¯m pÅ™idej RX na portu PA0.
 -------------------------------------------------------------------------------------------------------------------
 5.3.2026
-Soubory jsou aktuální upravené verze programu pro procesor EFM32GG11B820F2048GQ64. 
-Na port RX PA0 a má pøiveden signál. Tento signál je datagram POCSAG o rychlosti 1200Hz. 
-Vytvoø funkce kterı tento datagram pøijme a zapíše do datové struktury.
-Pøidej kontrolu BCH kódu.
-Pøidej do hlavní smyèky programu vıpis na UART1 pøijatého datagramu. 
-Vypiš zda byl pøijat bezchybnì nebo zda probìhly opravy.
-Nové funkce vytvoø v souboru pocsag.c a pocsag.h
-Pro ètení signálu mùeš vyuít timer1, kterı bìí na 1200Hz.
+Soubory jsou aktuÃ¡lnÃ­ upravenÃ© verze programu pro procesor EFM32GG11B820F2048GQ64. 
+Na port RX PA0 a mÃ¡ pÅ™iveden signÃ¡l. Tento signÃ¡l je datagram POCSAG o rychlosti 1200Hz. 
+VytvoÅ™ funkce kterÃ½ tento datagram pÅ™ijme a zapÃ­Å¡e do datovÃ© struktury.
+PÅ™idej kontrolu BCH kÃ³du.
+PÅ™idej do hlavnÃ­ smyÄky programu vÃ½pis na UART1 pÅ™ijatÃ©ho datagramu. 
+VypiÅ¡ zda byl pÅ™ijat bezchybnÄ› nebo zda probÄ›hly opravy.
+NovÃ© funkce vytvoÅ™ v souboru pocsag.c a pocsag.h
+Pro ÄtenÃ­ signÃ¡lu mÅ¯Å¾eÅ¡ vyuÅ¾Ã­t timer1, kterÃ½ bÄ›Å¾Ã­ na 1200Hz.
 ----------------------
-Jak je zajištìna synchronizace na zaèátku datagramu POCSAG. 
-Na vstupu je nejprve šum z radiostanice a teprve potom pøíjde POCSAG preamble. 
-Musíš zajistit naètení. Staèí pøijmout 32 bitù preamble.
+Jak je zajiÅ¡tÄ›na synchronizace na zaÄÃ¡tku datagramu POCSAG. 
+Na vstupu je nejprve Å¡um z radiostanice a teprve potom pÅ™Ã­jde POCSAG preamble. 
+MusÃ­Å¡ zajistit naÄtenÃ­. StaÄÃ­ pÅ™ijmout 32 bitÅ¯ preamble.
 ----------------------
-Není nijak zajištìn okamik odeèítání bitu. Je nutné od hrany signálu poèkat polovinu doby bitu a potom teprve spustit odeèítání.
+NenÃ­ nijak zajiÅ¡tÄ›n okamÅ¾ik odeÄÃ­tÃ¡nÃ­ bitu. Je nutnÃ© od hrany signÃ¡lu poÄkat polovinu doby bitu a potom teprve spustit odeÄÃ­tÃ¡nÃ­.
 -------------------------------------------------------------------------------------------------------------------
 18.3.2026
-Soubory jsou aktuální upravené verze programu pro procesor EFM32GG11B820F2048GQ64. 
-Na port RX PA0 a má pøiveden signál. Tento signál je datagram POCSAG o rychlosti 1200Hz, kterı je ji demodulován z NRZ, 
-take jednotlivé bity jsou ji bity POCSAG datagramu. Napøíklad POCSAG IDLE word bude pøijat jako 0x7A89C197.
-Vytvoø funkce kterı tento datagram pøijme a zapíše do datové struktury.
-Na vstupu je nejprve šum z radiostanice a teprve potom pøíjde POCSAG preamble. 
-Musíš zajistit naètení. Staèí pøijmout 32 bitù preamble.
-Musíš zajistit správnı okamik odeèítání bitu. Je vhodné od hrany signálu poèkat polovinu doby bitu a potom teprve spustit odeèítání.
-Pro ètení signálu mùeš vyuít timer1, kterı bìí na 1200Hz. Mùeš zmìnit rychlost timer1 podle potøeby, 
-tøeba na dvojnásobek aby jsi nastavil okamik odeètení bitu. 
-Pøidej kontrolu BCH kódu a parity.
-Pøidej do hlavní smyèky programu vıpis na UART1 pøijatého datagramu. 
-Vypiš zda byl pøijat bezchybnì nebo zda probìhly opravy.
-Nové funkce vytvoø v souboru pocsag.c a pocsag.h
+Soubory jsou aktuÃ¡lnÃ­ upravenÃ© verze programu pro procesor EFM32GG11B820F2048GQ64. 
+Na port RX PA0 a mÃ¡ pÅ™iveden signÃ¡l. Tento signÃ¡l je datagram POCSAG o rychlosti 1200Hz, kterÃ½ je jiÅ¾ demodulovÃ¡n z NRZ, 
+takÅ¾e jednotlivÃ© bity jsou jiÅ¾ bity POCSAG datagramu. NapÅ™Ã­klad POCSAG IDLE word bude pÅ™ijat jako 0x7A89C197.
+VytvoÅ™ funkce kterÃ½ tento datagram pÅ™ijme a zapÃ­Å¡e do datovÃ© struktury.
+Na vstupu je nejprve Å¡um z radiostanice a teprve potom pÅ™Ã­jde POCSAG preamble. 
+MusÃ­Å¡ zajistit naÄtenÃ­. StaÄÃ­ pÅ™ijmout 32 bitÅ¯ preamble.
+MusÃ­Å¡ zajistit sprÃ¡vnÃ½ okamÅ¾ik odeÄÃ­tÃ¡nÃ­ bitu. Je vhodnÃ© od hrany signÃ¡lu poÄkat polovinu doby bitu a potom teprve spustit odeÄÃ­tÃ¡nÃ­.
+Pro ÄtenÃ­ signÃ¡lu mÅ¯Å¾eÅ¡ vyuÅ¾Ã­t timer1, kterÃ½ bÄ›Å¾Ã­ na 1200Hz. MÅ¯Å¾eÅ¡ zmÄ›nit rychlost timer1 podle potÅ™eby, 
+tÅ™eba na dvojnÃ¡sobek aby jsi nastavil okamÅ¾ik odeÄtenÃ­ bitu. 
+PÅ™idej kontrolu BCH kÃ³du a parity.
+PÅ™idej do hlavnÃ­ smyÄky programu vÃ½pis na UART1 pÅ™ijatÃ©ho datagramu. 
+VypiÅ¡ zda byl pÅ™ijat bezchybnÄ› nebo zda probÄ›hly opravy.
+NovÃ© funkce vytvoÅ™ v souboru pocsag.c a pocsag.h
 ----------------------------------------------------------------------------------------------------------------
-Vytvoø funkci make_tx_route(), která projde tabulku param.route[] a podle zadanıch parametrù net, path, dau 
-nastavi promnenou tx_route, polozky follow, error, revers. 
-Záznamy v tabulce mají rùznou prioritu a je tøeba vybrat ten s nejvyší proiritou. 
-Vybírá se podle shody parametru net,path,dau. Pøitom v tabulce mùe bıt hodnota 255, 
-v tom pøípadì mùe bıt odpovídající parametr libovolnı (jakákoliv hodnota). 
-Priority pro typy záznamù:
+VytvoÅ™ funkciÂ make_tx_route(), kterÃ¡ projde tabulkuÂ param.route[] a podle zadanÃ½ch parametrÅ¯ net, path, dau 
+nastavi promnenouÂ tx_route, polozky follow, error, revers. 
+ZÃ¡znamy v tabulce majÃ­ rÅ¯znou prioritu a je tÅ™eba vybrat ten s nejvyÅ¾Å¡Ã­ proiritou. 
+VybÃ­rÃ¡ se podle shody parametru net,path,dau. PÅ™itom v tabulce mÅ¯Å¾e bÃ½t hodnota 255, 
+v tom pÅ™Ã­padÄ› mÅ¯Å¾e bÃ½t odpovÃ­dajÃ­cÃ­ parametr libovolnÃ½ (jakÃ¡koliv hodnota). 
+Priority pro typy zÃ¡znamÅ¯:
 1: net,255,255
 2: net,255,dau
 3: net,path,255
 4: net,path,dau
-To znamená, e pokud se najde záznam kde se schoduje net, path i dau, tak je nastaveno tx_route.follow,error,revers 
-podle tohoto záznamu s nejvyší prioritou. Pokud ne hledá se shoda se záznamy s niší prioritou. 
-Nejniší prioritu má záznam kde se shoduje pouze net a path i dau mùe bıt libovolné (255).
-Funkce by mìla vracet, zda se povedlo nastavit tx_route. V tom pøípadì funkce nabıvá hodnoty 0, jinak èíslo chyby.
+To znamenÃ¡, Å¾e pokud se najde zÃ¡znam kde se schoduje net, path i dau, tak je nastaveno tx_route.follow,error,revers 
+podle tohoto zÃ¡znamu s nejvyÅ¾Å¡Ã­ prioritou. Pokud ne hledÃ¡ se shoda se zÃ¡znamy s niÅ¾Å¡Ã­ prioritou. 
+NejniÅ¾Å¡Ã­ prioritu mÃ¡ zÃ¡znam kde se shoduje pouze net a path i dau mÅ¯Å¾e bÃ½t libovolnÃ© (255).
+Funkce by mÄ›la vracet, zda se povedlo nastavit tx_route. V tom pÅ™Ã­padÄ› funkce nabÃ½vÃ¡ hodnoty 0, jinak ÄÃ­slo chyby.
 ----------------------------------------------------------------------------------------------------------------
-Soubory jsou èástí programu pro procesor EFM32GG11B820F2048GQ64.
-Na USART0 (PE12,PE13) je pøipojen GPS obvod NEO-M9N-00B, kterı má pin D_SEL pøipojen na VCC, take komunikuje po RS232.
-Uprav nastavení USART0 a pøípadnì nakonfiguruj NEO-M9N-00B.
-Napiš program, kterı bude pøijímat zprávy z USART0 od NEO-M9N-00B a bude je kopírovat na UART1,
-k tomu vyuij funkci sendStringUART1(). Zvláštì mne zajímají zprávy, které obsahují UTC.
+Soubory jsou ÄÃ¡stÃ­ programu pro procesor EFM32GG11B820F2048GQ64.
+Na USART0 (PE12,PE13) je pÅ™ipojen GPS obvod NEO-M9N-00B, kterÃ½ mÃ¡ pin D_SEL pÅ™ipojen na VCC, takÅ¾e komunikuje po RS232.
+Uprav nastavenÃ­ USART0 a pÅ™Ã­padnÄ› nakonfiguruj NEO-M9N-00B.
+NapiÅ¡ program, kterÃ½ bude pÅ™ijÃ­mat zprÃ¡vy z USART0 od NEO-M9N-00B a bude je kopÃ­rovat na UART1,
+k tomu vyuÅ¾ij funkci sendStringUART1(). ZvlÃ¡Å¡tÄ› mne zajÃ­majÃ­ zprÃ¡vy, kterÃ© obsahujÃ­ UTC.
 -----------------
-Pøidej modul rtc.c (rtc.h) kterı bude obsluhovat RTC procesoru.
-Pøidej funkci set_rtc(), která nastaví RTC procesoru podle údajù pøijatıch z GPS na USART0. Tato funkce bude volána z USART0_RX_IRQHandler()
-Pøidej funkci show_rtc(), která vypíše datum a èas pomocí sendStringUART1().
-Do usart0.c pøidej funkce pro zakázání a povolení pøerušení od USART0, tak aby se dalo ovládat z main.c
+PÅ™idej modul rtc.c (rtc.h) kterÃ½ bude obsluhovat RTC procesoru.
+PÅ™idej funkci set_rtc(), kterÃ¡ nastavÃ­ RTC procesoru podle ÃºdajÅ¯ pÅ™ijatÃ½ch z GPS na USART0. Tato funkce bude volÃ¡na z USART0_RX_IRQHandler()
+PÅ™idej funkci show_rtc(), kterÃ¡ vypÃ­Å¡e datum a Äas pomocÃ­ sendStringUART1().
+Do usart0.c pÅ™idej funkce pro zakÃ¡zÃ¡nÃ­ a povolenÃ­ pÅ™eruÅ¡enÃ­ od USART0, tak aby se dalo ovlÃ¡dat z main.c
