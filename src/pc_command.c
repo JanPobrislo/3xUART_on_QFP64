@@ -6,6 +6,9 @@
 #include "em_usart.h"
 #include "uart0.h"
 #include "parameters.h"
+#include "uart1.h"
+
+unsigned char eeprom[128]; // pro simulaci EEPROM puvodni TCI
 
 
 typedef enum {
@@ -13,10 +16,22 @@ typedef enum {
 	QUESTION,
 	PC,
 	PASSWORD,
-	CMD
+	CMD,
+	CMD_Z,
+	CMD_Y
 } type_pc_status;
 
 type_pc_status pc_status = IDLE;
+
+//------------------------------------------------------------------------------
+// Simulace zapisu do EEPROM puvodni TCI - smaze pole eeprom
+//------------------------------------------------------------------------------
+void eeprom_clear_all(void) {
+	unsigned char n;
+	for (n=0; n<128; n++) {
+		eeprom[n]=0;
+	}
+}
 
 //------------------------------------------------------------------------------
 // Simulace cteni EEPROM puvodni TCI - vypise 128 byte na COM-A (UART0)
@@ -69,6 +84,8 @@ void eeprom_read_routes(void) {
     char buf[300];
 	unsigned char n;
 
+	sendStringUART0("p\r\n");
+
 	for (n=0; n<MAX_ROUTES; n++) {
 		if (param.route[n].net == 0) break;
 
@@ -82,7 +99,24 @@ void eeprom_read_routes(void) {
 					);
 		sendStringUART0(buf);
 	}
+    sendStringUART0("\r\n");
+}
 
+//------------------------------------------------------------------------------
+// Simulace zapisu do EEPROM puvodni TCI - prijme 128 byte z COM-A (UART0)
+//------------------------------------------------------------------------------
+void eeprom_write_all(void) {
+    char buf[300];
+	unsigned char n;
+
+    sendStringUART1("\r\nEEPROM:[");
+
+	for (n=0; n<128; n++) {
+		sprintf(buf,"%03u,",eeprom[n]);
+		sendStringUART1(buf);
+
+	}
+    sendStringUART1("]\r\n");
 }
 
 //------------------------------------------------------------------------------
@@ -168,22 +202,26 @@ void read_pc_byte(unsigned char zn) {
 			break;
 
 		case 'z':
-			sendStringUART0("[");
-		    USART_Tx(UART0, zn);
-		    sendStringUART0("]");
-			pc_status = CMD;
+			sendStringUART0(":");
+			index = 0;
+			eeprom_clear_all();
+			pc_status = CMD_Z;
 			break;
 
 		case 'y':
-			sendStringUART0("[");
-		    USART_Tx(UART0, zn);
-		    sendStringUART0("]");
-			pc_status = CMD;
+			sendStringUART0("\n\rWRITE ROUTE TABLE:  (128=END\n\r");
+			index = 0;
+			eeprom_clear_all();
+			pc_status = CMD_Y;
 			break;
 
 		case '!':
 			sendStringUART0(" RESET ");
 			pc_status = IDLE;
+			break;
+
+		case '?':
+			pc_status = QUESTION;
 			break;
 
 		default:
@@ -195,6 +233,31 @@ void read_pc_byte(unsigned char zn) {
 		}
 
 		sendStringUART0("\r\nCMD> ");
+		break;
+
+	case CMD_Z:
+		if (index<128) { //-- cte 128 byte EEPROM
+			eeprom[index]=zn;
+			index++;
+		}
+		else {
+			eeprom_write_all();
+			sendStringUART0("\r\nCMD> ");
+			pc_status = CMD;
+		}
+		break;
+
+	case CMD_Y:
+		if (zn==128 || index > (MAX_ROUTES*6)+2) { //-- 128 ukoncuje zapis EEPROM
+			eeprom[index]=zn; // zapise i znak 128
+			eeprom_write_all();
+			sendStringUART0("\r\nROUTE TABLE WRITED\r\nCMD> ");
+			pc_status = CMD;
+		}
+		else {
+			eeprom[index]=zn;
+			index++;
+		}
 		break;
 
 	default:

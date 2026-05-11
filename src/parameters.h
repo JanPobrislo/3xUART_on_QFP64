@@ -4,7 +4,7 @@
 #define PROGRAM_VERSION "0.1"
 
 #define MAX_NETS      15
-#define MAX_ROUTES    10
+#define MAX_ROUTES    20
 
 typedef struct {
 	unsigned char net;

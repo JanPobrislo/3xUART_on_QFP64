@@ -33,8 +33,14 @@
 #include "rtc.h"
 
 //------------------------------------------------------------------------------
-//  Globalni promenne
+//  SW vyvolani resetu.
 //------------------------------------------------------------------------------
+void perform_system_reset(void) {
+    // Provede softwarový reset celého procesoru
+    // Používá CMSIS funkci, která zapíše do registru AIRCR
+    // specifický "klíč" a bit SYSRESETREQ
+    NVIC_SystemReset();
+}
 
 //------------------------------------------------------------------------------
 //  Init procesoru
@@ -62,6 +68,8 @@ static void initClocks(void)
     CMU->HFPERPRESC = (CMU->HFPERPRESC & ~_CMU_HFPERPRESC_PRESC_MASK);
     CMU_ClockEnable(cmuClock_HFPER, true);
 }
+
+#include "em_device.h"
 
 static void initOutputs(void)
 {
