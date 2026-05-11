@@ -24,7 +24,7 @@ typedef enum {
 type_pc_status pc_status = IDLE;
 
 //------------------------------------------------------------------------------
-// Simulace zapisu do EEPROM puvodni TCI - smaze pole eeprom
+// Smaze pole eeprom
 //------------------------------------------------------------------------------
 void eeprom_clear_all(void) {
 	unsigned char n;
@@ -125,7 +125,7 @@ void eeprom_show_all(void) {
 //------------------------------------------------------------------------------
 void eeprom_write_all(void) {
 //    char buf[300];
-//	unsigned char n;
+	unsigned char n;
 
     if (eeprom[0]!=51 || eeprom[1]!=204) return;
 
@@ -140,6 +140,12 @@ void eeprom_write_all(void) {
 	param.next_time = eeprom[10];
 	param.next_rpt = eeprom[12];
 	param.error_rpt = eeprom[13];
+	param.out_enabled = eeprom[16];
+
+	parameters_clear_netdau();
+	for (n=0; n<MAX_NETS; n++) {
+		param.netdau[n] = eeprom[41+n];
+	}
 
     sendStringUART1("]\r\n");
 }

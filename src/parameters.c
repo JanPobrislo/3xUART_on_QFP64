@@ -25,6 +25,7 @@ void parameters_init(void) {
 	param.pretime = 10;
 	param.deadtime = 11;
 	param.sys_tok = 12;
+	param.out_enabled = 1;
 
 	for (n=0; n<MAX_NETS; n++) {
 		param.netdau[n] = 0;
@@ -112,6 +113,8 @@ void parameters_show(void) {
 	sprintf(txt,"DEADTIME : %u\r\n",param.deadtime);
 	sendStringUART1(txt);
 	sprintf(txt,"SYS.TOK  : %u\r\n",param.sys_tok);
+	sendStringUART1(txt);
+	sprintf(txt,"OUT ENAB.: %u\r\n",param.out_enabled);
 	sendStringUART1(txt);
 
 	sendStringUART1("-------------------------------------------------\r\nNET:");

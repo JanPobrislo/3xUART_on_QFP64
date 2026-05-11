@@ -23,6 +23,7 @@ typedef struct {
 	unsigned char pretime;
 	unsigned char deadtime;
 	unsigned char sys_tok;
+	unsigned char out_enabled;
 	unsigned char netdau[MAX_NETS];
 	tci_routes    route[MAX_ROUTES];
 } tci_parameters;
