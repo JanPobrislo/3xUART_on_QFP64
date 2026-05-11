@@ -33,16 +33,6 @@
 #include "rtc.h"
 
 //------------------------------------------------------------------------------
-//  SW vyvolani resetu.
-//------------------------------------------------------------------------------
-void perform_system_reset(void) {
-    // Provede softwarový reset celého procesoru
-    // Používá CMSIS funkci, která zapíše do registru AIRCR
-    // specifický "klíč" a bit SYSRESETREQ
-    NVIC_SystemReset();
-}
-
-//------------------------------------------------------------------------------
 //  Init procesoru
 //------------------------------------------------------------------------------
 static void initClocks(void)
@@ -122,6 +112,8 @@ int main(void)
     LED_TX_On(); delay_ms(300); LED_TX_Off();
 
     parameters_init();
+    parameters_load();
+
     POCSAG_rx_init();
 
     for (volatile int i = 0; i < 100000; i++);
@@ -164,11 +156,22 @@ int main(void)
     					sendStringUART1(" s : toggle second time-tick\r\n");
     					sendStringUART1(" i : toggle the display of inputs\r\n");
     					sendStringUART1(" a : show alarms status\r\n");
+    					sendStringUART1(" w : write parameters to FLASH\r\n");
+    					sendStringUART1(" l : load parameters from FLASH\r\n");
     					sendStringUART1(" h : display this help\r\n");
     					sendStringUART1(" --------------------------------\r\n");
     					POCSAG_show_rx_state();
     					sendStringUART1(" --------------------------------\r\n");
 						break;
+
+    		case 'w' : 	sendStringUART1("Save parameters to FLASH\r\n");
+    					parameters_save();
+    					break;
+
+    		case 'l' : 	sendStringUART1("Load parameters from FLASH\r\n");
+    					parameters_load();
+    					parameters_show();
+    					break;
 
     		case 'p' : 	parameters_show();
     					break;

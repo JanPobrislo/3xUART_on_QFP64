@@ -1,3 +1,5 @@
+#include "em_msc.h"
+#include <string.h>
 #include <stdio.h>
 //#include <stdint.h>
 //#include <stdbool.h>
@@ -11,9 +13,100 @@ routes_for_tx tx_route;  // definuje routu pro vysilani
 
 unsigned long uptime;    // cas od resetu v sec
 
+//------------------------------------------------------------------------------
+// Docasne globalni parametry
+//------------------------------------------------------------------------------
 unsigned char show_timetick = 0;  // povoluje zobrazovani . kazdou sec
 unsigned char show_inputs = 0;    // povoluje zobrazovani vstupu kazdou sec
 unsigned char show_gps_nmea = 0;  // povoluje zobrazovani . kazdou sec
+
+//------------------------------------------------------------------------------
+// Ulozeni parametru do FLASH (USERDATA stranka)
+// USERDATA_BASE = 0x0FE00000, velikost 2048 B
+// Vraci: 0=OK, 1=chyba mazani, 2=chyba zapisu
+//
+// Format v USERDATA:
+//   [0..3]   magic number 0x54434900 ('TCI\0')
+//   [4..7]   velikost struktury (kontrola kompatibility)
+//   [8..]    data struktury tci_parameters
+//------------------------------------------------------------------------------
+#define PARAM_MAGIC      0x54434900UL   // 'TCI\0'
+#define PARAM_FLASH_ADDR ((uint32_t *)USERDATA_BASE)
+
+unsigned char parameters_save(void)
+{
+    MSC_Status_TypeDef ret;
+
+    // Sestavit buffer zarovnany na 4 byty
+    // Header: magic(4) + size(4) + data
+    uint32_t dataSize = sizeof(tci_parameters);
+    uint32_t bufSize  = 8 + dataSize;
+
+    // Zaokrouhlit na nasobek 4 (pozadavek MSC_WriteWord)
+    if (bufSize % 4 != 0) bufSize += 4 - (bufSize % 4);
+
+    uint8_t buf[bufSize];
+    memset(buf, 0xFF, bufSize);
+
+    // Zapsat header
+    ((uint32_t *)buf)[0] = PARAM_MAGIC;
+    ((uint32_t *)buf)[1] = dataSize;
+
+    // Zapsat data
+    memcpy(buf + 8, &param, sizeof(tci_parameters));
+
+    // Inicializovat MSC
+    MSC_Init();
+
+    // Smazat stranku
+    ret = MSC_ErasePage(PARAM_FLASH_ADDR);
+    if (ret != mscReturnOk) {
+        MSC_Deinit();
+        sendStringUART1("FLASH: erase error\r\n");
+        return 1;
+    }
+
+    // Zapsat data
+    ret = MSC_WriteWord(PARAM_FLASH_ADDR, buf, bufSize);
+    if (ret != mscReturnOk) {
+        MSC_Deinit();
+        sendStringUART1("FLASH: write error\r\n");
+        return 2;
+    }
+
+    MSC_Deinit();
+    sendStringUART1("FLASH: parameters saved\r\n");
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// Nacteni parametru z FLASH (USERDATA stranka)
+// Vraci: 0=OK, 1=neplatna data (magic), 2=nekompatibilni velikost
+// Pokud nacteni selze, param zustane beze zmeny
+//------------------------------------------------------------------------------
+unsigned char parameters_load(void)
+{
+    uint32_t *flash = PARAM_FLASH_ADDR;
+
+    // Zkontrolovat magic number
+    if (flash[0] != PARAM_MAGIC) {
+        sendStringUART1("FLASH: no valid data\r\n");
+        return 1;
+    }
+
+    // Zkontrolovat velikost struktury
+    uint32_t savedSize = flash[1];
+    if (savedSize != sizeof(tci_parameters)) {
+        sendStringUART1("FLASH: size mismatch, using defaults\r\n");
+        return 2;
+    }
+
+    // Nacist data
+    memcpy(&param, (uint8_t *)flash + 8, sizeof(tci_parameters));
+
+    sendStringUART1("FLASH: parameters loaded\r\n");
+    return 0;
+}
 
 void parameters_init(void) {
 	unsigned char n;

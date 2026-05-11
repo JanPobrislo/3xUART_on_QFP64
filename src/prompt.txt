@@ -136,3 +136,8 @@ Přidej modul rtc.c (rtc.h) který bude obsluhovat RTC procesoru.
 Přidej funkci set_rtc(), která nastaví RTC procesoru podle údajů přijatých z GPS na USART0. Tato funkce bude volána z USART0_RX_IRQHandler()
 Přidej funkci show_rtc(), která vypíše datum a čas pomocí sendStringUART1().
 Do usart0.c přidej funkce pro zakázání a povolení přerušení od USART0, tak aby se dalo ovládat z main.c
+----------------------------------------------------------------------------------------------------------------
+Soubory jsou částí programu pro procesor EFM32GG11B820F2048GQ64.
+Do parameters.c přidej funkci parameters_save(), které zapíše promněnou param do nepomíjivé paměti FLASH procesoru.
+Analogicky vytvoř funkci parameters_load(), která načte proměnou param z paměti FLASH procesoru.
+

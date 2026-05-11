@@ -24,6 +24,16 @@ typedef enum {
 type_pc_status pc_status = IDLE;
 
 //------------------------------------------------------------------------------
+//  SW vyvolani resetu.
+//------------------------------------------------------------------------------
+void perform_system_reset(void) {
+    // Provede softwarový reset celého procesoru
+    // Používá CMSIS funkci, která zapíše do registru AIRCR
+    // specifický "klíè" a bit SYSRESETREQ
+    NVIC_SystemReset();
+}
+
+//------------------------------------------------------------------------------
 // Smaze pole eeprom
 //------------------------------------------------------------------------------
 void eeprom_clear_all(void) {
@@ -275,6 +285,7 @@ void read_pc_byte(unsigned char zn) {
 		case '!':
 			sendStringUART0(" RESET ");
 			pc_status = IDLE;
+			perform_system_reset();
 			break;
 
 		case '?':

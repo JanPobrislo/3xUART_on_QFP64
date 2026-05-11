@@ -47,6 +47,9 @@ extern unsigned char show_timetick;
 extern unsigned char show_inputs;
 extern unsigned char show_gps_nmea;
 
+unsigned char parameters_load(void);
+unsigned char parameters_save(void);
+
 void parameters_clear_netdau(void);
 void parameters_clear_routes(void);
 void parameters_init(void);
