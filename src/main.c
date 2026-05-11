@@ -121,7 +121,7 @@ int main(void)
     LED_RX_On(); delay_ms(300); LED_RX_Off();
     LED_TX_On(); delay_ms(300); LED_TX_Off();
 
-    Parameters_Init();
+    parameters_init();
     POCSAG_rx_init();
 
     for (volatile int i = 0; i < 100000; i++);
@@ -134,7 +134,7 @@ int main(void)
 
     sendStringUART1 ("TCI COM2-B (UART1) - DEBUG\r\n");
     sendStringUART1 ("HFXO: 50 MHz krystal, DPLL: 72 MHz\r\n");
-    Parameters_Show();
+    parameters_show();
 
     while (1) {
 
@@ -170,7 +170,7 @@ int main(void)
     					sendStringUART1(" --------------------------------\r\n");
 						break;
 
-    		case 'p' : 	Parameters_Show();
+    		case 'p' : 	parameters_show();
     					break;
 
     		case '1' : 	LED1_Toggle();

@@ -45,7 +45,7 @@ void eeprom_read_all(void) {
 	sprintf(buf,"%03u,%03u,%03u,%03u,",
 			param.primary_net,
 			param.netdau[param.primary_net],
-			param.next_time,
+			param.pretime,
 			param.deadtime
 	);
 	sendStringUART0(buf);
@@ -103,9 +103,9 @@ void eeprom_read_routes(void) {
 }
 
 //------------------------------------------------------------------------------
-// Simulace zapisu do EEPROM puvodni TCI - prijme 128 byte z COM-A (UART0)
+// Vypise eeprom[] na UART1
 //------------------------------------------------------------------------------
-void eeprom_write_all(void) {
+void eeprom_show_all(void) {
     char buf[300];
 	unsigned char n;
 
@@ -117,6 +117,57 @@ void eeprom_write_all(void) {
 
 	}
     sendStringUART1("]\r\n");
+}
+
+
+//------------------------------------------------------------------------------
+// Simulace zapisu do EEPROM puvodni TCI - prijme 128 byte z COM-A (UART0)
+//------------------------------------------------------------------------------
+void eeprom_write_all(void) {
+//    char buf[300];
+//	unsigned char n;
+
+    if (eeprom[0]!=51 || eeprom[1]!=204) return;
+
+    sendStringUART1("\r\nWRITE EEPROM:[");
+
+	param.primary_net = eeprom[4];
+//	param.netdau[param.primary_net] = eeprom[5];
+	param.pretime = eeprom[6];
+	param.deadtime = eeprom[7];
+
+	param.sys_tok = eeprom[9];
+	param.next_time = eeprom[10];
+	param.next_rpt = eeprom[12];
+	param.error_rpt = eeprom[13];
+
+    sendStringUART1("]\r\n");
+}
+
+//------------------------------------------------------------------------------
+// Simulace zapisu do EEPROM puvodni TCI - zapise routovaci tabulku z COM-A
+//------------------------------------------------------------------------------
+void eeprom_write_routes(unsigned char routes) {
+    char buf[300];
+	unsigned char n;
+
+    if (routes == 0 || routes>MAX_ROUTES) return;
+
+    sendStringUART1("\r\nWRITE ROUTES: [");
+	sprintf(buf,"%ux]\r\n",routes);
+	sendStringUART1(buf);
+
+	parameters_clear_routes();
+
+	for (n=0; n<routes; n++) {
+		param.route[n].net    = eeprom[((n)*6)];
+		param.route[n].path   = eeprom[((n)*6)+1];
+		param.route[n].dau    = eeprom[((n)*6)+2];
+		param.route[n].follow = eeprom[((n)*6)+3];
+		param.route[n].error  = eeprom[((n)*6)+4];
+		param.route[n].revers = eeprom[((n)*6)+5];
+	}
+    sendStringUART1("END\r\n");
 }
 
 //------------------------------------------------------------------------------
@@ -241,6 +292,7 @@ void read_pc_byte(unsigned char zn) {
 			index++;
 		}
 		else {
+			eeprom_show_all();
 			eeprom_write_all();
 			sendStringUART0("\r\nCMD> ");
 			pc_status = CMD;
@@ -250,8 +302,9 @@ void read_pc_byte(unsigned char zn) {
 	case CMD_Y:
 		if (zn==128 || index > (MAX_ROUTES*6)+2) { //-- 128 ukoncuje zapis EEPROM
 			eeprom[index]=zn; // zapise i znak 128
-			eeprom_write_all();
 			sendStringUART0("\r\nROUTE TABLE WRITED\r\nCMD> ");
+			eeprom_show_all();
+			eeprom_write_routes(index/6);
 			pc_status = CMD;
 		}
 		else {

@@ -46,8 +46,10 @@ extern unsigned char show_timetick;
 extern unsigned char show_inputs;
 extern unsigned char show_gps_nmea;
 
-void Parameters_Init(void);
-void Parameters_Show(void);
+void parameters_clear_netdau(void);
+void parameters_clear_routes(void);
+void parameters_init(void);
+void parameters_show(void);
 unsigned char make_tx_route(unsigned char net, unsigned char path, unsigned char dau);
 
 #endif

@@ -15,16 +15,16 @@ unsigned char show_timetick = 0;  // povoluje zobrazovani . kazdou sec
 unsigned char show_inputs = 0;    // povoluje zobrazovani vstupu kazdou sec
 unsigned char show_gps_nmea = 0;  // povoluje zobrazovani . kazdou sec
 
-void Parameters_Init(void) {
+void parameters_init(void) {
 	unsigned char n;
 
 	param.primary_net = 15;
 	param.next_time = 3;
 	param.next_rpt = 1;
 	param.error_rpt = 2;
-	param.pretime = 0;
-	param.deadtime = 0;
-	param.sys_tok = 0;
+	param.pretime = 10;
+	param.deadtime = 11;
+	param.sys_tok = 12;
 
 	for (n=0; n<MAX_NETS; n++) {
 		param.netdau[n] = 0;
@@ -71,7 +71,26 @@ void Parameters_Init(void) {
 	param.route[3].revers = 2;
 }
 
-void Parameters_Show(void) {
+void parameters_clear_netdau(void) {
+	unsigned char n;
+	for (n=0; n<MAX_NETS; n++) {
+		param.netdau[n] = 0;
+	}
+}
+
+void parameters_clear_routes(void) {
+	unsigned char n;
+	for (n=0; n<MAX_ROUTES; n++) {
+		param.route[n].net = 0;
+		param.route[n].path = 0;
+		param.route[n].dau = 0;
+		param.route[n].follow = 0;
+		param.route[n].error = 0;
+		param.route[n].revers = 0;
+	}
+}
+
+void parameters_show(void) {
 	unsigned char n;
 	char txt[250] = "";
 
