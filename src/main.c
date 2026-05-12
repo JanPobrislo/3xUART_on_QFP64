@@ -111,6 +111,7 @@ int main(void)
     LED_RX_On(); delay_ms(300); LED_RX_Off();
     LED_TX_On(); delay_ms(300); LED_TX_Off();
 
+    //----------------- Parametry
     parameters_init();
     parameters_load();
 
@@ -150,12 +151,12 @@ int main(void)
     					sendStringUART1(" t : start TX TOKEN\r\n");
     					sendStringUART1(" T : stop timer1 1200Hz\r\n");
     					sendStringUART1(" x : GPIO_IntEnable(RX_PIN)\r\n");
-    					sendStringUART1(" p : show parameters\r\n");
-    					sendStringUART1(" r : show RTC\r\n");
     					sendStringUART1(" n : toggle show GPS protocol NMEA\r\n");
     					sendStringUART1(" s : toggle second time-tick\r\n");
     					sendStringUART1(" i : toggle the display of inputs\r\n");
+    					sendStringUART1(" r : show RTC\r\n");
     					sendStringUART1(" a : show alarms status\r\n");
+    					sendStringUART1(" p : show parameters\r\n");
     					sendStringUART1(" w : write parameters to FLASH\r\n");
     					sendStringUART1(" l : load parameters from FLASH\r\n");
     					sendStringUART1(" h : display this help\r\n");

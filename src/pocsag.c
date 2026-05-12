@@ -16,16 +16,16 @@
 typedef enum {
     STATE_RX_IDLE,      // Čekání na preamble v šumu
 	STATE_PREAMBLE,		// Preamble nalezen, zacne kalibrovat
-//	STATE_PREAMBLE_CALIBRATED,	// Cte az do konce preamble
     STATE_SYNC_WORD,    // Konec preamble, čeká na první Sync Word
     STATE_RECEIVING,    // Pevné časování, příjem datových slov
-	STATE_TRANSMITING   // Během vysílání se musí blokovat příjem.
+	STATE_TRANSMITING   // Vysilá (během vysílání se blokuje příjem)
 } POCSAG_Rx_State;
 
 static volatile POCSAG_Rx_State rx_state = STATE_RX_IDLE;
 static volatile uint32_t shiftReg = 0;
 static volatile uint16_t bitCounter = 0;
 POCSAG_token rx_token;
+
 static uint32_t bitBuffer = 0;
 static uint8_t bitsInBuffer = 0;
 
@@ -961,32 +961,45 @@ void POCSAG_process(void) {
 		{
 			if (rx_token.adr == param.netdau[rx_token.net-1])   //-- je pro mne
 			{
-				//-- zjisti komu vysilat
-				if (0==make_tx_route(rx_token.net, rx_token.path, rx_token.dau)) {
-
-					//-- Vysilam
+				if (rx_token.master == param.netdau[rx_token.net-1])   //-- jsem master
+				{
+					//-- Vysilam potvrzovaci token sam na sebe
 					LED4_On();
 					tx_token = rx_token;
-					if (tx_token.distribution == REVERSE_TOKEN) {
-						tx_token.adr = tx_route.revers;  //-- Posle reverzni cestou
-					}
-					else {
-						tx_token.adr = tx_route.follow;  //-- Posle primou cestou
-					}
-					tx_token.dau = param.netdau[rx_token.net-1];
-
-					//-- Nastavi cekani na potvrzeni tokenu (jen pro REPAIR tokeny)
-					if (tx_token.distribution == REPAIR_TOKEN) {
-						route_state = WAIT_FOLLOW;
-						route_repeat_counter = param.next_rpt+1;
-						route_timer = param.next_time+1;
-					}
-
-					tx_token.tx_status = TX_DIRECT_WAY;
+					tx_token.adr = tx_token.dau;  // sam na sebe
+					tx_token.distribution = DIRECT_TOKEN;  // nepotvrzovany
+					route_state = STATE_ROUTE_IDLE;
 					tx_start();  //-- Spusti vysilani
 				}
-				else {
-					sendStringUART1("NEVYSILAM - Nenalezen zaznam v ROUTE TABLE\r\n");
+				else
+				{
+					//-- zjisti komu vysilat
+					if (0==make_tx_route(rx_token.net, rx_token.path, rx_token.dau)) {
+
+						//-- Vysilam
+						LED4_On();
+						tx_token = rx_token;
+						if (tx_token.distribution == REVERSE_TOKEN) {
+							tx_token.adr = tx_route.revers;  //-- Posle reverzni cestou
+						}
+						else {
+							tx_token.adr = tx_route.follow;  //-- Posle primou cestou
+						}
+						tx_token.dau = param.netdau[rx_token.net-1];
+
+						//-- Nastavi cekani na potvrzeni tokenu (jen pro REPAIR tokeny)
+						if (tx_token.distribution == REPAIR_TOKEN) {
+							route_state = WAIT_FOLLOW;
+							route_repeat_counter = param.next_rpt+1;
+							route_timer = param.next_time+1;
+						}
+
+						tx_token.tx_status = TX_DIRECT_WAY;
+						tx_start();  //-- Spusti vysilani
+					}
+					else {
+						sendStringUART1("NEVYSILAM - Nenalezen zaznam v ROUTE TABLE\r\n");
+					}
 				}
 
 			}

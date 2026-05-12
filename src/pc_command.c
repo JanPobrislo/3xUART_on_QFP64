@@ -7,9 +7,9 @@
 #include "uart0.h"
 #include "parameters.h"
 #include "uart1.h"
+#include "pocsag.h"
 
 unsigned char eeprom[128]; // pro simulaci EEPROM puvodni TCI
-
 
 typedef enum {
 	IDLE,
@@ -18,10 +18,18 @@ typedef enum {
 	PASSWORD,
 	CMD,
 	CMD_Z,
-	CMD_Y
+	CMD_Y,
+	MASTER_TOKEN_BATCH,
+	MASTER_TOKEN_PATH,
+	MASTER_TOKEN_TIMEOUT,
+	MASTER_TOKEN_ID,
+	MASTER_TOKEN_TYP,
+	MASTER_TOKEN_DATA
 } type_pc_status;
 
 type_pc_status pc_status = IDLE;
+
+POCSAG_token master_token; // token prijaty z PC
 
 //------------------------------------------------------------------------------
 //  SW vyvolani resetu.
@@ -54,7 +62,7 @@ void eeprom_read_all(void) {
 
 	sprintf(buf,"%03u,%03u,%03u,%03u,",
 			param.primary_net,
-			param.netdau[param.primary_net],
+			param.netdau[param.primary_net-1],
 			param.pretime,
 			param.deadtime
 	);
@@ -142,7 +150,7 @@ void eeprom_write_all(void) {
     sendStringUART1("\r\nWRITE EEPROM:[");
 
 	param.primary_net = eeprom[4];
-//	param.netdau[param.primary_net] = eeprom[5];
+//	param.netdau[param.primary_net-1] = eeprom[5];
 	param.pretime = eeprom[6];
 	param.deadtime = eeprom[7];
 
@@ -190,9 +198,10 @@ void eeprom_write_routes(unsigned char routes) {
 // Automat zpracuje jeden znak z COM-A
 //------------------------------------------------------------------------------
 void read_pc_byte(unsigned char zn) {
-
-	char     passwd[] = "WASER";
-	static unsigned char index = 0;
+    char buf[200];
+	char passwd[] = "WASER";
+	static unsigned int index = 0;
+	static uint32_t word = 0;
 
 /*
 	sendStringUART0("[");
@@ -210,16 +219,26 @@ void read_pc_byte(unsigned char zn) {
 	case QUESTION:
 		switch(zn) {
 
+		//-- Pravidelny dotaz
 		case '0':
 			sendStringUART0("Yes");
 			pc_status = IDLE;
 			break;
 
+		//-- Nacte master token z PC
+		case '3':
+			sendStringUART0("Ready");
+			pc_status = MASTER_TOKEN_BATCH;
+			break;
+
+		//-- Dotaz na NET/DAU
 		case '6':
-			sendStringUART0("NET/DAU");  //-- ToDo: spravny format
+			sprintf(buf,"%c%c",param.primary_net,param.netdau[param.primary_net-1]);
+			sendStringUART0(buf);
 			pc_status = IDLE;
 			break;
 
+		//-- Pripojeni PC - TCImulti
 		case 'P':
 			pc_status = PC;
 			break;
@@ -229,6 +248,67 @@ void read_pc_byte(unsigned char zn) {
 			break;
 		}
 		break;
+
+	//------------- Nacetl ?3
+	case MASTER_TOKEN_BATCH:
+		master_token.batch = zn;
+		master_token.total_words = zn*WORDS_PER_BATCH;
+		pc_status = MASTER_TOKEN_PATH;
+		break;
+	case MASTER_TOKEN_PATH:
+		master_token.path = zn;
+		pc_status = MASTER_TOKEN_TIMEOUT;
+		break;
+	case MASTER_TOKEN_TIMEOUT:
+		master_token.timeout = zn;
+		pc_status = MASTER_TOKEN_ID;
+		break;
+	case MASTER_TOKEN_ID:
+		master_token.token_id = zn;
+		pc_status = MASTER_TOKEN_TYP;
+		break;
+	case MASTER_TOKEN_TYP:
+		master_token.token_type = zn;
+		index = 0;
+		word = 0;
+		pc_status = MASTER_TOKEN_DATA;
+	    sendStringUART1("MASTER TOKEN: HEAD OK\r\n");
+		break;
+
+	case MASTER_TOKEN_DATA:
+		if (zn=='E') {
+			if (index == master_token.batch*WORDS_PER_BATCH*21) {
+				sendStringUART0("OK");
+				sprintf(buf,"MASTER TOKEN loaded from the master [BATCH=%u]\r\n",master_token.batch);
+			    sendStringUART1(buf);
+			}
+			else {
+				sendStringUART0("ERROR");
+//			    sendStringUART1("ERROR: Token NOT loaded from the master\r\n");
+//				sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u ",rx_token.token_id,rx_token.batch,rx_token.master);
+				sprintf(buf,"ERROR: Token NOT loaded from the master [INDEX=%u]\r\n ",index);
+			    sendStringUART1(buf);
+			}
+			pc_status = IDLE;
+		}
+		else {
+			index++;
+			word <<= 1;
+			if (zn=='1') {word++;}
+
+			if (index%21 == 0) { // prijat jeden cely CDW
+				word <<= 11;
+				master_token.data[(index/21)-1] = word;
+				word = 0;
+			}
+		}
+		if (index > MAX_BATCHES*WORDS_PER_BATCH*21) {
+			//-- jen pro jistotu, aby nepretekl
+		    sendStringUART1("ERROR: Token NOT loaded from the master!\r\n");
+		    pc_status = IDLE;
+		}
+		break;
+
 	//------------- Nacetl ?P
 	case PC:
 		if (zn == 'C') {
@@ -312,6 +392,7 @@ void read_pc_byte(unsigned char zn) {
 			eeprom_show_all();
 			eeprom_write_all();
 			sendStringUART0("\r\nCMD> ");
+			//-- nezapisuje do flash, protoze z TCImulti nasleduje prikaz 'y'
 			pc_status = CMD;
 		}
 		break;
@@ -322,6 +403,7 @@ void read_pc_byte(unsigned char zn) {
 			sendStringUART0("\r\nROUTE TABLE WRITED\r\nCMD> ");
 			eeprom_show_all();
 			eeprom_write_routes(index/6);
+			parameters_save();  //-- zapise do flash
 			pc_status = CMD;
 		}
 		else {

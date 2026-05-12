@@ -7,11 +7,12 @@
 #define MAX_BATCHES      10
 #define WORDS_PER_BATCH  16
 #define POCSAG_SYNC_WORD 0x7CD215D8  // FS t.j. synchronizacni slovo
-#define POCSAG_IDLE_WORD 0x7A89C197
+#define POCSAG_IDLE_WORD 0x7A89C197  // 01111010100010011100000110010111
 
 typedef struct {
     uint32_t data[MAX_BATCHES * WORDS_PER_BATCH];
     uint16_t total_words;
+    unsigned char timeout;  // Pouze pro master token z PC
     volatile bool ready;    // Dokoncen prijem tokenu
     bool rx_ok;             // Token prijat bezchybne nebo chyby opraveny
     bool header_ok;         // Hlavicka tokenu (3xCDW] prijat bezchybne nebo chyby opraveny
