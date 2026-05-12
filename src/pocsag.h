@@ -13,7 +13,7 @@ typedef struct {
     uint32_t data[MAX_BATCHES * WORDS_PER_BATCH];
     uint16_t total_words;
     unsigned char timeout;  // Pouze pro master token z PC
-    volatile bool ready;    // Dokoncen prijem tokenu
+//    volatile bool rx_end;    // Dokoncen prijem tokenu
     bool rx_ok;             // Token prijat bezchybne nebo chyby opraveny
     bool header_ok;         // Hlavicka tokenu (3xCDW] prijat bezchybne nebo chyby opraveny
     //------------------------------ Hlavicka prijateho POCSAG tokenu.
@@ -67,5 +67,7 @@ void POCSAG_process(void);       // volano v main loop
 void POCSAG_show_rx_state(void);
 void tx_start(void);
 void POCSAG_routing_handler(void);
+void master_token_loaded(void);
+void MASTER_process(void);
 
 #endif

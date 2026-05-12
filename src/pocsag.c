@@ -12,19 +12,23 @@
 #include "led.h"
 #include "timer1.h"
 #include "rtc.h"
+#include "pc_command.h"
 
 typedef enum {
     STATE_RX_IDLE,      // Čekání na preamble v šumu
 	STATE_PREAMBLE,		// Preamble nalezen, zacne kalibrovat
     STATE_SYNC_WORD,    // Konec preamble, čeká na první Sync Word
     STATE_RECEIVING,    // Pevné časování, příjem datových slov
+	STATE_RECEIVED,	    // Datagram prijat (neni zkontrolovano BCH+PAR)
 	STATE_TRANSMITING   // Vysilá (během vysílání se blokuje příjem)
 } POCSAG_Rx_State;
 
 static volatile POCSAG_Rx_State rx_state = STATE_RX_IDLE;
 static volatile uint32_t shiftReg = 0;
 static volatile uint16_t bitCounter = 0;
+
 POCSAG_token rx_token;
+POCSAG_token tx_token;
 
 static uint32_t bitBuffer = 0;
 static uint8_t bitsInBuffer = 0;
@@ -33,7 +37,7 @@ typedef enum {
     STATE_TX_IDLE, 	// Nic nedela, ceka az bude vysilat
     TX_PREAMBLE, 	// Vysila preamble
     TX_SYNC,  		// Vysila FS - synchronizacni slovo
-    TX_CDW,  		// Vysila codeword - datove slovo
+    TX_CDW  		// Vysila codeword - datove slovo
 } POCSAG_Tx_State;
 static POCSAG_Tx_State tx_state = STATE_TX_IDLE;
 static volatile uint16_t number_of_tx = 0;    // Pocet vyslanych bitu
@@ -42,7 +46,7 @@ static volatile uint16_t number_of_words = 0; // Pocet vyslanych slov CDW
 typedef enum {
     STATE_ROUTE_IDLE,  // Nic nedela, ceka az bude vysilat
     WAIT_FOLLOW,  	// Ceka na vysilac v prime ceste
-    WAIT_ERROR,  	// Ceka na vysilac v chybove ceste
+    WAIT_ERROR  	// Ceka na vysilac v chybove ceste
 //    WAIT_REVERS,  	// Ceka na vysilac v reverzni ceste
 } POCSAG_Route_State;
 
@@ -50,7 +54,15 @@ static POCSAG_Route_State route_state = STATE_ROUTE_IDLE;
 static uint32_t route_repeat_counter = 0;
 static uint32_t route_timer = 0;
 
-POCSAG_token tx_token;
+typedef enum {
+    MASTER_IDLE,
+	MASTER_PREPARED,
+	MASTER_SENT,
+	MASTER_RETURNED,
+	MASTER_CONFIRMED
+} type_MASTER_State;
+
+static type_MASTER_State master_state = MASTER_IDLE;
 
 // --- BCH (31,21) a Parita ---
 // Pomocná funkce pro zrcadlení bitů v 32-bitovém slově
@@ -210,7 +222,7 @@ void make_bch(POCSAG_token *token) {
 //------------------------------------------------------------------------------
 void POCSAG_rx_init(void) {
     rx_state = STATE_RX_IDLE;
-    rx_token.ready = false;
+//    rx_token.rx_end = false;
     rx_token.total_words = 0;
 	tx_state = STATE_TX_IDLE;
 	shiftReg = 0;
@@ -371,6 +383,7 @@ void POCSAG_sample_bit(void) {
                 bitCounter = 0;
                 wordsInBatch = 1; // Dalších 16 slov jsou data
                 rx_token.total_words = 0;
+//            	rx_token.rx_end = false;
             	rx_edge_irq_disabled(); // Vypneme detekci hran - teď už jen pevný čas
             }
             else {
@@ -406,8 +419,8 @@ void POCSAG_sample_bit(void) {
 						// wordsInBatch necháme na 0, ale nepíšeme SYNC do dat
 					} else {
 						// KONEC DATAGRAMU: Na místě, kde měl být SYNC, je něco jiného
-						rx_token.ready = true;
-						rx_state = STATE_RX_IDLE;
+//						rx_token.rx_end = true;
+						rx_state = STATE_RECEIVED;
 //						TIMER1->CMD = TIMER_CMD_STOP;
 
 //						sprintf(buf,"\r\nTIMER1.TOP=%lu",TIMER1->TOP);
@@ -434,13 +447,19 @@ void POCSAG_sample_bit(void) {
 
 				// Ochrana proti přetečení celkového pole
 				if (rx_token.total_words >= (MAX_BATCHES * WORDS_PER_BATCH)) {
-					rx_token.ready = true;
-					rx_state = STATE_RX_IDLE;
+//					rx_token.rx_end = true;
+//					rx_state = STATE_RX_IDLE;
+					rx_state = STATE_RECEIVED;
 //					TIMER1->CMD = TIMER_CMD_STOP;
 					TIMER1_ResetSpeed();
 					rx_edge_irq_enabled();
 				}
 			}
+			break;
+
+		case STATE_RECEIVED:
+			//-- Sem prejde kdyz je kompletne prijaty token (bez kontrol)
+			//   Do jineho stavu (STATE_RX_IDLE) ho presune POCSAG_process()
 			break;
 
 		case STATE_TRANSMITING:
@@ -462,11 +481,7 @@ void POCSAG_show_rx_state(void) {
         case STATE_PREAMBLE:
 			sendStringUART1("STATE_PREAMBLE");
             break;
-/*
-        case STATE_PREAMBLE_CALIBRATED:
-			sendStringUART1("STATE_PREAMBLE_CALIBRATED");
-            break;
-*/
+
         case STATE_SYNC_WORD:
 			sendStringUART1("STATE_SYNC_WAIT");
             break;
@@ -474,6 +489,10 @@ void POCSAG_show_rx_state(void) {
 		case STATE_RECEIVING:
 			sendStringUART1("STATE_RECEIVING");
 			break;
+
+        case STATE_RECEIVED:
+			sendStringUART1("STATE_RECEIVED");
+            break;
 
 		case STATE_TRANSMITING:
 			sendStringUART1("STATE_TRANSMITING");
@@ -774,9 +793,10 @@ void tx_start(void) {
 //  Zpracovani prijateho datagramu
 //------------------------------------------------------------------------------
 void POCSAG_process(void) {
-    if (!rx_token.ready) return;
+//    if (!rx_token.rx_end) return;
+    if (rx_state != STATE_RECEIVED) return;
 
-    char buf[160];
+    char buf[250];
     char textMsg[128] = {0};
     bitBuffer = 0;
     bitsInBuffer = 0;
@@ -950,7 +970,7 @@ void POCSAG_process(void) {
 
 	sendStringUART1("--- END ---\r\n");
 
-	rx_token.ready = false;
+//	rx_token.ready = false;
 
 	//------------------------------------------------------------------------------
     //  Vysilani
@@ -1014,13 +1034,18 @@ void POCSAG_process(void) {
 						sendStringUART1("Token potvrzen\r\n");
 					}
 				}
+				POCSAG_rx_init();  // inicializuje prijem
 			}
+		}
+		else {  //--- Prijaty token nebyl OK
+			POCSAG_rx_init();  // inicializuje prijem
 		}
     }
     else {
     	//-- TO DO zpracovani PP Testu - vysilat odpoved
     	if (rx_token.header_ok){
 			sendStringUART1("TO DO: vysilat odpoved na PP-TEST\r\n");
+			POCSAG_rx_init();  // inicializuje prijem
     	}
     }
 	LED3_Off();
@@ -1088,4 +1113,68 @@ void POCSAG_routing_handler(void) {
 //				break;
 		}
 	}
+}
+
+void master_token_loaded(void)
+{
+	master_state = MASTER_PREPARED;
+}
+
+//------------------------------------------------------------------------------
+//  Zpracovani datagramu nacteneho z masteru (do global var. master_token)
+//------------------------------------------------------------------------------
+void MASTER_process(void)
+{
+    char buf[250];
+
+    switch (master_state) {
+        case MASTER_IDLE:
+            break;
+
+        case MASTER_PREPARED:
+
+        	sprintf(buf,"MASTER TOKEN: BATCH=%u PATH=%u TIMEOUT=%u TOKEN-ID=%u TOKEN-TYPE=%u\r\n",
+    		master_token.batch,
+    		master_token.path,
+    		master_token.timeout,
+    		master_token.token_id,
+    		master_token.token_type
+    	 	);
+            sendStringUART1(buf);
+
+            master_token.total_words = master_token.batch * WORDS_PER_BATCH;
+            master_token.net = param.primary_net;
+        	master_token.dau = param.netdau[param.primary_net-1];		// Odesilatel (DAU) - vysilac ktery vyslal tento token
+        	master_token.master = master_token.dau;	// Master DAU, ktery zahajil vysilani tokenu
+        	master_token.distribution = REPAIR_TOKEN; // 00=direct(nepotvrzovany), 10=repair(potvrzovany), 01=reverzal
+        	master_token.pass_dau = 0;		// vysilac ktery nevyslal (byl obejit)
+        	master_token.alarm_dau = 0;	// vysilac ktery hlasi poruchu
+        	master_token.alarm_no = 0;	    // cislo poruchu
+
+            if (0==make_tx_route(master_token.net, master_token.path, master_token.dau)) {
+				master_token.adr = tx_route.follow;
+				//-- Vygeneruje binární podobu hlavičky
+				make_header(&master_token);
+				//-- Opravi BCH+PARITU celeho tokenu
+				make_bch(&master_token);
+				//-- Spusti vysilani
+				tx_state = TX_PREAMBLE;
+				rx_state = STATE_TRANSMITING;
+				number_of_tx = 0;
+				GPIO_PinOutClear(TX_PORT, TX_PIN);    	// nula aby preamble zacal 1
+				GPIO_PinOutClear(PTT_PORT, PTT_PIN);  	// zaklicuje
+				TIMER1_ResetSpeed();
+				TIMER1_Start();
+			}
+
+			master_state = MASTER_IDLE;
+            break;
+
+        case MASTER_SENT:
+            break;
+        case MASTER_RETURNED:
+            break;
+        case MASTER_CONFIRMED:
+            break;
+    }
 }

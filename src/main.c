@@ -134,7 +134,8 @@ int main(void)
     	//------------------------------------------------------------------------------
     	//  Prijem POCSAG
     	//------------------------------------------------------------------------------
-    	POCSAG_process(); // Zpracuje a vypíše datagram, pokud je připraven
+    	POCSAG_process(); // Zpracuje a vypíše datagram, pokud je přijat
+    	MASTER_process(); // Zpracuje datagram nacteny z masteru
 
     	//------------------------------------------------------------------------------
     	//  Prikaz z COM-B (UART1)

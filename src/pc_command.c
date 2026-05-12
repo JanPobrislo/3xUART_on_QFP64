@@ -272,15 +272,16 @@ void read_pc_byte(unsigned char zn) {
 		index = 0;
 		word = 0;
 		pc_status = MASTER_TOKEN_DATA;
-	    sendStringUART1("MASTER TOKEN: HEAD OK\r\n");
+//	    sendStringUART1("MASTER TOKEN: HEAD OK\r\n");
 		break;
 
 	case MASTER_TOKEN_DATA:
 		if (zn=='E') {
 			if (index == master_token.batch*WORDS_PER_BATCH*21) {
 				sendStringUART0("OK");
-				sprintf(buf,"MASTER TOKEN loaded from the master [BATCH=%u]\r\n",master_token.batch);
+				sprintf(buf,"MASTER TOKEN: loaded from the master [BATCH=%u]\r\n",master_token.batch);
 			    sendStringUART1(buf);
+			    master_token_loaded();
 			}
 			else {
 				sendStringUART0("ERROR");
