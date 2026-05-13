@@ -140,4 +140,9 @@ Do usart0.c přidej funkce pro zakázání a povolení přerušení od USART0, t
 Soubory jsou částí programu pro procesor EFM32GG11B820F2048GQ64.
 Do parameters.c přidej funkci parameters_save(), které zapíše promněnou param do nepomíjivé paměti FLASH procesoru.
 Analogicky vytvoř funkci parameters_load(), která načte proměnou param z paměti FLASH procesoru.
+----------------------------------------------------------------------------------------------------------------
+Soubory jsou částí programu pro procesor EFM32GG11B820F2048GQ64.
+Myslím že je problém s prioritami přerušení. Pokud běží obsluha UART0 nepříznivě to ovlivní činnost Timer1 a PA0.
+Potřebuji aby priority byly takovéto: (nejvyžší) PA0,Timer1,UART0,USART0,UART1,Timer0 (nejnižší).
+Zkontroluj to a případně uprav. Nejdůležitější je aby obsluha Timer1 proběhla vždy v přesný okamžik.
 

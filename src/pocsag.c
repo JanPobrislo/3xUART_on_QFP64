@@ -1112,11 +1112,6 @@ void POCSAG_routing_handler(void) {
 	}
 }
 
-void master_token_loaded(void)
-{
-	master_state = MASTER_PREPARED;
-}
-
 //------------------------------------------------------------------------------
 //  Zpracovani datagramu nacteneho z masteru (do global var. master_token)
 //------------------------------------------------------------------------------
@@ -1126,6 +1121,9 @@ void MASTER_process(void)
 
     switch (master_state) {
         case MASTER_IDLE:
+            break;
+
+        case MASTER_LOADING:
             break;
 
         case MASTER_PREPARED:
@@ -1169,7 +1167,7 @@ void MASTER_process(void)
         case MASTER_RETURNED:
             break;
         case MASTER_CONFIRMED:
-			master_state = MASTER_IDLE;
+//			master_state = MASTER_IDLE;
             break;
     }
 }

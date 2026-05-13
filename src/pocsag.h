@@ -11,7 +11,7 @@
 
 typedef struct {
     uint32_t data[MAX_BATCHES * WORDS_PER_BATCH];
-    uint16_t total_words;
+    unsigned char total_words;
     unsigned char timeout;  // Pouze pro master token z PC
 //    volatile bool rx_end;    // Dokoncen prijem tokenu
     bool rx_ok;             // Token prijat bezchybne nebo chyby opraveny
@@ -61,7 +61,8 @@ typedef struct {
 
 typedef enum {
     MASTER_IDLE,	 // klidovy stav
-	MASTER_PREPARED, // token nacten zmasteru
+	MASTER_LOADING,  // master posila token do TCI
+	MASTER_PREPARED, // token nacten z masteru
 	MASTER_SENT,	 // token odvysilan
 	MASTER_RETURNED, // prijat token = obehl dokola
 	MASTER_CONFIRMED // potvrzeno prijeti do masteru
@@ -78,7 +79,6 @@ void POCSAG_process(void);       // volano v main loop
 void POCSAG_show_rx_state(void);
 void tx_start(void);
 void POCSAG_routing_handler(void);
-void master_token_loaded(void);
 void MASTER_process(void);
 
 #endif

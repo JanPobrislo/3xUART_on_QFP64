@@ -88,6 +88,15 @@ int main(void)
 
     CHIP_Init();  	//-- z em_chip.h
 
+    // Nastavení priorit přerušení (nižší číslo = vyšší priorita)
+    // PA0 (GPIO_EVEN) > TIMER1 > UART0 > USART0 > UART1 > TIMER0
+    NVIC_SetPriority(GPIO_EVEN_IRQn,  0);  // nejvyšší - detekce hrany POCSAG
+    NVIC_SetPriority(TIMER1_IRQn,     1);  // vzorkování 1200 Hz - musí být přesné
+    NVIC_SetPriority(UART0_RX_IRQn,   2);  // COM-A 9600 baud
+    NVIC_SetPriority(USART0_RX_IRQn,  3);  // COM-C GPS 38400 baud
+    NVIC_SetPriority(UART1_RX_IRQn,   4);  // COM-B debug 115200 baud
+    NVIC_SetPriority(TIMER0_IRQn,     5);  // 1 Hz sekundový tick - nejnižší
+
     initClocks();  	/* MUSI BYT PRVNI */
 
     initInputs();
