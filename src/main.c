@@ -158,12 +158,13 @@ int main(void)
     					sendStringUART1(" TCI commands:\r\n");
     					sendStringUART1(" --------------------------------\r\n");
     					sendStringUART1(" 1..6 : toggle LED: 1,2,3,4,RX,TX\r\n");
+    					sendStringUART1(" d : toggle view of details RX/TX\r\n");
     					sendStringUART1(" t : start TX TOKEN\r\n");
     					sendStringUART1(" T : stop timer1 1200Hz\r\n");
     					sendStringUART1(" x : GPIO_IntEnable(RX_PIN)\r\n");
-    					sendStringUART1(" n : toggle show GPS protocol NMEA\r\n");
-    					sendStringUART1(" s : toggle second time-tick\r\n");
-    					sendStringUART1(" i : toggle the display of inputs\r\n");
+    					sendStringUART1(" n : enable view GPS protocol NMEA\r\n");
+    					sendStringUART1(" s : toggle view second time-tick\r\n");
+    					sendStringUART1(" i : toggle view of inputs\r\n");
     					sendStringUART1(" r : show RTC\r\n");
     					sendStringUART1(" a : show alarms status\r\n");
     					sendStringUART1(" p : show parameters\r\n");
@@ -217,6 +218,11 @@ int main(void)
     		case 'x' : 	sendStringUART1("TX toggle bit\r\n");
 //    					GPIO_PinOutToggle(TX_PORT, TX_PIN);
     					rx_edge_irq_enabled();
+    					break;
+
+    		case 'd' : 	show_rxtx_details = !show_rxtx_details;
+    					if (show_rxtx_details==1) {sendStringUART1("RXTX DETAILS ON\r\n");}
+    					else {sendStringUART1("RXTX DETAILS OFF\r\n");}
     					break;
 
     		case 's' : 	show_timetick = !show_timetick;

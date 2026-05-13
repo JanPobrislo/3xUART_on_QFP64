@@ -328,7 +328,7 @@ void read_pc_byte(unsigned char zn) {
 		if (zn=='E') {
 			if (index == master_token.batch*WORDS_PER_BATCH*21) {
 				sendStringUART0("OK");
-				sprintf(buf,"MASTER TOKEN: loaded from the master [BATCH=%u]\r\n",master_token.batch);
+				sprintf(buf,"\r\nMASTER TOKEN: loaded from the master [BATCH=%u]\r\n",master_token.batch);
 			    sendStringUART1(buf);
 			    master_state = MASTER_PREPARED;
 			}
@@ -336,7 +336,7 @@ void read_pc_byte(unsigned char zn) {
 				sendStringUART0("ERROR");
 //			    sendStringUART1("ERROR: Token NOT loaded from the master\r\n");
 //				sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u ",rx_token.token_id,rx_token.batch,rx_token.master);
-				sprintf(buf,"ERROR: Token NOT loaded from the master [INDEX=%u]\r\n ",index);
+				sprintf(buf,"\r\nERROR: Token NOT loaded from the master [INDEX=%u]\r\n ",index);
 			    sendStringUART1(buf);
 			}
 			pc_state = IDLE;
@@ -354,7 +354,7 @@ void read_pc_byte(unsigned char zn) {
 		}
 		if (index > MAX_BATCHES*WORDS_PER_BATCH*21) {
 			//-- jen pro jistotu, aby nepretekl
-		    sendStringUART1("ERROR: Token NOT loaded from the master!\r\n");
+		    sendStringUART1("\r\nERROR: Token NOT loaded from the master!\r\n");
 		    pc_state = IDLE;
 		}
 		break;

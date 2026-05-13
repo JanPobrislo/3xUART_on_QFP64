@@ -265,11 +265,11 @@ void tx_stop(void) {
 void set_tx_bit(uint8_t bit) {
 	if (bit==1) {
 		GPIO_PinOutSet(TX_PORT, TX_PIN);
-		sendStringUART1("1");
+		if (show_rxtx_details==1) {sendStringUART1("1");}
 	}
 	else {
 		GPIO_PinOutClear(TX_PORT, TX_PIN);
-		sendStringUART1("0");
+		if (show_rxtx_details==1) {sendStringUART1("0");}
 	}
 }
 
@@ -288,7 +288,7 @@ void tx_bit(void) {
 				number_of_tx = 0;
 				number_of_words = 0;
 				tx_state = TX_SYNC;
-				sendStringUART1("\n");
+				if (show_rxtx_details==1) sendStringUART1("\n");
 			}
         	break;
         case TX_SYNC:
@@ -297,7 +297,7 @@ void tx_bit(void) {
 			if (number_of_tx == 32) {  //-- 32 bitu sync word
 				number_of_tx = 0;
 				tx_state = TX_CDW;
-				sendStringUART1("\n");
+				if (show_rxtx_details==1) sendStringUART1("\n");
 			}
         	break;
         case TX_CDW:
@@ -306,17 +306,17 @@ void tx_bit(void) {
 			if (number_of_tx == 32) {  //-- 32 bitu = vyslano cele slovo
 				number_of_tx = 0;
 				number_of_words++;
-				sendStringUART1("\n");
+				if (show_rxtx_details==1) sendStringUART1("\n");
 				if(number_of_words >= tx_token.total_words) {  //-- vyslan cely token
 					tx_stop();
-					sendStringUART1("--------------------------------\n");
-					sendStringUART1("TxEND\n");
+//						sendStringUART1("--------------------------------\n");
+					sendStringUART1("--- TxEND ---\n");
 				}
 				else {
 					if(number_of_words%16 == 0) {  //-- konec batch nasleduje SYNC WORD
 						number_of_tx = 0;
 						tx_state = TX_SYNC;
-						sendStringUART1("\n");
+						if (show_rxtx_details==1) {sendStringUART1("\n");}
 					}
 				}
 			}
@@ -802,8 +802,10 @@ void POCSAG_process(void) {
         uint32_t raw = rx_token.data[i];
 
         if (raw == POCSAG_IDLE_WORD) {
-            sprintf(buf, "%02d: IDLE\r\n", i+1);
-            sendStringUART1(buf);
+            if (show_rxtx_details==1) {
+            	sprintf(buf, "%02d: IDLE\r\n", i+1);
+            	sendStringUART1(buf);
+            }
             continue;
         }
 
@@ -818,10 +820,12 @@ void POCSAG_process(void) {
         	rx_token.rx_ok = false;
         }
 
-        sprintf(buf, "%02d: %08X %s %s\r\n",
-                i+1, (unsigned int)rx_token.data[i],
-				valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
-        sendStringUART1(buf);
+        if (show_rxtx_details==1) {
+			sprintf(buf, "%02d: %08X %s %s\r\n",
+					i+1, (unsigned int)rx_token.data[i],
+					valid ? "OK " : "ERR", fixed ? "[FIXED]" : "");
+			sendStringUART1(buf);
+        }
 
         //-- Pro hlavicku staci OK prvni 3 CDW
         if (i == 2) {

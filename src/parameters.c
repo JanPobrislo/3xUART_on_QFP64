@@ -19,6 +19,7 @@ unsigned long uptime;    // cas od resetu v sec
 unsigned char show_timetick = 0;  // povoluje zobrazovani . kazdou sec
 unsigned char show_inputs = 0;    // povoluje zobrazovani vstupu kazdou sec
 unsigned char show_gps_nmea = 0;  // povoluje zobrazovani . kazdou sec
+unsigned char show_rxtx_details = 1;
 
 //------------------------------------------------------------------------------
 // Ulozeni parametru do FLASH (USERDATA stranka)

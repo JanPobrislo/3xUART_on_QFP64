@@ -46,6 +46,7 @@ extern unsigned long uptime;    // cas od resetu v sec
 extern unsigned char show_timetick;
 extern unsigned char show_inputs;
 extern unsigned char show_gps_nmea;
+extern unsigned char show_rxtx_details;
 
 unsigned char parameters_load(void);
 unsigned char parameters_save(void);
