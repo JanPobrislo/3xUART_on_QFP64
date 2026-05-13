@@ -310,7 +310,9 @@ void tx_bit(void) {
 				if(number_of_words >= tx_token.total_words) {  //-- vyslan cely token
 					tx_stop();
 //						sendStringUART1("--------------------------------\n");
-					sendStringUART1("--- TxEND ---\n");
+					sendStringUART1("--- TX END ---\r\n");
+//				    sendStringUART1("    ");
+				    show_rtc();
 				}
 				else {
 					if(number_of_words%16 == 0) {  //-- konec batch nasleduje SYNC WORD
@@ -652,9 +654,9 @@ void make_system_status(POCSAG_token *token) {
 
 //    make_bch(token);  //udela tesne pred vysilanim
 
-    char buf[160];
-    sprintf(buf, "\r\nSTATUS DAU:0x%X on CDW=%u POS=%u\r\n ",status,cdw,pos);
-	sendStringUART1(buf);
+//  char buf[160];
+//	sprintf(buf, "\r\nSTATUS DAU:0x%X on CDW=%u POS=%u\r\n ",status,cdw,pos);
+//	sendStringUART1(buf);
 }
 
 //------------------------------------------------------------------------------
@@ -738,8 +740,8 @@ void tx_start(void) {
 	//-- Opravi BCH+PARITU celeho tokenu
 	make_bch(&tx_token);
 
-	sendStringUART1("\r\n-------------- TX --------------\r\n");
-	sendStringUART1("TX: ");
+    sendStringUART1("\r\n--- TX START ---\r\n");
+	sendStringUART1("    TX: ");
     //--- Vypise TX hlavicku
     switch (tx_token.token_type) {
 		case SYSTEM_TOKEN:
@@ -756,7 +758,7 @@ void tx_start(void) {
     sendStringUART1(buf);
 	sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u\r\n",tx_token.token_id,tx_token.batch,tx_token.master);
     sendStringUART1(buf);
-	sprintf(buf,"ROUTE: FOLLOW=%02u ERROR=%02u REVERSAL=%02u",tx_route.follow, tx_route.error, tx_route.revers);
+	sprintf(buf,"    ROUTE: FOLLOW=%02u ERROR=%02u REVERSAL=%02u",tx_route.follow, tx_route.error, tx_route.revers);
     sendStringUART1(buf);
 
     sendStringUART1("  DISTRIBUTION: ");
@@ -848,11 +850,11 @@ void POCSAG_process(void) {
     //------------------------------------------------------------------------------
 
     if (rx_token.rx_ok) {
-    	sendStringUART1("--- OK: ");
+    	sendStringUART1("    OK: ");
     	LED3_On();
     }
     else {
-    	sendStringUART1("--- ERROR");
+    	sendStringUART1("    ERROR");
         if (rx_token.header_ok) {
         	sendStringUART1("(HEAD:OK):");
         	LED3_On();
@@ -902,9 +904,6 @@ void POCSAG_process(void) {
 	}
 	sprintf(buf,"PASS-DAU=%02u ALARM-DAU=%02u ALARM-NO=%u\r\n",rx_token.pass_dau,rx_token.alarm_dau,rx_token.alarm_no);
     sendStringUART1(buf);
-
-    sendStringUART1("    ");
-    show_rtc();
 
     //--- Dekódování adresy a textu --- az od ctvrteho codewordu, za hlavickou
 	if (rx_token.rx_ok) {
@@ -964,7 +963,9 @@ void POCSAG_process(void) {
 		}
 	}
 
-	sendStringUART1("--- END ---\r\n");
+	sendStringUART1("--- RX END ---\r\n");
+//    sendStringUART1("    ");
+    show_rtc();
 
 //	rx_token.ready = false;
 
@@ -1025,14 +1026,14 @@ void POCSAG_process(void) {
 
 			}
 			else {  //-- token neni pro mne, kontrola routingu
-				sendStringUART1("NOT TX\r\n");
+				sendStringUART1("NOT TO TX\r\n");
 
 				if (route_state == WAIT_FOLLOW || route_state == WAIT_ERROR) {
 					if (rx_token.net == tx_token.net && rx_token.dau == tx_token.adr) {
 						//-- je to ten co cekam
 						route_state = STATE_ROUTE_IDLE;
 						LED4_Off();
-						sendStringUART1("Token potvrzen\r\n");
+						sendStringUART1("TOKEN FOLLOWS OK\r\n");
 					}
 				}
 				POCSAG_rx_init();  // inicializuje prijem
@@ -1071,14 +1072,14 @@ void POCSAG_routing_handler(void) {
 						tx_token.adr = tx_route.error;
 						route_repeat_counter = param.error_rpt+1;
 						route_timer = param.next_time+1;
-						sendStringUART1("ERROR-PATH\r\n");
+						sendStringUART1("REPEAT ERROR WAY\r\n");
 						tx_token.tx_status = TX_ERROR_WAY;
 						tx_start();
 					}
 					else {
 						//-- opakuje primou cestou
 						route_timer = param.next_time+1;
-						sendStringUART1("REPEAT\r\n");
+						sendStringUART1("REPEAT DIRECT WAY\r\n");
 						tx_token.tx_status = TX_REPEAT_DIRECT;
 						tx_start();
 					}
@@ -1096,14 +1097,14 @@ void POCSAG_routing_handler(void) {
 						tx_token.distribution = REVERSE_TOKEN;
 						route_repeat_counter = 0;
 						route_timer = 0;
-						sendStringUART1("REVERSE TOKEN\r\n");
+						sendStringUART1("TX REVERSE TOKEN\r\n");
 						tx_token.tx_status = tx_token.tx_status + TX_REVERSAL_WAY;
 						tx_start();
 					}
 					else {
 						//-- opakuje chybovou cestou
 						route_timer = param.next_time+1;
-						sendStringUART1("REPEAT ERROR\r\n");
+						sendStringUART1("REPEAT ERROR WAY\r\n");
 						tx_token.tx_status = TX_ERROR_WAY;
 						tx_start();
 					}
