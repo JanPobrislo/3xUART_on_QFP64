@@ -72,15 +72,15 @@ void show_statistics(void)
 	unsigned char n;
     char buf[300];
 
-	sendStringUART1("\r\n------------------------\r\n");
-	sendStringUART1("  RX statistics from\r\n  ");
-	sprintf(buf, "20%02u-%02u-%02u %02u:%02u:%02u\r\n",
+	sendStringUART1("\r\n---------------------\r\n");
+	sendStringUART1("  RX STATISTIC FROM\r\n  ");
+	sprintf(buf, "%02u-%02u-%02u %02u:%02u:%02u\r\n",
             stat.init_time.year, stat.init_time.month, stat.init_time.day,
             stat.init_time.hour, stat.init_time.min,   stat.init_time.sec);
     sendStringUART1(buf);
-	sendStringUART1("------------------------\r\n");
+	sendStringUART1("---------------------\r\n");
 
-    sendStringUART1("  NET-DAU  RX COUNT\r\n");
+    sendStringUART1("  NET-DAU  RX-COUNT\r\n");
 
 	for (n=0; n<MAX_STATISTICAL_RECORDS; n++) {
 		if (stat.rx_count[n].net==0) break;
@@ -91,7 +91,7 @@ void show_statistics(void)
 			stat.rx_count[n].count);
 	    sendStringUART1(buf);
 	}
-	sendStringUART1("------------------------\r\n");
+	sendStringUART1("---------------------\r\n");
 }
 
 void insert_statistics(unsigned char RXnet, unsigned char RXdau)
