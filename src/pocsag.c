@@ -970,6 +970,8 @@ void POCSAG_process(void) {
 //    sendStringUART1("    ");
     show_rtc();
 
+    if (rx_token.rx_ok) {insert_statistics(rx_token.net,rx_token.dau);}
+
 //	rx_token.ready = false;
 
 	//------------------------------------------------------------------------------
@@ -1137,23 +1139,34 @@ void MASTER_process(void)
         case MASTER_PREPARED:
         	if (rx_state != STATE_RX_IDLE || tx_state != STATE_TX_IDLE) {break;}
 
-        	sprintf(buf,"    BATCH=%u PATH=%u TIMEOUT=%u TOKEN-ID=%u TOKEN-TYPE=%u\r\n",
-    		master_token.batch,
-    		master_token.path,
-    		master_token.timeout,
-    		master_token.token_id,
-    		master_token.token_type
+            switch (master_token.token_type) {
+        		case 0:
+        			sendStringUART1("    TYPE=SYSTEM ");
+        			break;
+        		case 1:
+        			sendStringUART1("    TYPE=NORMAL ");
+        			break;
+        		default:
+        			break;
+        	}
+        	sprintf(buf,"PATH=%u TOKEN=%u BATCH=%u TIMEOUT=%usec\r\n",
+        			master_token.path,
+		    		master_token.token_id,
+					master_token.batch,
+					master_token.timeout
     	 	);
             sendStringUART1(buf);
+			sendStringUART1("--- MASTER LOADED ---\r\n");
+		    show_rtc();
 
             master_token.total_words = master_token.batch * WORDS_PER_BATCH;
             master_token.net = param.primary_net;
-        	master_token.dau = param.netdau[param.primary_net-1];		// Odesilatel (DAU) - vysilac ktery vyslal tento token
-        	master_token.master = master_token.dau;	// Master DAU, ktery zahajil vysilani tokenu
-        	master_token.distribution = REPAIR_TOKEN; // 00=direct(nepotvrzovany), 10=repair(potvrzovany), 01=reverzal
-        	master_token.pass_dau = 0;		// vysilac ktery nevyslal (byl obejit)
-        	master_token.alarm_dau = 0;	// vysilac ktery hlasi poruchu
-        	master_token.alarm_no = 0;	    // cislo poruchu
+        	master_token.dau = param.netdau[param.primary_net-1];
+        	master_token.master = master_token.dau;
+        	master_token.distribution = REPAIR_TOKEN;
+        	master_token.pass_dau = 0;
+        	master_token.alarm_dau = 0;
+        	master_token.alarm_no = 0;
 
             if (0==make_tx_route(master_token.net, master_token.path, master_token.dau))
             {

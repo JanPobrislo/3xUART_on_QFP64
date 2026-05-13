@@ -328,7 +328,7 @@ void read_pc_byte(unsigned char zn) {
 		if (zn=='E') {
 			if (index == master_token.batch*WORDS_PER_BATCH*21) {
 				sendStringUART0("OK");
-				sendStringUART1("\r\n--- MASTER TOKEN LOADED ---\r\n");
+				sendStringUART1("\r\n--- MASTER TOKEN ---\r\n");
 			    master_state = MASTER_PREPARED;
 			}
 			else {

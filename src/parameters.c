@@ -14,7 +14,7 @@ routes_for_tx tx_route;  // definuje routu pro vysilani
 unsigned long uptime;    // cas od resetu v sec
 
 //------------------------------------------------------------------------------
-// Docasne globalni parametry
+// Docasne globalni parametry - Prepinace pro zobrazovani na consoli COM-B UART1
 //------------------------------------------------------------------------------
 unsigned char show_timetick = 0;  // povoluje zobrazovani . kazdou sec
 unsigned char show_inputs = 0;    // povoluje zobrazovani vstupu kazdou sec
@@ -22,6 +22,89 @@ unsigned char show_gps_nmea = 0;  // povoluje zobrazovani . kazdou sec
 unsigned char show_rxtx_details = 1;
 
 //------------------------------------------------------------------------------
+// Statistika prijmu
+//------------------------------------------------------------------------------
+typedef struct {
+	unsigned char net;
+	unsigned char dau;
+	unsigned long count;
+} type_rx_statistic;
+
+#define MAX_STATISTICAL_RECORDS 30
+
+typedef struct {
+    rtc_datetime_t init_time;
+	type_rx_statistic rx_count[MAX_STATISTICAL_RECORDS];
+} type_statistical;
+
+type_statistical stat;
+
+void init_statistics(void)
+{
+	unsigned char n;
+	get_rtc(&stat.init_time);
+	for (n=0; n<MAX_STATISTICAL_RECORDS; n++) {
+		stat.rx_count[n].net=0;
+		stat.rx_count[n].dau=0;
+		stat.rx_count[n].count=0;
+	}
+/*
+	stat.rx_count[0].net=15;
+	stat.rx_count[0].dau=3;
+	stat.rx_count[0].count=108;
+
+	stat.rx_count[1].net=15;
+	stat.rx_count[1].dau=2;
+	stat.rx_count[1].count=77108;
+*/
+}
+
+void show_statistics(void)
+{
+	unsigned char n;
+    char buf[300];
+
+	sendStringUART1("\r\n------------------------\r\n");
+	sendStringUART1("  RX statistics from\r\n  ");
+	sprintf(buf, "20%02u-%02u-%02u %02u:%02u:%02u\r\n",
+            stat.init_time.year, stat.init_time.month, stat.init_time.day,
+            stat.init_time.hour, stat.init_time.min,   stat.init_time.sec);
+    sendStringUART1(buf);
+	sendStringUART1("------------------------\r\n");
+
+    sendStringUART1("  NET-DAU  RX COUNT\r\n");
+
+	for (n=0; n<MAX_STATISTICAL_RECORDS; n++) {
+		if (stat.rx_count[n].net==0) break;
+
+		sprintf(buf,"   %02u-%02u : %lu\r\n",
+			stat.rx_count[n].net,
+			stat.rx_count[n].dau,
+			stat.rx_count[n].count);
+	    sendStringUART1(buf);
+	}
+	sendStringUART1("------------------------\r\n");
+}
+
+void insert_statistics(unsigned char RXnet, unsigned char RXdau)
+{
+	unsigned char n;
+	for (n=0; n<MAX_STATISTICAL_RECORDS; n++)
+	{
+		if (stat.rx_count[n].net==RXnet && stat.rx_count[n].dau==RXdau ) {
+			stat.rx_count[n].count++;
+			break;
+		}
+
+		if (stat.rx_count[n].net==0) {
+			stat.rx_count[n].net=RXnet;
+			stat.rx_count[n].dau=RXdau;
+			stat.rx_count[n].count=1;
+			break;
+		}
+	}
+}
+//---------------- --------------------------------------------------------------
 // Ulozeni parametru do FLASH (USERDATA stranka)
 // USERDATA_BASE = 0x0FE00000, velikost 2048 B
 // Vraci: 0=OK, 1=chyba mazani, 2=chyba zapisu

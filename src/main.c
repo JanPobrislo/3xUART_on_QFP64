@@ -157,19 +157,19 @@ int main(void)
     					sendStringUART1(" --------------------------------\r\n");
     					sendStringUART1(" TCI commands:\r\n");
     					sendStringUART1(" --------------------------------\r\n");
-    					sendStringUART1(" 1..6 : toggle LED: 1,2,3,4,RX,TX\r\n");
-    					sendStringUART1(" d : toggle view of details RX/TX\r\n");
-    					sendStringUART1(" t : start TX TOKEN\r\n");
-    					sendStringUART1(" T : stop timer1 1200Hz\r\n");
-    					sendStringUART1(" x : GPIO_IntEnable(RX_PIN)\r\n");
-    					sendStringUART1(" n : enable view GPS protocol NMEA\r\n");
-    					sendStringUART1(" s : toggle view second time-tick\r\n");
-    					sendStringUART1(" i : toggle view of inputs\r\n");
-    					sendStringUART1(" r : show RTC\r\n");
-    					sendStringUART1(" a : show alarms status\r\n");
     					sendStringUART1(" p : show parameters\r\n");
+    					sendStringUART1(" s : show statistics\r\n");
+    					sendStringUART1(" d : toggle view of details RX/TX\r\n");
+    					sendStringUART1(" t : toggle view second time-tick\r\n");
+    					sendStringUART1(" i : toggle view of inputs\r\n");
+    					sendStringUART1(" a : show alarms status of inputs\r\n");
+    					sendStringUART1(" n : show GPS protocol NMEA\r\n");
+    					sendStringUART1(" r : show RTC\r\n");
     					sendStringUART1(" w : write parameters to FLASH\r\n");
     					sendStringUART1(" l : load parameters from FLASH\r\n");
+    					sendStringUART1(" 1..6 : toggle LED: 1,2,3,4,RX,TX\r\n");
+    					sendStringUART1(" c : clear statistics\r\n");
+    					sendStringUART1(" T : start TX TOKEN from memory\r\n");
     					sendStringUART1(" h : display this help\r\n");
     					sendStringUART1(" --------------------------------\r\n");
     					POCSAG_show_rx_state();
@@ -183,6 +183,13 @@ int main(void)
     		case 'l' : 	sendStringUART1("Load parameters from FLASH\r\n");
     					parameters_load();
     					parameters_show();
+    					break;
+
+    		case 's' : 	show_statistics();
+    					break;
+
+    		case 'c' : 	init_statistics();
+    					sendStringUART1("Statistics have been cleared and initialized.\r\n");
     					break;
 
     		case 'p' : 	parameters_show();
@@ -207,17 +214,8 @@ int main(void)
     					sendStringUART1("LED TX");
     					break;
 
-    		case 't' : 	tx_start();
-    					sendStringUART1("Tx datagram\r\n");
-    					break;
-
-    		case 'T' : 	TIMER1_Stop();
-    					sendStringUART1("Stop timer1 TX 1200Hz\r\n");
-    					break;
-
-    		case 'x' : 	sendStringUART1("TX toggle bit\r\n");
-//    					GPIO_PinOutToggle(TX_PORT, TX_PIN);
-    					rx_edge_irq_enabled();
+    		case 'T' : 	tx_start();
+//    					sendStringUART1("Tx datagram\r\n");
     					break;
 
     		case 'd' : 	show_rxtx_details = !show_rxtx_details;
@@ -225,7 +223,7 @@ int main(void)
     					else {sendStringUART1("RXTX DETAILS: OFF\r\n");}
     					break;
 
-    		case 's' : 	show_timetick = !show_timetick;
+    		case 't' : 	show_timetick = !show_timetick;
     					break;
 
     		case 'i' : 	show_inputs = !show_inputs;
