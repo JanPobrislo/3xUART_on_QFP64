@@ -137,6 +137,7 @@ int main(void)
     sendStringUART1 ("TCI COM2-B (UART1) - DEBUG\r\n");
     sendStringUART1 ("HFXO: 50 MHz krystal, DPLL: 72 MHz\r\n");
     parameters_show();
+    init_statistics();  //-- radeji az zde aby uz bylo nastavene RTC
 
     while (1) {
 

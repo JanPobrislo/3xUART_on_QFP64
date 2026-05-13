@@ -60,6 +60,7 @@ void parameters_show(void);
 unsigned char make_tx_route(unsigned char net, unsigned char path, unsigned char dau);
 
 void init_statistics(void);
+void clear_statistics(void);
 void show_statistics(void);
 void insert_statistics(unsigned char RXnet, unsigned char RXdau);
 

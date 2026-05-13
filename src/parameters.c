@@ -39,7 +39,7 @@ typedef struct {
 
 type_statistical stat;
 
-void init_statistics(void)
+void clear_statistics(void)
 {
 	unsigned char n;
 	get_rtc(&stat.init_time);
@@ -57,6 +57,14 @@ void init_statistics(void)
 	stat.rx_count[1].dau=2;
 	stat.rx_count[1].count=77108;
 */
+}
+
+//-- Pokud neni nastavene datum (2000-00-00) tak maze a inicializuje statistiku
+void init_statistics(void)
+{
+	if (stat.init_time.year==0 && stat.init_time.month==0 && stat.init_time.day==0) {
+		clear_statistics();
+	}
 }
 
 void show_statistics(void)
