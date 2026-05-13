@@ -758,23 +758,26 @@ void tx_start(void) {
     sendStringUART1(buf);
 	sprintf(buf,"TOKEN=%u BATCH=%u MASTER=%02u\r\n",tx_token.token_id,tx_token.batch,tx_token.master);
     sendStringUART1(buf);
-	sprintf(buf,"    ROUTE: FOLLOW=%02u ERROR=%02u REVERSAL=%02u",tx_route.follow, tx_route.error, tx_route.revers);
-    sendStringUART1(buf);
 
-    sendStringUART1("  DISTRIBUTION: ");
+    sendStringUART1("    DISTRIBUTION=");
     switch (tx_token.distribution) {
 		case DIRECT_TOKEN:
-			sendStringUART1("DIRECT\r\n");
+			sendStringUART1("DIRECT ");
 			break;
 		case REPAIR_TOKEN:
-			sendStringUART1("REPAIR\r\n");
+			sendStringUART1("REPAIR ");
 			break;
 		case REVERSE_TOKEN:
-			sendStringUART1("REVERSE\r\n");
+			sendStringUART1("REVERSE ");
 			break;
 	}
+	sprintf(buf,"PASS-DAU=%02u ALARM-DAU=%02u ALARM-NO=%u\r\n",tx_token.pass_dau,tx_token.alarm_dau,tx_token.alarm_no);
+    sendStringUART1(buf);
 
-	//-- Spusti vysilani
+	sprintf(buf,"    ROUTE WAY: FOLLOW=%02u ERROR=%02u REVERSAL=%02u\r\n",tx_route.follow, tx_route.error, tx_route.revers);
+    sendStringUART1(buf);
+
+    //-- Spusti vysilani
 	tx_state = TX_PREAMBLE;
 	number_of_tx = 0;
 	GPIO_PinOutClear(TX_PORT, TX_PIN);    	// nula aby preamble zacal 1
@@ -890,7 +893,7 @@ void POCSAG_process(void) {
     sprintf(buf, "f=%lu.%03luHz\r\n", freq_mHz / 1000, freq_mHz % 1000);
     sendStringUART1(buf);
 
-	sendStringUART1("    DISTR=");
+	sendStringUART1("    DISTRIBUTION=");
     switch (rx_token.distribution) {
 		case DIRECT_TOKEN:
 			sendStringUART1("DIRECT ");
@@ -1134,7 +1137,7 @@ void MASTER_process(void)
         case MASTER_PREPARED:
         	if (rx_state != STATE_RX_IDLE || tx_state != STATE_TX_IDLE) {break;}
 
-        	sprintf(buf,"MASTER TOKEN: BATCH=%u PATH=%u TIMEOUT=%u TOKEN-ID=%u TOKEN-TYPE=%u\r\n",
+        	sprintf(buf,"    BATCH=%u PATH=%u TIMEOUT=%u TOKEN-ID=%u TOKEN-TYPE=%u\r\n",
     		master_token.batch,
     		master_token.path,
     		master_token.timeout,

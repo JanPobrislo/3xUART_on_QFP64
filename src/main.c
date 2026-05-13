@@ -221,8 +221,8 @@ int main(void)
     					break;
 
     		case 'd' : 	show_rxtx_details = !show_rxtx_details;
-    					if (show_rxtx_details==1) {sendStringUART1("RXTX DETAILS ON\r\n");}
-    					else {sendStringUART1("RXTX DETAILS OFF\r\n");}
+    					if (show_rxtx_details==1) {sendStringUART1("RXTX DETAILS: ON\r\n");}
+    					else {sendStringUART1("RXTX DETAILS: OFF\r\n");}
     					break;
 
     		case 's' : 	show_timetick = !show_timetick;
