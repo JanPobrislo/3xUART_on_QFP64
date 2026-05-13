@@ -59,6 +59,17 @@ typedef struct {
 
 //extern POCSAG_token rx_token;
 
+typedef enum {
+    MASTER_IDLE,	 // klidovy stav
+	MASTER_PREPARED, // token nacten zmasteru
+	MASTER_SENT,	 // token odvysilan
+	MASTER_RETURNED, // prijat token = obehl dokola
+	MASTER_CONFIRMED // potvrzeno prijeti do masteru
+} type_MASTER_State;
+
+extern type_MASTER_State master_state;
+
+
 void POCSAG_rx_init(void);
 void POCSAG_edge_detected(void); // volano interuptem GPIO_EVEN_IRQHandler()
 void POCSAG_sample_bit(void);    // volano z TIMER1 (1200 Hz)

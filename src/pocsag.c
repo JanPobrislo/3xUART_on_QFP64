@@ -54,15 +54,7 @@ static POCSAG_Route_State route_state = STATE_ROUTE_IDLE;
 static uint32_t route_repeat_counter = 0;
 static uint32_t route_timer = 0;
 
-typedef enum {
-    MASTER_IDLE,
-	MASTER_PREPARED,
-	MASTER_SENT,
-	MASTER_RETURNED,
-	MASTER_CONFIRMED
-} type_MASTER_State;
-
-static type_MASTER_State master_state = MASTER_IDLE;
+type_MASTER_State master_state = MASTER_IDLE;
 
 // --- BCH (31,21) a Parita ---
 // Pomocná funkce pro zrcadlení bitů v 32-bitovém slově
@@ -768,7 +760,7 @@ void tx_start(void) {
     sendStringUART1(buf);
 
     sendStringUART1("  DISTRIBUTION: ");
-    switch (rx_token.distribution) {
+    switch (tx_token.distribution) {
 		case DIRECT_TOKEN:
 			sendStringUART1("DIRECT\r\n");
 			break;
@@ -986,9 +978,14 @@ void POCSAG_process(void) {
 					//-- Vysilam potvrzovaci token sam na sebe
 					LED4_On();
 					tx_token = rx_token;
-					tx_token.adr = tx_token.dau;  // sam na sebe
+					tx_token.dau = tx_token.adr;  // sam na sebe
 					tx_token.distribution = DIRECT_TOKEN;  // nepotvrzovany
 					route_state = STATE_ROUTE_IDLE;
+					if (master_state == MASTER_SENT) {
+						master_token = rx_token;
+						master_state = MASTER_RETURNED;
+					}
+					sendStringUART1("TOKEN RETURNED\r\n");
 					tx_start();  //-- Spusti vysilani
 				}
 				else
@@ -1018,13 +1015,13 @@ void POCSAG_process(void) {
 						tx_start();  //-- Spusti vysilani
 					}
 					else {
-						sendStringUART1("NEVYSILAM - Nenalezen zaznam v ROUTE TABLE\r\n");
+						sendStringUART1("NOT TX - Record not found in ROUTE TABLE\r\n");
 					}
 				}
 
 			}
 			else {  //-- token neni pro mne, kontrola routingu
-				sendStringUART1("NEVYSILAM\r\n");
+				sendStringUART1("NOT TX\r\n");
 
 				if (route_state == WAIT_FOLLOW || route_state == WAIT_ERROR) {
 					if (rx_token.net == tx_token.net && rx_token.dau == tx_token.adr) {
@@ -1132,6 +1129,7 @@ void MASTER_process(void)
             break;
 
         case MASTER_PREPARED:
+        	if (rx_state != STATE_RX_IDLE || tx_state != STATE_TX_IDLE) {break;}
 
         	sprintf(buf,"MASTER TOKEN: BATCH=%u PATH=%u TIMEOUT=%u TOKEN-ID=%u TOKEN-TYPE=%u\r\n",
     		master_token.batch,
@@ -1151,23 +1149,19 @@ void MASTER_process(void)
         	master_token.alarm_dau = 0;	// vysilac ktery hlasi poruchu
         	master_token.alarm_no = 0;	    // cislo poruchu
 
-            if (0==make_tx_route(master_token.net, master_token.path, master_token.dau)) {
+            if (0==make_tx_route(master_token.net, master_token.path, master_token.dau))
+            {
 				master_token.adr = tx_route.follow;
-				//-- Vygeneruje binární podobu hlavičky
-				make_header(&master_token);
-				//-- Opravi BCH+PARITU celeho tokenu
-				make_bch(&master_token);
-				//-- Spusti vysilani
-				tx_state = TX_PREAMBLE;
-				rx_state = STATE_TRANSMITING;
-				number_of_tx = 0;
-				GPIO_PinOutClear(TX_PORT, TX_PIN);    	// nula aby preamble zacal 1
-				GPIO_PinOutClear(PTT_PORT, PTT_PIN);  	// zaklicuje
-				TIMER1_ResetSpeed();
-				TIMER1_Start();
+				tx_token = master_token;   // prepise token do vysilaci promnene
+//	        	tx_token.distribution = REPAIR_TOKEN;
+				route_state = WAIT_FOLLOW;
+				route_repeat_counter = param.next_rpt+1;
+				route_timer = param.next_time+1;
+
+				tx_start();  //-- Spusti vysilani
 			}
 
-			master_state = MASTER_IDLE;
+			master_state = MASTER_SENT;
             break;
 
         case MASTER_SENT:
@@ -1175,6 +1169,7 @@ void MASTER_process(void)
         case MASTER_RETURNED:
             break;
         case MASTER_CONFIRMED:
+			master_state = MASTER_IDLE;
             break;
     }
 }

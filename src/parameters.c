@@ -139,7 +139,7 @@ void parameters_init(void) {
 	param.route[0].net = 15;
 	param.route[0].path = 255;
 	param.route[0].dau = 255;
-	param.route[0].follow = 7;
+	param.route[0].follow = 4;
 	param.route[0].error = 2;
 	param.route[0].revers = 2;
 

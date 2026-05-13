@@ -225,6 +225,29 @@ void read_pc_byte(unsigned char zn) {
 			pc_status = IDLE;
 			break;
 
+		//-- Dotaz na potvrzeni obehu tokenu
+		case '2':
+		    switch (master_state) {
+		        case MASTER_IDLE:  //-- to by nemelo nastat
+					sendStringUART0("ResetTCI");
+		            break;
+		        case MASTER_PREPARED:
+					sendStringUART0("Wait");
+		            break;
+		        case MASTER_SENT:
+					sendStringUART0("Wait");
+		            break;
+		        case MASTER_RETURNED:
+					sendStringUART0("Tok");
+					USART_Tx(UART0,master_token.path);
+					USART_Tx(UART0,master_token.pass_dau);
+					master_state = MASTER_CONFIRMED;
+		            break;
+		        case MASTER_CONFIRMED:
+		            break;
+		    }
+			break;
+
 		//-- Nacte master token z PC
 		case '3':
 			sendStringUART0("Ready");
