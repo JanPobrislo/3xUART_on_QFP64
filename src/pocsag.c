@@ -970,7 +970,10 @@ void POCSAG_process(void) {
 //    sendStringUART1("    ");
     show_rtc();
 
-    if (rx_token.rx_ok) {insert_statistics(rx_token.net,rx_token.dau);}
+    //--- Prida prijem do statistiky
+    if (rx_token.rx_ok)
+    	 {add_to_statitic(rx_token.net,rx_token.dau);}
+    else {err_to_statitic();}
 
 //	rx_token.ready = false;
 

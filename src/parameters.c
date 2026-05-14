@@ -1,4 +1,5 @@
 #include "em_msc.h"
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 //#include <stdint.h>
@@ -30,47 +31,56 @@ typedef struct {
 	unsigned long count;
 } type_rx_statistic;
 
-#define MAX_STATISTICAL_RECORDS 30
+#define MAX_STATISTICS_RECORDS 30
 
 typedef struct {
     rtc_datetime_t init_time;
-	type_rx_statistic rx_count[MAX_STATISTICAL_RECORDS];
+	type_rx_statistic rx_count[MAX_STATISTICS_RECORDS];
+	unsigned long error_count;
 } type_statistical;
 
 type_statistical stat;
 
-void clear_statistics(void)
+void clear_statistic(void)
 {
 	unsigned char n;
 	get_rtc(&stat.init_time);
-	for (n=0; n<MAX_STATISTICAL_RECORDS; n++) {
+	for (n=0; n<MAX_STATISTICS_RECORDS; n++) {
 		stat.rx_count[n].net=0;
 		stat.rx_count[n].dau=0;
 		stat.rx_count[n].count=0;
 	}
-/*
-	stat.rx_count[0].net=15;
-	stat.rx_count[0].dau=3;
-	stat.rx_count[0].count=108;
-
-	stat.rx_count[1].net=15;
-	stat.rx_count[1].dau=2;
-	stat.rx_count[1].count=77108;
-*/
+	stat.error_count = 0;
 }
 
-//-- Pokud neni nastavene datum (2000-00-00) tak maze a inicializuje statistiku
-void init_statistics(void)
+void init_statistic(void)
 {
-	if (stat.init_time.year==0 && stat.init_time.month==0 && stat.init_time.day==0) {
-		clear_statistics();
+	switch (statistic_load()) {
+
+		case 0: //-- nacetl OK
+			break;
+
+		case 1: //-- ve flash neni jeste ulozeno (prvni reset)
+			clear_statistic();
+			statistic_save();
+			break;
+
+		case 2: //-- ve flash je blbost
+			if (stat.init_time.year==0 && stat.init_time.month==0 && stat.init_time.day==0) {
+				//-- Pokud neni nastavene datum (2000-00-00) tak maze a inicializuje statistiku
+				clear_statistic();
+			}
+			statistic_save();
+			break;
 	}
 }
 
-void show_statistics(void)
+/*  //------------------ Nesetrizena varianta
+void show_statistic(void)
 {
 	unsigned char n;
     char buf[300];
+	unsigned long sum;
 
 	sendStringUART1("\r\n---------------------\r\n");
 	sendStringUART1("  RX STATISTIC FROM\r\n  ");
@@ -82,7 +92,8 @@ void show_statistics(void)
 
     sendStringUART1("  NET-DAU  RX-COUNT\r\n");
 
-	for (n=0; n<MAX_STATISTICAL_RECORDS; n++) {
+    sum=0;
+	for (n=0; n<MAX_STATISTICS_RECORDS; n++) {
 		if (stat.rx_count[n].net==0) break;
 
 		sprintf(buf,"   %02u-%02u : %lu\r\n",
@@ -90,14 +101,78 @@ void show_statistics(void)
 			stat.rx_count[n].dau,
 			stat.rx_count[n].count);
 	    sendStringUART1(buf);
+	    sum += stat.rx_count[n].count;
 	}
 	sendStringUART1("---------------------\r\n");
+	sprintf(buf,"TOTAL OK : %lu\r\n",sum);
+    sendStringUART1(buf);
+	sprintf(buf,"  ERRORS : %lu\r\n",stat.error_count);
+    sendStringUART1(buf);
+	sendStringUART1("---------------------\r\n");
+}
+*/
+
+// Pomocná funkce pro qsort - porovná dva záznamy sestupně podle count
+static int compare_statistics(const void *a, const void *b) {
+    type_rx_statistic *statA = (type_rx_statistic *)a;
+    type_rx_statistic *statB = (type_rx_statistic *)b;
+
+    if (statA->count < statB->count) return 1;
+    if (statA->count > statB->count) return -1;
+    return 0;
 }
 
-void insert_statistics(unsigned char RXnet, unsigned char RXdau)
+void show_statistic(void)
+{
+    unsigned char n;
+    char buf[300];
+    unsigned long sum;
+
+    // Lokální kopie pole pro seřazení, abychom nezměnili data v globální proměnné 'stat'
+    type_rx_statistic sorted_records[MAX_STATISTICS_RECORDS];
+    memcpy(sorted_records, stat.rx_count, sizeof(sorted_records));
+
+    // Seřadíme záznamy pomocí qsort (sestupně)
+    qsort(sorted_records, MAX_STATISTICS_RECORDS, sizeof(type_rx_statistic), compare_statistics);
+
+    sendStringUART1("\r\n---------------------\r\n");
+    sendStringUART1("  RX STATISTIC FROM\r\n  ");
+    sprintf(buf, "%02u-%02u-%02u %02u:%02u:%02u\r\n",
+            stat.init_time.year, stat.init_time.month, stat.init_time.day,
+            stat.init_time.hour, stat.init_time.min,   stat.init_time.sec);
+    sendStringUART1(buf);
+    sendStringUART1("---------------------\r\n");
+
+    sendStringUART1("  NET-DAU  RX-COUNT\r\n");
+
+    sum = 0;
+    for (n = 0; n < MAX_STATISTICS_RECORDS; n++) {
+        // Kontrolujeme seřazené záznamy. Pokud narazíme na count 0,
+        // víme, že zbytek seřazeného pole už jsou prázdné záznamy.
+        if (sorted_records[n].count == 0) continue;
+
+        sprintf(buf, "   %02u-%02u : %lu\r\n",
+                sorted_records[n].net,
+                sorted_records[n].dau,
+                sorted_records[n].count);
+        sendStringUART1(buf);
+
+        // Sumu počítáme z originální statistiky, nebo z této seřazené (je to stejné)
+        sum += sorted_records[n].count;
+    }
+
+    sendStringUART1("---------------------\r\n");
+    sprintf(buf, "TOTAL OK : %lu\r\n", sum);
+    sendStringUART1(buf);
+    sprintf(buf, "  ERRORS : %lu\r\n", stat.error_count);
+    sendStringUART1(buf);
+    sendStringUART1("---------------------\r\n");
+}
+
+void add_to_statitic (unsigned char RXnet, unsigned char RXdau)
 {
 	unsigned char n;
-	for (n=0; n<MAX_STATISTICAL_RECORDS; n++)
+	for (n=0; n<MAX_STATISTICS_RECORDS; n++)
 	{
 		if (stat.rx_count[n].net==RXnet && stat.rx_count[n].dau==RXdau ) {
 			stat.rx_count[n].count++;
@@ -112,6 +187,100 @@ void insert_statistics(unsigned char RXnet, unsigned char RXdau)
 		}
 	}
 }
+
+void err_to_statitic (void)
+{
+	stat.error_count++;
+}
+
+//------------------------------------------------------------------------------
+//  Ulozeni dat ve FLASH
+//------------------------------------------------------------------------------
+// Vzájemné oddělení je zajištěno adresami:
+// param → 0x0FE00000 (USERDATA stránka 1, velikost 2 kB)
+// stat → 0x0FE00800 (USERDATA stránka 2, velikost 2 kB)
+// MSC_ErasePage() maže vždy přesně jednu stránku (2 kB)
+// zápis do jedné stránky tedy nikdy neovlivní druhou.
+// Obě funkce jsou zcela nezávislé.
+//
+// Každá funkce pracuje s jinou adresou a jiným magic number:
+// parameters_save/load() — adresa 0x0FE00000, magic 0x54434900
+// statistic_save/load() — adresa 0x0FE00800, magic 0x53544100
+//
+// MSC_ErasePage() maže vždy přesně jednu 2 kB stránku,
+// takže mazání statistiky na 0x0FE00800 se nijak nedotkne
+// parametrů na 0x0FE00000 a naopak.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// Ulozeni statistiky do FLASH (USERDATA stranka 2)
+// USERDATA stranka 1: 0x0FE00000 - parametry
+// USERDATA stranka 2: 0x0FE00800 - statistika
+// Vraci: 0=OK, 1=chyba mazani, 2=chyba zapisu
+//------------------------------------------------------------------------------
+#define STAT_MAGIC      0x53544100UL   // 'STA\0'
+#define STAT_FLASH_ADDR ((uint32_t *)(USERDATA_BASE + 0x800))
+
+unsigned char statistic_save(void)
+{
+    MSC_Status_TypeDef ret;
+
+    uint32_t dataSize = sizeof(type_statistical);
+    uint32_t bufSize  = 8 + dataSize;
+    if (bufSize % 4 != 0) bufSize += 4 - (bufSize % 4);
+
+    uint8_t buf[bufSize];
+    memset(buf, 0xFF, bufSize);
+
+    ((uint32_t *)buf)[0] = STAT_MAGIC;
+    ((uint32_t *)buf)[1] = dataSize;
+    memcpy(buf + 8, &stat, sizeof(type_statistical));
+
+    MSC_Init();
+
+    ret = MSC_ErasePage(STAT_FLASH_ADDR);
+    if (ret != mscReturnOk) {
+        MSC_Deinit();
+        sendStringUART1("FLASH: stat erase error\r\n");
+        return 1;
+    }
+
+    ret = MSC_WriteWord(STAT_FLASH_ADDR, buf, bufSize);
+    if (ret != mscReturnOk) {
+        MSC_Deinit();
+        sendStringUART1("FLASH: stat write error\r\n");
+        return 2;
+    }
+
+    MSC_Deinit();
+    sendStringUART1("FLASH: statistic saved\r\n");
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// Nacteni statistiky z FLASH (USERDATA stranka 2)
+// Vraci: 0=OK, 1=neplatna data (magic), 2=nekompatibilni velikost
+
+unsigned char statistic_load(void)
+{
+    uint32_t *flash = STAT_FLASH_ADDR;
+
+    if (flash[0] != STAT_MAGIC) {
+        sendStringUART1("FLASH: no valid statistic\r\n");
+        return 1;
+    }
+
+    uint32_t savedSize = flash[1];
+    if (savedSize != sizeof(type_statistical)) {
+        sendStringUART1("FLASH: stat size mismatch\r\n");
+        return 2;
+    }
+
+    memcpy(&stat, (uint8_t *)flash + 8, sizeof(type_statistical));
+    sendStringUART1("FLASH: statistic loaded\r\n");
+    return 0;
+}
+
 //---------------- --------------------------------------------------------------
 // Ulozeni parametru do FLASH (USERDATA stranka)
 // USERDATA_BASE = 0x0FE00000, velikost 2048 B
@@ -368,12 +537,12 @@ unsigned char make_tx_route(unsigned char net, unsigned char path, unsigned char
 {
     unsigned char p;
     unsigned char d;
-    // Index nalezen�ho z�znamu pro ka�dou prioritu, -1 = nenalezen
+    // Index nalezeného záznamu pro každou prioritu, -1 = nenalezen
     int found[4] = { -1, -1, -1, -1 };
 
     for (int n = 0; n < MAX_ROUTES; n++) {
 
-        if (param.route[n].net == net) {  // net se mus� v�dy shodovat
+        if (param.route[n].net == net) {  // net se musí vždy shodovat
 
 			p = param.route[n].path;
 			d = param.route[n].dau;
@@ -393,7 +562,7 @@ unsigned char make_tx_route(unsigned char net, unsigned char path, unsigned char
         }
     }
 
-    // Vybrat z�znam s nejvy��� prioritou (4 > 3 > 2 > 1)
+    // Vybrat záznam s nejvyšší prioritou (4 > 3 > 2 > 1)
     int best = -1;
     for (int pri = 3; pri >= 0; pri--) {
         if (found[pri] != -1) {
@@ -406,7 +575,7 @@ unsigned char make_tx_route(unsigned char net, unsigned char path, unsigned char
         tx_route.follow = 0;
         tx_route.error  = 0;
         tx_route.revers = 0;
-        return 1;  // chyba: ��dn� z�znam nenalezen
+        return 1;  // chyba: žádný záznam nenalezen
     }
 
     tx_route.follow = param.route[best].follow;

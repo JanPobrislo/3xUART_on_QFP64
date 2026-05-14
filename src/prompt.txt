@@ -145,4 +145,10 @@ Soubory jsou částí programu pro procesor EFM32GG11B820F2048GQ64.
 Myslím že je problém s prioritami přerušení. Pokud běží obsluha UART0 nepříznivě to ovlivní činnost Timer1 a PA0.
 Potřebuji aby priority byly takovéto: (nejvyžší) PA0,Timer1,UART0,USART0,UART1,Timer0 (nejnižší).
 Zkontroluj to a případně uprav. Nejdůležitější je aby obsluha Timer1 proběhla vždy v přesný okamžik.
+----------------------------------------------------------------------------------------------------------------
+Soubory jsou částí programu pro procesor EFM32GG11B820F2048GQ64.
+Funkce parameters_save() zapíše promněnou param do nepomíjivé paměti FLASH procesoru.
+Analogicky funguje parameters_load(), která načte proměnou param z paměti FLASH procesoru.
+Do parameters.c přidej funkci statistic_save() pro uložení proměnné stat do FLASH a funkci statistic_load() pro načtení stat z FLASH paměti.
+Funkce parameters_save() a statistic_save() se navzájem nesmí ovlivňovat.
 

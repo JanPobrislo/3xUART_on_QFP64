@@ -137,7 +137,7 @@ int main(void)
     sendStringUART1 ("TCI COM2-B (UART1) - DEBUG\r\n");
     sendStringUART1 ("HFXO: 50 MHz krystal, DPLL: 72 MHz\r\n");
     parameters_show();
-    init_statistics();  //-- radeji az zde aby uz bylo nastavene RTC
+    init_statistic();  //-- radeji az zde aby uz bylo nastavene RTC
 
     while (1) {
 
@@ -169,7 +169,9 @@ int main(void)
     					sendStringUART1(" w : write parameters to FLASH\r\n");
     					sendStringUART1(" l : load parameters from FLASH\r\n");
     					sendStringUART1(" 1..6 : toggle LED: 1,2,3,4,RX,TX\r\n");
-    					sendStringUART1(" c : clear statistics\r\n");
+    					sendStringUART1(" C : clear statistics\r\n");
+    					sendStringUART1(" S : save statistics to FLASH\r\n");
+    					sendStringUART1(" L : load statistics from FLASH\r\n");
     					sendStringUART1(" T : start TX TOKEN from memory\r\n");
     					sendStringUART1(" h : display this help\r\n");
     					sendStringUART1(" --------------------------------\r\n");
@@ -186,10 +188,16 @@ int main(void)
     					parameters_show();
     					break;
 
-    		case 's' : 	show_statistics();
+    		case 's' : 	show_statistic();
     					break;
 
-    		case 'c' : 	init_statistics();
+    		case 'S' : 	if (statistic_save()==0) {sendStringUART1("Save statistic to FLASH\r\n");}
+    					break;
+
+    		case 'L' : 	if (statistic_load()==0) {sendStringUART1("Load statistic from FLASH\r\n");}
+    					break;
+
+    		case 'C' : 	clear_statistic();
     					sendStringUART1("Statistics have been cleared and initialized.\r\n");
     					break;
 
@@ -263,6 +271,10 @@ int main(void)
 
     		if (uptime % (unsigned long)TIME_TO_SET_RTC == 0) {
     			USART0_irq_enabled();  //-- Povoli prijem znaku od GPS
+    		}
+
+    		if (uptime % (unsigned long)TIME_TO_SAVE_STATISTIC == 0) {
+    			statistic_save();  //-- Zapis do flash
     		}
 
     		POCSAG_routing_handler();
