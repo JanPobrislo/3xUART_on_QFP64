@@ -275,6 +275,7 @@ int main(void)
 
     		if (uptime % (unsigned long)TIME_TO_SAVE_STATISTIC == 0) {
     			statistic_save();  //-- Zapis do flash
+    			show_rtc();
     		}
 
     		POCSAG_routing_handler();
