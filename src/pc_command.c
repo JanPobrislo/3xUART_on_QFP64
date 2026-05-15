@@ -8,6 +8,7 @@
 #include "parameters.h"
 #include "uart1.h"
 #include "pocsag.h"
+#include "led.h"
 
 unsigned char eeprom[128]; // pro simulaci EEPROM puvodni TCI
 
@@ -209,6 +210,8 @@ void read_pc_byte(unsigned char zn) {
     USART_Tx(UART0, zn);
     sendStringUART0("]");
 */
+	if (master_state == MASTER_IDLE) {LED3_On();}
+
     switch (pc_state) {
 	case IDLE:
 		if (zn == '?') {
@@ -465,4 +468,5 @@ void read_pc_byte(unsigned char zn) {
 		pc_state = IDLE;
 		break;
     }
+	if (master_state == MASTER_IDLE) {LED3_Off();}
 }

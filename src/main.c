@@ -297,30 +297,6 @@ int main(void)
 			tamper_alarm_pending();
 			batery_alarm_pending();
 
-    		/*
-    		if (Input_GetOnBattery()) {
-				sendStringUART1("Batery:1  ");
-				LED3_On();
-			} else {
-				sendStringUART1("Batery:0  ");
-				LED3_Off();
-			}
-
-			if (Input_GetTamper()) {
-				sendStringUART1("Tamper:1  ");
-				LED4_On();
-			} else {
-				sendStringUART1("Tamper:0  ");
-				LED4_Off();
-			}
-			sprintf(txt,"Time: %lu  ",SecondCounter);
-			sendStringUART1(txt);
-			sendStringUART1("\r\n");
-			*/
-//    	    sendStringUART0 ("[COM1-A]");
-//    	    sendStringUART1 ("[COM2-B]");
-//    	    sendStringUSART0("[COM3-C]");
-
 	    }
     }
 }

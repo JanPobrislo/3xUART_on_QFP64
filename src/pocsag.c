@@ -350,7 +350,8 @@ void POCSAG_sample_bit(void) {
                 TIMER_CounterSet((TIMER_TypeDef *)WTIMER0, 0); // Nuluje counter
             	calib_bits = 0;
         		calib_start = true;
-            	LED1_On();
+            	LED1_Off();
+            	LED2_On();
             }
             break;
 
@@ -383,6 +384,7 @@ void POCSAG_sample_bit(void) {
                 	TIMER1_ResetSpeed();
 					rx_edge_irq_enabled();
 					rx_state = STATE_RX_IDLE;
+					LED2_Off();
                 }
             }
             break;
@@ -418,6 +420,7 @@ void POCSAG_sample_bit(void) {
 
 						TIMER1_ResetSpeed();
     					rx_edge_irq_enabled();
+    	            	LED2_Off();
 						return;
 					}
 				}
@@ -788,7 +791,6 @@ void POCSAG_process(void) {
 //    if (!rx_token.rx_end) return;
     if (rx_state != STATE_RECEIVED) return;
 
-	LED2_On();
     char buf[250];
     char textMsg[128] = {0};
     bitBuffer = 0;
@@ -850,13 +852,11 @@ void POCSAG_process(void) {
 
     if (rx_token.rx_ok) {
     	sendStringUART1("    OK: ");
-    	LED3_On();
     }
     else {
     	sendStringUART1("    ERROR");
         if (rx_token.header_ok) {
         	sendStringUART1("(HEAD:OK):");
-        	LED3_On();
         }
         else {
         	sendStringUART1("(HEAD:ERR):");
@@ -994,6 +994,7 @@ void POCSAG_process(void) {
 						master_state = MASTER_RETURNED;
 					}
 					sendStringUART1("TOKEN RETURNED\r\n");
+					LED3_Off();
 					tx_start();  //-- Spusti vysilani
 				}
 				else
@@ -1016,6 +1017,7 @@ void POCSAG_process(void) {
 							route_state = WAIT_FOLLOW;
 							route_repeat_counter = param.next_rpt+1;
 							route_timer = param.next_time+1;
+					    	LED3_On();
 						}
 
 						tx_token.tx_status = TX_DIRECT_WAY;
@@ -1035,6 +1037,7 @@ void POCSAG_process(void) {
 						//-- je to ten co cekam
 						route_state = STATE_ROUTE_IDLE;
 						sendStringUART1("TOKEN FOLLOWS OK\r\n");
+						if (master_state == MASTER_IDLE) {LED3_Off();}
 					}
 				}
 				POCSAG_rx_init();  // inicializuje prijem
@@ -1076,7 +1079,6 @@ void POCSAG_process(void) {
 			}
     	}
     }
-	LED3_Off();
 }
 
 //------------------------------------------------------------------------------

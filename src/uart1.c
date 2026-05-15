@@ -2,12 +2,12 @@
  * @file uart1.c  COM-B
  * @brief Obsluha UART1 - 115200 8N1, LOCATION 4 (PE12/PE13)
  *****************************************************************************/
-#include "uart1.h"
-#include "usart0.h"   /* USART_BaudrateSet_Manual */
-#include "ports.h"
 #include "em_usart.h"
 #include "em_cmu.h"
 #include "em_gpio.h"
+#include "uart1.h"
+#include "usart0.h"   /* USART_BaudrateSet_Manual */
+#include "ports.h"
 
 char     rxBuffer3[BUFFER_SIZE];
 volatile uint16_t rxIndex3 = 0;
@@ -59,6 +59,7 @@ void sendStringUART1(const char *str)
 void UART1_RX_IRQHandler(void)
 {
 	uint8_t data = USART_Rx(UART1);
+
     if (data == 13) {
         rxBuffer3[rxIndex3] = '\0';
         //sendStringUART1(rxBuffer3);
