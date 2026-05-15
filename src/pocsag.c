@@ -1064,8 +1064,9 @@ void POCSAG_process(void) {
 				tx_token.dau = rx_token.adr;
 
 				//-- Do ctvrteho CDW zapise pocet prijatych CDW (musi zacinat 1 + 7 bitu)
-				tx_token.data[3] = (unsigned long)(0x80 | tx_token.total_words)<<24;
-				tx_token.data[3] = tx_token.data[3] | (POCSAG_IDLE_WORD & 0x0FFFFFFF); // aby tam nebyla dlouha 0
+				tx_token.data[3] = rx_token.data[3] & (unsigned long)0x00FFFFFF;
+				tx_token.data[3] = tx_token.data[3] + ((unsigned long)(tx_token.total_words)<<24);
+				tx_token.data[3] = tx_token.data[3] + ((unsigned long)0x80000000);
 
 				//-- Pro jistotu vymaze telo tokenu od pateho CDW
 				for(n=4; n<tx_token.total_words; n++) {
