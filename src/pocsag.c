@@ -253,8 +253,7 @@ void POCSAG_edge_detected(void) {
 void tx_stop(void) {
 	tx_state = STATE_TX_IDLE;
 	GPIO_PinOutSet(PTT_PORT, PTT_PIN);  	// odklicuje
-	LED2_Off();
-	LED3_Off();
+	LED4_Off();
 	POCSAG_rx_init();  // inicializuje prijem
 	rx_state = STATE_RX_IDLE;
 }
@@ -335,9 +334,6 @@ void POCSAG_sample_bit(void) {
 
 	uint8_t bit = (Input_GetRX() > 0) ? 1 : 0;
     shiftReg = (shiftReg << 1) | bit;
-
-//    GPIO_PinOutToggle(DBG_PORT, DBG_PIN);
-    //LED2_Toggle();
 
     switch (rx_state) {
         case STATE_RX_IDLE:
@@ -684,8 +680,6 @@ void POCSAG_Tx_datagram(void) {
 void tx_start(void) {
     char buf[160];
 
-	LED2_On();
-
 	//-- Zastavit a zablokovat Rx
 	TIMER1_Stop();
 	rx_edge_irq_disabled(); // Vypneme detekci hran - nevyhodnocuje prijem
@@ -782,6 +776,7 @@ void tx_start(void) {
 	number_of_tx = 0;
 	GPIO_PinOutClear(TX_PORT, TX_PIN);    	// nula aby preamble zacal 1
 	GPIO_PinOutClear(PTT_PORT, PTT_PIN);  	// zaklicuje
+	LED4_On();
 	TIMER1_ResetSpeed();
 	TIMER1_Start();
 }
@@ -793,6 +788,7 @@ void POCSAG_process(void) {
 //    if (!rx_token.rx_end) return;
     if (rx_state != STATE_RECEIVED) return;
 
+	LED2_On();
     char buf[250];
     char textMsg[128] = {0};
     bitBuffer = 0;
@@ -975,7 +971,7 @@ void POCSAG_process(void) {
     	 {add_to_statitic(rx_token.net,rx_token.dau);}
     else {err_to_statitic();}
 
-//	rx_token.ready = false;
+	LED2_Off();
 
 	//------------------------------------------------------------------------------
     //  Vysilani
@@ -1006,7 +1002,6 @@ void POCSAG_process(void) {
 					if (0==make_tx_route(rx_token.net, rx_token.path, rx_token.dau)) {
 
 						//-- Vysilam
-						LED4_On();
 						tx_token = rx_token;
 						if (tx_token.distribution == REVERSE_TOKEN) {
 							tx_token.adr = tx_route.revers;  //-- Posle reverzni cestou
@@ -1039,7 +1034,6 @@ void POCSAG_process(void) {
 					if (rx_token.net == tx_token.net && rx_token.dau == tx_token.adr) {
 						//-- je to ten co cekam
 						route_state = STATE_ROUTE_IDLE;
-						LED4_Off();
 						sendStringUART1("TOKEN FOLLOWS OK\r\n");
 					}
 				}

@@ -29,16 +29,16 @@
 #define TAMPER_PIN          (4)
 
 /* --- LED diody --- */
-#define LED1_PORT           (gpioPortA)
+#define LED1_PORT           (gpioPortA)  //-- RX zelena leva horni (radiovy sum)
 #define LED1_PIN            (8)
 
-#define LED2_PORT           (gpioPortD)
+#define LED2_PORT           (gpioPortD)  //-- TOKEN zelena leva dolni  (od preamble do konce tokenu)
 #define LED2_PIN            (5)
 
-#define LED3_PORT           (gpioPortD)
+#define LED3_PORT           (gpioPortD)  //-- WAIT/MASTER cervena prava horni (ceka na potvrzeni / komunikuje s masterem)
 #define LED3_PIN            (6)
 
-#define LED4_PORT           (gpioPortD)
+#define LED4_PORT           (gpioPortD)  //-- TX cervena prava dolni  (vysila)
 #define LED4_PIN            (8)
 
 #define LED_RX_PORT         (gpioPortD)
