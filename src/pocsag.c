@@ -1056,22 +1056,30 @@ void POCSAG_process(void) {
     	//------------------------------------------------------------------
     	unsigned char n;
     	if (rx_token.header_ok){
-			sendStringUART1("TX: Sending response to PP-TEST\r\n");
-			tx_token = rx_token;
+			if (rx_token.adr == param.netdau[rx_token.net-1])   //-- je pro mne
+			{
+				sendStringUART1("TX: Sending response to PP-TEST\r\n");
+				tx_token = rx_token;
 
-			//-- Upravi hlavicku
-			tx_token.adr = tx_token.dau;   // vrati token tomu DAU co vysilalo
-			tx_token.dau = rx_token.adr;
+				//-- Upravi hlavicku
+				tx_token.adr = tx_token.dau;   // vrati token tomu DAU co vysilalo
+				tx_token.dau = rx_token.adr;
 
-			//-- Do ctvrteho CDW zapise pocet prijatych CDW (musi zacinat 1 + 7 bitu)
-			tx_token.data[3] = (unsigned long)(0x80 | tx_token.total_words)<<24;
+				//-- Do ctvrteho CDW zapise pocet prijatych CDW (musi zacinat 1 + 7 bitu)
+				tx_token.data[3] = (unsigned long)(0x80 | tx_token.total_words)<<24;
+				tx_token.data[3] = tx_token.data[3] | (POCSAG_IDLE_WORD & 0x0FFFFFFF); // aby tam nebyla dlouha 0
 
-			//-- Pro jistotu vymaze telo tokenu od pateho CDW
-			for(n=4; n<tx_token.total_words; n++) {
-				tx_token.data[n] = POCSAG_IDLE_WORD;
+				//-- Pro jistotu vymaze telo tokenu od pateho CDW
+				for(n=4; n<tx_token.total_words; n++) {
+					tx_token.data[n] = POCSAG_IDLE_WORD;
+				}
+
+				tx_start();  //-- Spusti vysilani
 			}
-
-			tx_start();  //-- Spusti vysilani
+			else {  //--- Prijaty token nebyl pro mne
+				sendStringUART1("NOT TX - PP-TEST not for me\r\n");
+				POCSAG_rx_init();  // inicializuje prijem
+			}
     	}
     }
 	LED3_Off();

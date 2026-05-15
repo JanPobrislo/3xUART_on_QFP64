@@ -251,7 +251,10 @@ int main(void)
     					sendStringUART1("\r\n");
     					break;
 
-    		case 'r' : 	show_rtc();
+    		case 'r' : 	sendStringUART1("\r\n");
+    					show_rtc();
+    					sprintf(buf,"UPTIME: %lud %luh %lum %lusec\r\n",uptime/86400, (uptime%86400)/3600, (uptime%36000)/60, uptime%60);
+    					sendStringUART1(buf);
     					break;
 
     		default:	break;

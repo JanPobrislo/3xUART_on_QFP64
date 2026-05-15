@@ -41,7 +41,7 @@ extern routes_for_tx tx_route;  // definuje routu pro vysilani
 extern unsigned long uptime;    // cas od resetu v sec
 
 #define TIME_TO_SET_RTC 7200    // po kolika sec nastavi RTC z GPS
-#define TIME_TO_SAVE_STATISTIC 7200 //86400  // po kolika sec zapise statistiku do flash (24hod)
+#define TIME_TO_SAVE_STATISTIC 86400  // po kolika sec zapise statistiku do flash (24hod)
 
 //------------------------------------------------------------------------------
 // Docasne globalni parametry - Prepinace pro zobrazovani na consoli COM-B UART1
