@@ -1037,7 +1037,8 @@ void POCSAG_process(void) {
 						//-- je to ten co cekam
 						route_state = STATE_ROUTE_IDLE;
 						sendStringUART1("TOKEN FOLLOWS OK\r\n");
-						if (master_state == MASTER_IDLE) {LED3_Off();}
+						if (master_state == MASTER_IDLE || master_state == MASTER_CONFIRMED)
+							{LED3_Off();}
 					}
 				}
 				POCSAG_rx_init();  // inicializuje prijem

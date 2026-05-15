@@ -210,7 +210,8 @@ void read_pc_byte(unsigned char zn) {
     USART_Tx(UART0, zn);
     sendStringUART0("]");
 */
-	if (master_state == MASTER_IDLE) {LED3_On();}
+	if (master_state == MASTER_IDLE || master_state == MASTER_CONFIRMED)
+		{LED3_On();}
 
     switch (pc_state) {
 	case IDLE:
@@ -333,6 +334,7 @@ void read_pc_byte(unsigned char zn) {
 				sendStringUART0("OK");
 				sendStringUART1("\r\n--- MASTER TOKEN ---\r\n");
 			    master_state = MASTER_PREPARED;
+			    LED3_On();
 			}
 			else {
 				sendStringUART0("ERROR");
@@ -468,5 +470,6 @@ void read_pc_byte(unsigned char zn) {
 		pc_state = IDLE;
 		break;
     }
-	if (master_state == MASTER_IDLE) {LED3_Off();}
+	if (master_state == MASTER_IDLE || master_state == MASTER_CONFIRMED)
+		{LED3_Off();}
 }
